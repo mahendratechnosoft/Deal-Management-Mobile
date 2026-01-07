@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:xpertbiz/core/utils/app_colors.dart';
 import '../utils/responsive.dart';
 
 class AppTextField extends StatefulWidget {
@@ -26,12 +27,19 @@ class AppTextField extends StatefulWidget {
 }
 
 class _AppTextFieldState extends State<AppTextField> {
-  bool _obscure = false;
+  late bool _obscure;
 
   @override
   void initState() {
     super.initState();
     _obscure = widget.obscureText;
+  }
+
+  OutlineInputBorder _border(Color color, {double width = 1}) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(Responsive.r(8)),
+      borderSide: BorderSide(color: color, width: width),
+    );
   }
 
   @override
@@ -47,10 +55,14 @@ class _AppTextFieldState extends State<AppTextField> {
       ),
       decoration: InputDecoration(
         labelText: widget.hint,
+
+        /// Padding
         contentPadding: EdgeInsets.symmetric(
           vertical: Responsive.h(14),
           horizontal: Responsive.w(12),
         ),
+
+        /// Icons
         prefixIcon: widget.prefixIcon,
         suffixIcon: widget.obscureText
             ? IconButton(
@@ -58,23 +70,18 @@ class _AppTextFieldState extends State<AppTextField> {
                   _obscure ? Icons.visibility_off : Icons.visibility,
                   size: Responsive.sp(20),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _obscure = !_obscure;
-                  });
-                },
+                onPressed: () => setState(() => _obscure = !_obscure),
               )
             : widget.suffixIcon,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(8)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(Responsive.r(8)),
-          borderSide: BorderSide(
-            color: Colors.blueAccent.withOpacity(0.7),
-            width: 1.5,
-          ),
-        ),
+
+        /// 🎯 BORDER STATES
+        enabledBorder: _border(AppColors.borderDark),
+        focusedBorder: _border(AppColors.primaryDark),
+        errorBorder: _border(Colors.red),
+        focusedErrorBorder: _border(Colors.redAccent, width: 1.5),
+        disabledBorder: _border(AppColors.border.withOpacity(0.5)),
+
+        /// Fill
         filled: true,
         fillColor: Colors.white,
       ),

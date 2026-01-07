@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
-
+      Responsive.init(context);
       if (AuthLocalStorage.isLoggedIn()) {
         context.go(AppRouteName.dashboard);
       } else {

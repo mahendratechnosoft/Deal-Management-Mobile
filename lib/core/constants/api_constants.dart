@@ -6,4 +6,5 @@ class ApiConstants {
 
   static const String baseUrl = "http://91.203.133.210:9091/";
   static const String login = "signin";
+  static const String getTask = "/admin/getAllTaskList/";
   }

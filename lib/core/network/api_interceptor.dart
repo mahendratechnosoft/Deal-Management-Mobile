@@ -1,6 +1,6 @@
 import 'dart:developer';
-
 import 'package:dio/dio.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 
 class ApiInterceptor extends Interceptor {
   String? _token;
@@ -14,6 +14,10 @@ class ApiInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) {
     if (_token != null && _token!.isNotEmpty) {
+      options.headers['Authorization'] = 'Bearer $_token';
+    } else {
+      final user = AuthLocalStorage.getUser();
+      _token = user!.jwtToken;
       options.headers['Authorization'] = 'Bearer $_token';
     }
 
@@ -64,13 +68,7 @@ class ApiInterceptor extends Interceptor {
   }
 
   void _logRequest(RequestOptions options) {
-    log('''
-➡️ REQUEST
-URL: ${options.uri}
-METHOD: ${options.method}
-HEADERS: ${options.headers}
-BODY: ${options.data}
-''');
+    log('''➡️ REQUESTURL: ${options.uri}METHOD: ${options.method}HEADERS: ${options.headers}BODY: ${options.data}''');
   }
 
   void _logResponse(Response response) {

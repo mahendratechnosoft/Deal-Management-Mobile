@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
+import 'package:xpertbiz/core/network/api_interceptor.dart';
+
+final apiInterceptor = ApiInterceptor();
 
 class DioClient {
   static Dio getDio() {
@@ -18,7 +21,7 @@ class DioClient {
       requestBody: true,
       responseBody: true,
     ));
-
+    dio.interceptors.add(apiInterceptor);
     return dio;
   }
 }

@@ -46,8 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Responsive.init(context);
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -78,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Card(
-                      color: AppColors.card,
+                      color: AppColors.surface,
                       elevation: 10,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(Responsive.r(16)),

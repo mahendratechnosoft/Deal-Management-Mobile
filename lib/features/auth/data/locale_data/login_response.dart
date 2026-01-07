@@ -45,7 +45,7 @@ class LoginResponse extends HiveObject {
       userId: json['userId'],
       loginEmail: json['loginEmail'],
       role: json['role'],
-      loginUserName: json['loginUserName'],
+      loginUserName: json['loginUserName'] ?? 'User',
       employeeId: json['employeeId'],
       adminId: json['adminId'],
       moduleAccess: ModuleAccess.fromJson(json['moduleAccess']),
