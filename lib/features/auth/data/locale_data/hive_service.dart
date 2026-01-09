@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:xpertbiz/core/network/dio_client.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 
 class AuthLocalStorage {
@@ -21,7 +22,8 @@ class AuthLocalStorage {
   /// Check login
   static bool isLoggedIn() {
     final user = getUser();
-    return user != null && user.jwtToken.isNotEmpty;
+    apiInterceptor.updateToken(user!.jwtToken);
+    return user.jwtToken.isNotEmpty;
   }
 
   /// Clear on logout

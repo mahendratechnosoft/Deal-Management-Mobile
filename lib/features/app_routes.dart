@@ -6,8 +6,10 @@ import 'package:xpertbiz/features/customers/presentation/customers_screen.dart';
 import 'package:xpertbiz/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:xpertbiz/features/invoice/presentation/invoice_screen.dart';
 import 'package:xpertbiz/features/settings/presentation/settings_screen.dart';
-import 'package:xpertbiz/features/task/edit_task/presentation/task_edit_screen.dart';
-import 'package:xpertbiz/features/task/presentation/task_screen.dart';
+import 'package:xpertbiz/features/task_module/create_task/screens/create_task.dart';
+import 'package:xpertbiz/features/task_module/edit_task/presentation/task_edit_screen.dart';
+import 'package:xpertbiz/features/task_module/task_deatils/screen/task_details_screen.dart';
+import 'package:xpertbiz/features/task_module/task/presentation/task_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -63,6 +65,20 @@ class AppRouter {
         name: 'task edit',
         builder: (context, state) {
           return EditTask();
+        },
+      ),
+      GoRoute(
+        path: AppRouteName.createTask,
+        name: 'create task',
+        builder: (context, state) {
+          return CreateTask();
+        },
+      ),
+      GoRoute(
+        path: AppRouteName.taskDetails,
+        name: 'task details',
+        builder: (context, state) {
+          return TaskDetails();
         },
       ),
     ],

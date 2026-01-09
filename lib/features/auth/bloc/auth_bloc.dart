@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/network/api_error.dart';
@@ -17,12 +18,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       final response = await repository.login(event.email, event.password);
-
-     await AuthLocalStorage.saveUser(response);
+      await AuthLocalStorage.saveUser(response);
       emit(AuthSuccess(response));
-      
     } on DioException catch (dioError) {
       final message = ApiError.getMessage(dioError);
+      log(message);
       emit(AuthFailure(message));
     } catch (error) {
       emit(AuthFailure(

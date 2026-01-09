@@ -7,4 +7,6 @@ class AppRouteName {
   static const String settings = '/settings';
   static const String invoice = '/invoice';
   static const String editTask = '/edit_task';
+  static const String taskDetails ='/task_details';
+  static const String createTask ='/create_task';
 }

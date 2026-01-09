@@ -1,9 +1,9 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
-import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 
 class ApiInterceptor extends Interceptor {
   String? _token;
+
   void updateToken(String token) {
     _token = token;
   }
@@ -13,19 +13,22 @@ class ApiInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) {
-    if (_token != null && _token!.isNotEmpty) {
+    /// Add Authorization Header
+    if (_token != null && _token!.trim().isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $_token';
+      log('🔐 Bearer token added');
     } else {
-      final user = AuthLocalStorage.getUser();
-      _token = user!.jwtToken;
-      options.headers['Authorization'] = 'Bearer $_token';
+      log('⚠️ Bearer token NOT added');
     }
 
-    options.headers['Accept'] = 'application/json';
+    /// Default headers
+    options.headers.addAll({
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    });
 
     _logRequest(options);
-
-    super.onRequest(options, handler);
+    handler.next(options);
   }
 
   @override
@@ -33,9 +36,8 @@ class ApiInterceptor extends Interceptor {
     Response response,
     ResponseInterceptorHandler handler,
   ) {
-    // Logging (Response)
     _logResponse(response);
-    super.onResponse(response, handler);
+    handler.next(response);
   }
 
   @override
@@ -43,39 +45,49 @@ class ApiInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) {
-    // Handle Unauthorized (Token Expired)
     if (err.response?.statusCode == 401) {
       _handleUnauthorized();
     }
 
-    // Logging (Error)
     _logError(err);
-
-    super.onError(err, handler);
+    handler.next(err);
   }
 
   // ================= HELPERS =================
 
   void _handleUnauthorized() {
-    // 🔥 CRM LEVEL ACTION
-    // 1. Clear token from storage
-    // 2. Redirect to login
-    // 3. Clear BLoC states if needed
-
-    // Example:
-    // SecureStorage.clear();
-    // AppRouter.router.go('/login');
+    log('🚫 Unauthorized - Token expired or invalid');
+    // TODO:
+    // clear token
+    // redirect to login
   }
 
   void _logRequest(RequestOptions options) {
-    log('''➡️ REQUESTURL: ${options.uri}METHOD: ${options.method}HEADERS: ${options.headers}BODY: ${options.data}''');
+    log('''
+➡️ REQUEST
+URL: ${options.uri}
+METHOD: ${options.method}
+HEADERS: ${options.headers}
+BODY: ${options.data}
+''');
   }
 
   void _logResponse(Response response) {
-    log('''✅ RESPONSEURL: ${response.requestOptions.uri}STATUS: ${response.statusCode}DATA: ${response.data}''');
+    log('''
+✅ RESPONSE
+URL: ${response.requestOptions.uri}
+STATUS: ${response.statusCode}
+DATA: ${response.data}
+''');
   }
 
   void _logError(DioException err) {
-    log('''❌ ERRORURL: ${err.requestOptions.uri}URL: ${err.requestOptions.uri}URL: ${err.requestOptions.uri}STATUS: ${err.response?.statusCode}MESSAGE: ${err.message}DATA: ${err.response?.data}''');
+    log('''
+❌ ERROR
+URL: ${err.requestOptions.uri}
+STATUS: ${err.response?.statusCode}
+MESSAGE: ${err.message}
+DATA: ${err.response?.data}
+''');
   }
 }

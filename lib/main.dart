@@ -6,7 +6,8 @@ import 'package:xpertbiz/core/utils/responsive.dart';
 import 'package:xpertbiz/features/app_routes.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 import 'package:xpertbiz/features/drawer/bloc/drawer_bloc.dart';
-import 'package:xpertbiz/features/task/bloc/task_bloc.dart';
+import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.dart';
+import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'di/injection_container.dart' as di;
 import 'features/auth/bloc/auth_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (cntx) => di.sl<AuthBloc>()),
         BlocProvider(create: (cntx) => di.sl<TaskBloc>()),
         BlocProvider(create: (context) => DrawerBloc()),
+        BlocProvider(create: (context) => di.sl<CreateTaskBloc>()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
