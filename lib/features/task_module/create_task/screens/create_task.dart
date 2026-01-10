@@ -36,22 +36,29 @@ class CreateTask extends StatelessWidget {
         minimum: const EdgeInsets.all(10),
         child: BlocListener<CreateTaskBloc, CreateTaskState>(
           listener: (context, state) {
-
-            if (state.success) {
+            if (state.taskCreated) {
               AppSnackBar.show(
-                  type: SnackBarType.success,
-                  context,
-                  message: 'Task created successfully');
+                type: SnackBarType.success,
+                context,
+                message: 'Task created successfully',
+              );
               context.pop();
-            } else if (state.errorMessage != null) {
+            }
+
+            if (state.errorMessage != null) {
               AppSnackBar.show(
-                  type: SnackBarType.error,
-                  context,
-                  message: 'Something went wrong');
+                type: SnackBarType.error,
+                context,
+                message: state.errorMessage!,
+              );
             }
           },
           child: BlocBuilder<CreateTaskBloc, CreateTaskState>(
             builder: (context, state) {
+              final assigneeItems = [
+                DropdownItem(id: '', name: 'Non selected'),
+                ...getAssigneeItems(state),
+              ];
               if (state.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
@@ -151,43 +158,41 @@ class CreateTask extends StatelessWidget {
                       },
                       onChanged: (value) {
                         if (value != null) {
+                          context.read<CreateTaskBloc>().add(RelatedChange(
+                                value,
+                              ));
                           context
                               .read<CreateTaskBloc>()
-                              .add(RelatedChange(value));
+                              .add(FetchAssignEvent(value: value));
                         }
                       },
                       itemLabel: (item) => item,
                     ),
                     const SizedBox(height: 15),
 
-                    /// ASSIGNEES DROPDOWN (Placeholder - expand as needed)
-                    CustomDropdown<String>(
+                    CustomDropdown<DropdownItem>(
                       showLabel: true,
-                      labelText: 'Assignees',
-                      items: const [
-                        'Non selected',
-                        "A"
-                        // Add real assignees here, e.g., from API
-                      ],
-                      value: state.assignee,
-                      validator: (value) {
-                        // if (value == null || value == 'Non selected') {
-                        //   return 'Assignee is required';
-                        // }
-                        return null;
-                      },
+                      labelText: state.relatedTo == 'Non selected'
+                          ? 'Assignees'
+                          : 'Select ${state.relatedTo}',
+                      items: assigneeItems,
+                      value: assigneeItems.firstWhere(
+                        (item) {
+                          return item.id == state.assignee;
+                        },
+                        orElse: () => assigneeItems[0],
+                      ),
                       onChanged: (value) {
                         if (value != null) {
                           context
                               .read<CreateTaskBloc>()
-                              .add(AssigneeChange(value));
+                              .add(AssigneeChange(value.id));
                         }
                       },
-                      itemLabel: (item) => item,
+                      itemLabel: (item) => item.name,
                     ),
-                    const SizedBox(height: 15),
 
-                    /// FOLLOWERS DROPDOWN (Placeholder - expand as needed)
+                    const SizedBox(height: 15),
                     CustomDropdown<String>(
                       showLabel: true,
                       labelText: 'Followers',
@@ -308,7 +313,7 @@ class CreateTask extends StatelessWidget {
                                   endDate: formatDate(state.dueDate),
                                   priority: state.priority,
                                   relatedTo: state.relatedTo,
-                                  relatedToId: '',
+                                  relatedToId: state.assignee,
                                   relatedToName: '',
                                   hourlyRate: double.tryParse(
                                           hourlyRateController.text.trim()) ??
@@ -363,4 +368,44 @@ String formatDate(DateTime? date) {
   return "${date.year.toString().padLeft(4, '0')}-"
       "${date.month.toString().padLeft(2, '0')}-"
       "${date.day.toString().padLeft(2, '0')}";
+}
+
+List<DropdownItem> getAssigneeItems(CreateTaskState state) {
+  switch (state.relatedTo) {
+    case 'Lead':
+      return state.leadList
+          .where((e) => e.clientName.trim().isNotEmpty)
+          .map((e) => DropdownItem(id: e.leadId, name: e.clientName))
+          .toList();
+
+    case 'Customer':
+      return state.customerList
+          .where((e) => e.companyName.trim().isNotEmpty)
+          .map((e) => DropdownItem(id: e.id, name: e.companyName))
+          .toList();
+
+    case 'Proforma':
+      return state.proformList
+          .where((e) => e.formatedProformaInvoiceNumber.trim().isNotEmpty)
+          .map((e) => DropdownItem(
+              id: e.proformaInvoiceId, name: e.formatedProformaInvoiceNumber))
+          .toList();
+
+    case 'Proposal':
+      return state.proposalList
+          .where((e) => e.formatedProposalNumber.trim().isNotEmpty)
+          .map((e) =>
+              DropdownItem(id: e.proposalId, name: e.formatedProposalNumber))
+          .toList();
+
+    case 'Invoice':
+      return state.invoiceList
+          .where((e) => e.formatedInvoiceNumber.trim().isNotEmpty)
+          .map((e) =>
+              DropdownItem(id: e.invoiceId, name: e.formatedInvoiceNumber))
+          .toList();
+
+    default:
+      return [];
+  }
 }

@@ -1,4 +1,4 @@
-
+import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/core/network/api_error.dart';
@@ -19,70 +19,128 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
     on<AttachmentsChanged>(_onAttachmentsChanged);
     on<SubmitCreateTask>(_onSubmitTask);
     on<GetTaskEvent>(_getTask);
+    on<FetchAssignEvent>(_fetchAssigne);
     on<UpdateTaskEvent>(_taskUpdate);
   }
 
-  void _onRelatedChanged(RelatedChange event, Emitter<CreateTaskState> emit) {
-    emit(state.copyWith(relatedTo: event.value));
+  void _onRelatedChanged(RelatedChange e, Emitter<CreateTaskState> emit) {
+    emit(state.copyWith(relatedTo: e.value));
   }
 
-  void _onPriorityChanged(PriorityChange event, Emitter<CreateTaskState> emit) {
-    emit(state.copyWith(priority: event.value));
+  void _onPriorityChanged(PriorityChange e, Emitter<CreateTaskState> emit) {
+    emit(state.copyWith(priority: e.value));
   }
 
-  void _onAssigneeChanged(AssigneeChange event, Emitter<CreateTaskState> emit) {
-    emit(state.copyWith(assignee: event.value));
+  void _onAssigneeChanged(AssigneeChange e, Emitter<CreateTaskState> emit) {
+    emit(state.copyWith(assignee: e.value));
   }
 
-  void _onFollowerChanged(FollowerChange event, Emitter<CreateTaskState> emit) {
-    emit(state.copyWith(follower: event.value));
+  void _onFollowerChanged(FollowerChange e, Emitter<CreateTaskState> emit) {
+    emit(state.copyWith(follower: e.value));
   }
 
   void _onStartDateChanged(
-      TaskStartDateChanged event, Emitter<CreateTaskState> emit) {
-    emit(state.copyWith(startDate: event.date));
+      TaskStartDateChanged e, Emitter<CreateTaskState> emit) {
+    emit(state.copyWith(startDate: e.date));
   }
 
-  void _onDueDateChanged(
-      TaskDueDateChanged event, Emitter<CreateTaskState> emit) {
-    emit(state.copyWith(dueDate: event.date));
+  void _onDueDateChanged(TaskDueDateChanged e, Emitter<CreateTaskState> emit) {
+    emit(state.copyWith(dueDate: e.date));
   }
 
   void _onAttachmentsChanged(
-      AttachmentsChanged event, Emitter<CreateTaskState> emit) {
-    emit(state.copyWith(attachments: event.attachments));
+      AttachmentsChanged e, Emitter<CreateTaskState> emit) {
+    emit(state.copyWith(attachments: e.attachments));
   }
 
-  Future<void> _onSubmitTask(
-    SubmitCreateTask event,
+  // ---------------- FETCH ASSIGNE ----------------
+  Future<void> _fetchAssigne(
+    FetchAssignEvent event,
     Emitter<CreateTaskState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null, success: false));
-    try {
-      await repository.createTask(event.request);
+    emit(state.copyWith(isLoading: true, errorMessage: null, leadList: []));
 
-      emit(const CreateTaskState());
+    try {
+      switch (event.value) {
+        case 'Lead':
+          final leads = await repository.fetchLead(event.value);
+          emit(state.copyWith(
+            isLoading: false,
+            leadList: leads,
+          ));
+          break;
+
+        case 'Customer':
+          final customers = await repository.fetchCustomer(event.value);
+          emit(state.copyWith(
+            isLoading: false,
+            customerList: customers,
+          ));
+          break;
+
+        case 'Proposal':
+          final proposals = await repository.fetchProposal(event.value);
+          emit(state.copyWith(
+            isLoading: false,
+            proposalList: proposals,
+          ));
+          break;
+
+        case 'Proforma':
+          final proformas = await repository.fetchProform(event.value);
+          emit(state.copyWith(
+            isLoading: false,
+            proformList: proformas,
+          ));
+          break;
+
+        case 'Invoice':
+          final invoices = await repository.fetchInvoice(event.value);
+          emit(state.copyWith(
+            isLoading: false,
+            invoiceList: invoices,
+          ));
+          break;
+
+        default:
+          emit(state.copyWith(isLoading: false));
+      }
+    } catch (e) {
+      log('FetchAssign error: $e');
       emit(state.copyWith(
         isLoading: false,
-        success: true,
-        errorMessage: null,
-      ));
-    } on DioException catch (dioError) {
-      final message = ApiError.getMessage(dioError);
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: message,
-        success: false,
-      ));
-    } catch (error) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: "Something went wrong. Please try again.",
-        success: false,
+        errorMessage: e.toString(),
       ));
     }
   }
 
+  // ---------------- SUBMIT TASK ----------------
+  Future<void> _onSubmitTask(
+    SubmitCreateTask event,
+    Emitter<CreateTaskState> emit,
+  ) async {
+    emit(state.copyWith(
+      isSubmitting: true,
+      taskCreated: false,
+      errorMessage: null,
+    ));
+
+    try {
+      await repository.createTask(event.request);
+
+      emit(state.copyWith(
+        isSubmitting: false,
+        taskCreated: true,
+      ));
+    } on DioException catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        errorMessage: ApiError.getMessage(e),
+      ));
+    }
+  }
+
+  // ---------------- GET TASK ----------------
   Future<void> _getTask(
     GetTaskEvent event,
     Emitter<CreateTaskState> emit,
@@ -96,50 +154,38 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
         isLoading: false,
         getTaskModel: response,
       ));
-    } on DioException catch (dioError) {
-      final message = ApiError.getMessage(dioError);
+    } catch (e) {
       emit(state.copyWith(
         isLoading: false,
-        errorMessage: message,
-      ));
-    } catch (_) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: "Something went wrong",
+        errorMessage: e.toString(),
       ));
     }
   }
 
+  // ---------------- UPDATE TASK ----------------
   Future<void> _taskUpdate(
     UpdateTaskEvent event,
     Emitter<CreateTaskState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
+    emit(state.copyWith(
+      isSubmitting: true,
+      taskUpdated: false,
+      errorMessage: null,
+    ));
 
     try {
       final response = await repository.taskUpdate(event.request);
 
       emit(state.copyWith(
-        isLoading: false,
+        isSubmitting: false,
+        taskUpdated: true,
         taskUpdateModel: response,
-        success: true,
       ));
-      emit(const CreateTaskState());
-    } on DioException catch (dioError) {
-      final message = ApiError.getMessage(dioError);
+    } catch (e) {
       emit(state.copyWith(
-        isLoading: false,
-        errorMessage: message,
-        success: false,
-      ));
-    } catch (_) {
-      emit(state.copyWith(
-        isLoading: false,
-        success: false,
-        errorMessage: "Something went wrong",
+        isSubmitting: false,
+        errorMessage: e.toString(),
       ));
     }
   }
-
- 
 }

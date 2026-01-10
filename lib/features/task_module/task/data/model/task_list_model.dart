@@ -135,8 +135,8 @@ class AssignedEmployee {
 
   factory AssignedEmployee.fromJson(Map<String, dynamic> json) =>
       AssignedEmployee(
-        employeeId: json["employeeId"],
-        name: json["name"],
+        employeeId: json["employeeId"]??'NA',
+        name: json["name"]??"NA",
       );
 
   Map<String, dynamic> toJson() => {

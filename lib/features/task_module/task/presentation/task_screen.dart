@@ -37,6 +37,16 @@ class _TaskScreenState extends State<TaskScreen> {
     });
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Fetch tasks once after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TaskBloc>().add(const FetchTasks(isLoadMore: false));
+    });
+  }
+
   Future<void> _onRefresh(BuildContext context) async {
     context.read<TaskBloc>().add(const FetchTasks(isLoadMore: false));
   }
@@ -77,18 +87,15 @@ class _TaskScreenState extends State<TaskScreen> {
             BlocBuilder<TaskBloc, TaskListState>(
               builder: (context, state) {
                 if (state is TaskListSuccess) {
-                  return state.filteredTasks.isEmpty
-                      ? TaskFilterBar(
-                          filter: state.filter,
-                          onSearch: (v) =>
-                              context.read<TaskBloc>().add(UpdateSearch(v)),
-                          onStatus: (v) =>
-                              context.read<TaskBloc>().add(UpdateStatus(v)),
-                          onPriority: (v) =>
-                              context.read<TaskBloc>().add(UpdatePriority(v)),
-                        )
-                      : const SizedBox.shrink();
-                  
+                  return TaskFilterBar(
+                    filter: state.filter,
+                    onSearch: (v) =>
+                        context.read<TaskBloc>().add(UpdateSearch(v)),
+                    onStatus: (v) =>
+                        context.read<TaskBloc>().add(UpdateStatus(v)),
+                    onPriority: (v) =>
+                        context.read<TaskBloc>().add(UpdatePriority(v)),
+                  );
                 }
                 return const SizedBox.shrink();
               },
@@ -122,6 +129,10 @@ class _TaskScreenState extends State<TaskScreen> {
                         itemCount: state.filteredTasks.length,
                         itemBuilder: (context, index) {
                           final task = state.filteredTasks[index];
+                          final assigneeName = task.assignedEmployees.isNotEmpty
+                              ? task.assignedEmployees.first.name
+                              : 'Unassigned';
+
                           return InkWell(
                             onTap: () {
                               context.push(AppRouteName.taskDetails);
@@ -135,7 +146,7 @@ class _TaskScreenState extends State<TaskScreen> {
                                   .format(task.startDate),
                               endDate: DateFormat('dd MMM yyyy')
                                   .format(task.endDate),
-                              assignee: task.createdBy,
+                              assignee: assigneeName,
                               onEdit: () {
                                 context.push(
                                   AppRouteName.editTask,

@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/network/api_error.dart';
+import 'package:xpertbiz/core/network/dio_client.dart';
 import 'package:xpertbiz/features/auth/data/repo/auth_repository.dart';
 import '../data/locale_data/hive_service.dart';
 import 'auth_event.dart';
@@ -20,6 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final response = await repository.login(event.email, event.password);
       await AuthLocalStorage.saveUser(response);
       emit(AuthSuccess(response));
+      apiInterceptor.updateToken(response.jwtToken);
     } on DioException catch (dioError) {
       final message = ApiError.getMessage(dioError);
       log(message);

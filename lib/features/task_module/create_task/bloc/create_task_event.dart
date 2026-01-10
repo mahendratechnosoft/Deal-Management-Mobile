@@ -29,7 +29,6 @@ class PriorityChange extends CreateTaskEvent {
 
 class AssigneeChange extends CreateTaskEvent {
   final String value;
-
   const AssigneeChange(this.value);
 
   @override
@@ -91,3 +90,7 @@ class UpdateTaskEvent extends CreateTaskEvent {
   const UpdateTaskEvent({required this.request});
 }
 
+class FetchAssignEvent extends CreateTaskEvent {
+  final String value;
+  const FetchAssignEvent({required this.value});
+}

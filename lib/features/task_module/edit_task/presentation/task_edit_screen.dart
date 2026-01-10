@@ -34,6 +34,9 @@ class _EditTaskState extends State<EditTask> {
 
   final _formKey = GlobalKey<FormState>();
 
+  DateTime? startDate;
+  DateTime? endDate;
+
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -52,13 +55,14 @@ class _EditTaskState extends State<EditTask> {
         minimum: const EdgeInsets.all(10),
         child: BlocListener<CreateTaskBloc, CreateTaskState>(
           listener: (context, state) {
-            if (state.success) {
+            if (state.taskUpdated) {
               AppSnackBar.show(
                   type: SnackBarType.success,
                   context,
                   message: 'Task created successfully');
               context.pop();
             } else if (state.errorMessage != null) {
+              log(state.errorMessage.toString());
               AppSnackBar.show(
                   type: SnackBarType.error,
                   context,
@@ -131,6 +135,7 @@ class _EditTaskState extends State<EditTask> {
                             selectedDate: state.startDate,
                             errorText: 'Date is required',
                             onDateSelected: (date) {
+                              startDate = date;
                               context
                                   .read<CreateTaskBloc>()
                                   .add(TaskStartDateChanged(date));
@@ -148,6 +153,7 @@ class _EditTaskState extends State<EditTask> {
                             errorText: 'Date is required',
                             onDateSelected: (date) {
                               log('Due Date: $date');
+                              endDate = date;
                               context
                                   .read<CreateTaskBloc>()
                                   .add(TaskDueDateChanged(date));
@@ -188,20 +194,14 @@ class _EditTaskState extends State<EditTask> {
                     ),
                     const SizedBox(height: 15),
 
-                    /// ASSIGNEES DROPDOWN (Placeholder - expand as needed)
                     CustomDropdown<String>(
                       showLabel: true,
                       labelText: 'Assignees',
                       items: const [
                         'Non selected',
-                        "A"
-                        // Add real assignees here, e.g., from API
                       ],
                       value: state.assignee,
                       validator: (value) {
-                        // if (value == null || value == 'Non selected') {
-                        //   return 'Assignee is required';
-                        // }
                         return null;
                       },
                       onChanged: (value) {
@@ -214,16 +214,10 @@ class _EditTaskState extends State<EditTask> {
                       itemLabel: (item) => item,
                     ),
                     const SizedBox(height: 15),
-
-                    /// FOLLOWERS DROPDOWN (Placeholder - expand as needed)
                     CustomDropdown<String>(
                       showLabel: true,
                       labelText: 'Followers',
-                      items: const [
-                        'Non selected',
-                        'A'
-                        // Add real followers here, e.g., from API
-                      ],
+                      items: const ['Non selected', 'A'],
                       value: state.follower,
                       onChanged: (value) {
                         if (value != null) {
@@ -235,8 +229,6 @@ class _EditTaskState extends State<EditTask> {
                       itemLabel: (item) => item,
                     ),
                     const SizedBox(height: 15),
-
-                    /// PRIORITY DROPDOWN
                     CustomDropdown<String>(
                       showLabel: true,
                       labelText: 'Priority',
@@ -334,8 +326,9 @@ class _EditTaskState extends State<EditTask> {
                                 taskId: data.taskId,
                                 adminId: data.adminId,
                                 subject: subjectController.text.trim(),
-                                startDate: formatDate(state.startDate),
-                                endDate: formatDate(state.dueDate),
+                                startDate:
+                                    formatDate(startDate ?? state.startDate),
+                                endDate: formatDate(endDate ?? state.dueDate),
                                 priority: state.priority,
                                 relatedTo: state.relatedTo,
                                 relatedToId: data.relatedToId,

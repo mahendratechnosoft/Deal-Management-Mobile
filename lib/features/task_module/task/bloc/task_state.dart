@@ -96,8 +96,6 @@ class TaskFailure extends TaskListState {
   List<Object?> get props => [message];
 }
 
-
-
 class DeleteTaskState extends TaskListState {
   final String message;
   const DeleteTaskState(this.message);
@@ -105,7 +103,3 @@ class DeleteTaskState extends TaskListState {
   @override
   List<Object?> get props => [message];
 }
-
-
-
-

@@ -17,7 +17,10 @@ class CustomDropdown<T> extends StatelessWidget {
   final double borderRadius;
   final Widget? prefixIcon;
 
-  /// 🔥 NEW (LABEL + VALIDATION)
+  /// 🔥 NEW
+  final double? menuMaxHeight;
+
+  /// LABEL + VALIDATION
   final bool showLabel;
   final String? labelText;
   final bool isRequired;
@@ -38,8 +41,8 @@ class CustomDropdown<T> extends StatelessWidget {
     this.borderColor,
     this.borderRadius = 6,
     this.prefixIcon,
+    this.menuMaxHeight, // 👈
 
-    /// label & validation
     this.showLabel = false,
     this.labelText,
     this.isRequired = false,
@@ -55,7 +58,7 @@ class CustomDropdown<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// ✅ OPTIONAL LABEL
+        /// LABEL
         if (showLabel && labelText != null) ...[
           Padding(
             padding: const EdgeInsets.only(left: 5),
@@ -98,6 +101,7 @@ class CustomDropdown<T> extends StatelessWidget {
             child: DropdownButton<T>(
               value: value,
               isExpanded: true,
+              menuMaxHeight: menuMaxHeight ?? 250,
               icon: const Icon(Icons.keyboard_arrow_down_rounded),
               hint: Text(
                 hintText,
@@ -112,6 +116,8 @@ class CustomDropdown<T> extends StatelessWidget {
                   value: item,
                   child: Text(
                     itemLabel(item),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: Responsive.sp(14),
                       color: AppColors.textPrimary,
@@ -123,7 +129,7 @@ class CustomDropdown<T> extends StatelessWidget {
           ),
         ),
 
-        /// ❌ ERROR TEXT
+        /// ERROR TEXT
         if (hasError) ...[
           SizedBox(height: Responsive.h(4)),
           Padding(
@@ -140,4 +146,14 @@ class CustomDropdown<T> extends StatelessWidget {
       ],
     );
   }
+}
+
+class DropdownItem {
+  final String id;
+  final String name;
+
+  DropdownItem({required this.id, required this.name});
+
+  @override
+  String toString() => name; // For debugging
 }

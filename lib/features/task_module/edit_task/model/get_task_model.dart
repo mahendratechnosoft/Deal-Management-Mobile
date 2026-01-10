@@ -62,11 +62,11 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
       taskId: json['taskId'],
-      adminId: json['adminId'],
-      employeeId: json['employeeId'],
+      adminId: json['adminId'] ?? 'NA',
+      employeeId: json['employeeId'] ?? "NA",
       subject: json['subject'] ?? '',
       startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
+      endDate: DateTime.parse(json['endDate'] ?? json['startDate']),
       priority: json['priority'] ?? '',
       relatedTo: json['relatedTo'] ?? '',
       relatedToId: json['relatedToId'] ?? '',

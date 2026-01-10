@@ -38,4 +38,31 @@ class CreateTaskService {
   Future<Response> deleteTask(String taskId) {
     return dio.delete('${ApiConstants.deleteTask}$taskId');
   }
+
+  Future<Response> fetchAssigns(String value) async {
+    final url = await _getAssignEndpoint(value);
+    return dio.get(url);
+  }
+
+  Future<String> _getAssignEndpoint(String value) async {
+    switch (value) {
+      case 'Lead':
+        return 'admin/getLeadNameAndIdWithConverted';
+
+      case 'Customer':
+        return 'admin/getCustomerListWithNameAndId';
+
+      case 'Proforma':
+        return 'admin/getProformaNumberAndId';
+
+      case 'Proposal':
+        return 'admin/getProposalNumberAndId';
+
+      case 'Invoice':
+        return 'admin/getInvoiceNumberAndId';
+
+      default:
+        throw ArgumentError('Invalid assign type: $value');
+    }
+  }
 }
