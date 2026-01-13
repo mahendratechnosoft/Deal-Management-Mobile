@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -25,11 +24,8 @@ class EditTask extends StatefulWidget {
 
 class _EditTaskState extends State<EditTask> {
   final subjectController = TextEditingController();
-
   final hourlyRateController = TextEditingController();
-
   final estimateHoursController = TextEditingController();
-
   final descriptionController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
@@ -39,11 +35,12 @@ class _EditTaskState extends State<EditTask> {
 
   @override
   void initState() {
+    super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final taskId = GoRouterState.of(context).extra as String;
       context.read<CreateTaskBloc>().add(GetTaskEvent(taskId: taskId));
+      context.read<CreateTaskBloc>().add(LoadAssigneesEvent());
     });
-    super.initState();
   }
 
   @override
@@ -57,29 +54,31 @@ class _EditTaskState extends State<EditTask> {
           listener: (context, state) {
             if (state.taskUpdated) {
               AppSnackBar.show(
-                  type: SnackBarType.success,
-                  context,
-                  message: 'Task created successfully');
-              context.pop();
-            } else if (state.errorMessage != null) {
-              log(state.errorMessage.toString());
-              AppSnackBar.show(
-                  type: SnackBarType.error,
-                  context,
-                  message: 'Something went wrong');
+                type: SnackBarType.success,
+                context,
+                message: 'Task updated successfully',
+              );
+              context.pop(true);
             }
+
+            if (state.errorMessage != null) {
+              AppSnackBar.show(
+                type: SnackBarType.error,
+                context,
+                message: state.errorMessage!,
+              );
+            }
+
             if (state.getTaskModel != null) {
               final task = state.getTaskModel!.task;
               subjectController.text = task.subject;
               hourlyRateController.text = task.hourlyRate.toString();
               estimateHoursController.text = task.estimatedHours.toString();
               descriptionController.text = task.description;
-              context
-                  .read<CreateTaskBloc>()
-                  .add(TaskStartDateChanged(task.startDate));
-              context
-                  .read<CreateTaskBloc>()
-                  .add(TaskDueDateChanged(task.endDate));
+
+              context.read<CreateTaskBloc>()
+                ..add(TaskStartDateChanged(task.startDate))
+                ..add(TaskDueDateChanged(task.endDate));
             }
           },
           child: BlocBuilder<CreateTaskBloc, CreateTaskState>(
@@ -87,6 +86,23 @@ class _EditTaskState extends State<EditTask> {
               if (state.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
+
+              /// 🔹 Employee list for Assignee / Follower
+              final employeeDropdownItems = [
+                DropdownItem(id: '', name: 'Select'),
+                ...state.assigneesList.map(
+                  (e) => DropdownItem(
+                    id: e.employeeId,
+                    name: e.name,
+                  ),
+                ),
+              ];
+
+              /// 🔹 Related-to dropdown items
+              final relatedItems = [
+                DropdownItem(id: '', name: 'Non selected'),
+                ...getAssigneeItems(state),
+              ];
 
               return Form(
                 key: _formKey,
@@ -107,9 +123,7 @@ class _EditTaskState extends State<EditTask> {
                       controller: subjectController,
                       showLabel: true,
                       labelText: 'Subject',
-                      validator: (vl) {
-                        return Validators.required(vl, 'Subject');
-                      },
+                      validator: (v) => Validators.required(v, 'Subject'),
                       isRequired: true,
                     ),
                     const SizedBox(height: 15),
@@ -152,7 +166,6 @@ class _EditTaskState extends State<EditTask> {
                             selectedDate: state.dueDate,
                             errorText: 'Date is required',
                             onDateSelected: (date) {
-                              log('Due Date: $date');
                               endDate = date;
                               context
                                   .read<CreateTaskBloc>()
@@ -164,7 +177,7 @@ class _EditTaskState extends State<EditTask> {
                     ),
                     const SizedBox(height: 15),
 
-                    /// RELATED TO DROPDOWN
+                    /// RELATED TO
                     CustomDropdown<String>(
                       showLabel: true,
                       labelText: 'Related To',
@@ -177,12 +190,6 @@ class _EditTaskState extends State<EditTask> {
                         'Invoice'
                       ],
                       value: state.relatedTo,
-                      validator: (value) {
-                        if (value == null) {
-                          return 'Related To is required';
-                        }
-                        return null;
-                      },
                       onChanged: (value) {
                         if (value != null) {
                           context
@@ -194,41 +201,77 @@ class _EditTaskState extends State<EditTask> {
                     ),
                     const SizedBox(height: 15),
 
-                    CustomDropdown<String>(
+                    /// RELATED ITEM
+                    CustomDropdown<DropdownItem>(
                       showLabel: true,
-                      labelText: 'Assignees',
-                      items: const [
-                        'Non selected',
-                      ],
-                      value: state.assignee,
-                      validator: (value) {
-                        return null;
-                      },
+                      labelText: 'Select ${state.relatedTo}',
+                      items: relatedItems,
+                      value: relatedItems.firstWhere(
+                        (e) => e.id == state.assignee,
+                        orElse: () => relatedItems.first,
+                      ),
                       onChanged: (value) {
                         if (value != null) {
                           context
                               .read<CreateTaskBloc>()
-                              .add(AssigneeChange(value));
+                              .add(DependsLelatedtoEvent(value));
                         }
                       },
-                      itemLabel: (item) => item,
+                      itemLabel: (item) => item.name,
                     ),
                     const SizedBox(height: 15),
-                    CustomDropdown<String>(
+
+                    /// ASSIGNEE
+                    CustomDropdown<DropdownItem>(
                       showLabel: true,
-                      labelText: 'Followers',
-                      items: const ['Non selected', 'A'],
-                      value: state.follower,
+                      labelText: 'Assignee',
+                      items: employeeDropdownItems,
+                      value: state.assignIdValue.isEmpty
+                          ? employeeDropdownItems.first
+                          : employeeDropdownItems.firstWhere(
+                              (e) => e.id == state.assignIdValue,
+                              orElse: () => employeeDropdownItems.first,
+                            ),
                       onChanged: (value) {
                         if (value != null) {
-                          context
-                              .read<CreateTaskBloc>()
-                              .add(FollowerChange(value));
+                          context.read<CreateTaskBloc>().add(
+                                AssigneesDropDownEvent(
+                                  id: value.id,
+                                  name: value.name,
+                                ),
+                              );
                         }
                       },
-                      itemLabel: (item) => item,
+                      itemLabel: (item) => item.name,
                     ),
                     const SizedBox(height: 15),
+
+                    /// FOLLOWER ✅
+                    CustomDropdown<DropdownItem>(
+                      showLabel: true,
+                      labelText: 'Follower',
+                      items: employeeDropdownItems,
+                      value: state.followerId.isEmpty
+                          ? employeeDropdownItems.first
+                          : employeeDropdownItems.firstWhere(
+                              (e) => e.id == state.followerId,
+                              orElse: () => employeeDropdownItems.first,
+                            ),
+                      onChanged: (value) {
+                        if (value != null) {
+                          context.read<CreateTaskBloc>().add(
+                                FollowerChange(
+                                  value.name,
+                                  value.id,
+                                ),
+                              );
+                        }
+                      },
+                      itemLabel: (item) => item.name,
+                    ),
+                    const SizedBox(height: 15),
+
+                    /// PRIORITY
                     CustomDropdown<String>(
                       showLabel: true,
                       labelText: 'Priority',
@@ -240,12 +283,6 @@ class _EditTaskState extends State<EditTask> {
                         'Urgent',
                       ],
                       value: state.priority,
-                      validator: (value) {
-                        // if (value == null || value == 'Non selected') {
-                        //   return 'Priority is required';
-                        // }
-                        return null;
-                      },
                       onChanged: (value) {
                         if (value != null) {
                           context
@@ -265,93 +302,63 @@ class _EditTaskState extends State<EditTask> {
                       showLabel: true,
                     ),
                     const SizedBox(height: 15),
+
                     AppTextField(
                       hint: 'Add Description',
                       controller: descriptionController,
                       maxLines: 4,
                       labelText: 'Task Description',
                       showLabel: true,
-                      isRequired: false,
-                      minLength: 0,
-                      maxLength: 200,
                     ),
+                    const SizedBox(height: 20),
 
-                    const SizedBox(height: 15),
-                    // AttachmentPicker(
-                    //   maxFiles: 4,
-                    //   maxFileSizeMB: 5,
-                    //   allowedExtensions: [
-                    //     'pdf',
-                    //     'doc',
-                    //     'docx',
-                    //     'txt',
-                    //     'jpg',
-                    //     'jpeg',
-                    //     'png'
-                    //   ],
-                    //   onFilesChanged: (files) {
-                    //     context
-                    //         .read<CreateTaskBloc>()
-                    //         .add(AttachmentsChanged(files));
-                    //   },
-                    // ),
-                    // const SizedBox(height: 15),
                     Button(
-                      isLoading: state.isLoading,
                       text: 'Update Task',
-                      onPressed: state.isLoading
-                          ? null
-                          : () {
-                              if (!_formKey.currentState!.validate()) return;
+                      onPressed: () {
+                        if (!_formKey.currentState!.validate()) return;
 
-                              if (state.startDate == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Start date is required')),
-                                );
-                                return;
-                              }
-                              if (state.dueDate == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content: Text('Due date is required')),
-                                );
-                                return;
-                              }
+                        final task = state.getTaskModel!.task;
 
-                              //final user = AuthLocalStorage.getUser();
-                              final data = state.getTaskModel!.task;
+                        final payload = TaskUpdateRequest(
+                          taskId: task.taskId,
+                          adminId: task.adminId,
+                          subject: subjectController.text.trim(),
+                          startDate: formatDate(startDate ?? state.startDate),
+                          endDate: formatDate(endDate ?? state.dueDate),
+                          priority: state.priority,
+                          relatedTo: state.relatedTo,
+                          relatedToId: task.relatedToId,
+                          relatedToName: task.relatedToName,
+                          hourlyRate:
+                              double.tryParse(hourlyRateController.text) ?? 0,
+                          estimatedHours:
+                              double.tryParse(estimateHoursController.text) ??
+                                  0,
+                          description: descriptionController.text.trim(),
+                          status: task.status,
+                          assignedEmployees: [
+                            Employee(
+                              employeeId: state.assignIdValue,
+                              name: state.assignNameValue,
+                            ),
+                          ],
+                          followersEmployees: state.followerId.isEmpty
+                              ? []
+                              : [
+                                  Employee(
+                                    employeeId: state.followerId,
+                                    name: state.followerName,
+                                  ),
+                                ],
+                          createdAt: task.createdAt,
+                          createdBy: task.createdBy,
+                          employeeId: '',
+                        );
 
-                              final payload = TaskUpdateRequest(
-                                taskId: data.taskId,
-                                adminId: data.adminId,
-                                subject: subjectController.text.trim(),
-                                startDate:
-                                    formatDate(startDate ?? state.startDate),
-                                endDate: formatDate(endDate ?? state.dueDate),
-                                priority: state.priority,
-                                relatedTo: state.relatedTo,
-                                relatedToId: data.relatedToId,
-                                relatedToName: data.relatedToName,
-                                hourlyRate: double.tryParse(
-                                        hourlyRateController.text) ??
-                                    0.0,
-                                estimatedHours: double.tryParse(
-                                        estimateHoursController.text) ??
-                                    0.0,
-                                description: descriptionController.text.trim(),
-                                status: state.getTaskModel!.task.status,
-                                assignedEmployees: [],
-                                followersEmployees: [],
-                                createdAt: state.getTaskModel!.task.createdAt,
-                                createdBy: state.getTaskModel!.task.createdBy,
-                                employeeId: '',
-                              );
-
-                              context.read<CreateTaskBloc>().add(
-                                    UpdateTaskEvent(request: payload),
-                                  );
-                            },
+                        context.read<CreateTaskBloc>().add(
+                              UpdateTaskEvent(request: payload),
+                            );
+                      },
                     ),
                   ],
                 ),
@@ -364,9 +371,45 @@ class _EditTaskState extends State<EditTask> {
   }
 }
 
+/// Utils
 String formatDate(DateTime? date) {
   if (date == null) return '';
   return "${date.year.toString().padLeft(4, '0')}-"
       "${date.month.toString().padLeft(2, '0')}-"
       "${date.day.toString().padLeft(2, '0')}";
+}
+
+List<DropdownItem> getAssigneeItems(CreateTaskState state) {
+  switch (state.relatedTo) {
+    case 'Lead':
+      return state.leadList
+          .where((e) => e.clientName.isNotEmpty)
+          .map((e) => DropdownItem(id: e.leadId, name: e.clientName))
+          .toList();
+    case 'Customer':
+      return state.customerList
+          .where((e) => e.companyName.isNotEmpty)
+          .map((e) => DropdownItem(id: e.id, name: e.companyName))
+          .toList();
+    case 'Proforma':
+      return state.proformList
+          .where((e) => e.formatedProformaInvoiceNumber.isNotEmpty)
+          .map((e) => DropdownItem(
+              id: e.proformaInvoiceId, name: e.formatedProformaInvoiceNumber))
+          .toList();
+    case 'Proposal':
+      return state.proposalList
+          .where((e) => e.formatedProposalNumber.isNotEmpty)
+          .map((e) =>
+              DropdownItem(id: e.proposalId, name: e.formatedProposalNumber))
+          .toList();
+    case 'Invoice':
+      return state.invoiceList
+          .where((e) => e.formatedInvoiceNumber.isNotEmpty)
+          .map((e) =>
+              DropdownItem(id: e.invoiceId, name: e.formatedInvoiceNumber))
+          .toList();
+    default:
+      return [];
+  }
 }

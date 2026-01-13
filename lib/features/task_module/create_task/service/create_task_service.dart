@@ -39,7 +39,7 @@ class CreateTaskService {
     return dio.delete('${ApiConstants.deleteTask}$taskId');
   }
 
-  Future<Response> fetchAssigns(String value) async {
+  Future<Response> fetchRelatedTO(String value) async {
     final url = await _getAssignEndpoint(value);
     return dio.get(url);
   }
@@ -47,22 +47,64 @@ class CreateTaskService {
   Future<String> _getAssignEndpoint(String value) async {
     switch (value) {
       case 'Lead':
-        return 'admin/getLeadNameAndIdWithConverted';
+        return ApiConstants.leadUrl;
 
       case 'Customer':
-        return 'admin/getCustomerListWithNameAndId';
+        return ApiConstants.customerUrl;
 
       case 'Proforma':
-        return 'admin/getProformaNumberAndId';
+        return ApiConstants.proformaUrl;
 
       case 'Proposal':
-        return 'admin/getProposalNumberAndId';
+        return ApiConstants.proposalUrl;
 
       case 'Invoice':
-        return 'admin/getInvoiceNumberAndId';
+        return ApiConstants.invoiceUrl;
 
       default:
         throw ArgumentError('Invalid assign type: $value');
     }
+  }
+
+  Future<Response> fetchAssignsDropDown() async {
+    return dio.get(
+      ApiConstants.assignUrl,
+    );
+  }
+
+  Future<Response> startTaskTimer(String taskId) {
+    return dio.post(
+      ApiConstants.timerStartUrl,
+      data: {
+        "taskId": taskId,
+      },
+      options: Options(
+        contentType: Headers.jsonContentType,
+      ),
+    );
+  }
+
+  Future<Response> stopTaskTimer(String taskId, String note) async {
+    var pay = {"taskId": taskId, "endNote": note};
+    return await dio.post(
+      ApiConstants.timerStopUrl,
+      data: json.encode(pay),
+      options: Options(
+        responseType: ResponseType.plain,
+        contentType: Headers.jsonContentType,
+      ),
+    );
+  }
+
+  Future<Response> checkTimerStatus(String taskId) {
+    return dio.get(
+      "${ApiConstants.activeStuseUrl}/$taskId",
+    );
+  }
+
+  Future<Response> timedetailsFetch(String taskId) {
+    return dio.get(
+      "${ApiConstants.timeLogUrl}/$taskId",
+    );
   }
 }

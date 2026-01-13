@@ -1,5 +1,8 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
+import 'package:xpertbiz/features/app_route_name.dart';
+import 'package:xpertbiz/features/app_routes.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 
 class ApiInterceptor extends Interceptor {
   String? _token;
@@ -13,7 +16,6 @@ class ApiInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) {
-    /// Add Authorization Header
     if (_token != null && _token!.trim().isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $_token';
       log('🔐 Bearer token added');
@@ -21,7 +23,6 @@ class ApiInterceptor extends Interceptor {
       log('⚠️ Bearer token NOT added');
     }
 
-    /// Default headers
     options.headers.addAll({
       'Accept': 'application/json',
       'Content-Type': 'application/json',
@@ -53,13 +54,11 @@ class ApiInterceptor extends Interceptor {
     handler.next(err);
   }
 
-  // ================= HELPERS =================
-
-  void _handleUnauthorized() {
+  void _handleUnauthorized() async {
     log('🚫 Unauthorized - Token expired or invalid');
-    // TODO:
-    // clear token
-    // redirect to login
+    await AuthLocalStorage.clear();
+    _token = null;
+    AppRouter.router.go(AppRouteName.login);
   }
 
   void _logRequest(RequestOptions options) {

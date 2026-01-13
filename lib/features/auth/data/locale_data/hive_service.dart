@@ -2,37 +2,32 @@ import 'package:hive/hive.dart';
 import 'package:xpertbiz/core/network/dio_client.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 
+import '../../bloc/user_role.dart';
+
 class AuthLocalStorage {
   static const String _boxName = 'loginResponse';
   static const String _userKey = 'currentUser';
 
   static Box<LoginResponse> get _box => Hive.box<LoginResponse>(_boxName);
 
-  /// Save login response
-  static Future<void> saveUser(LoginResponse data) async {
+   static Future<void> saveUser(LoginResponse data) async {
     await _box.put(_userKey, data);
   }
 
-  /// Get saved user
   static LoginResponse? getUser() {
     return _box.get(_userKey);
   }
 
-  /// Check login
   static bool isLoggedIn() {
     final user = getUser();
-
     if (user == null || user.jwtToken.isEmpty) {
-      // No user saved or token is empty → not logged in
       return false;
     }
-
-    // Safe: only update token if user exists
+    RoleResolver.setRole(user.role);
     apiInterceptor.updateToken(user.jwtToken);
     return true;
   }
 
-  /// Clear on logout
   static Future<void> clear() async {
     await _box.clear();
   }

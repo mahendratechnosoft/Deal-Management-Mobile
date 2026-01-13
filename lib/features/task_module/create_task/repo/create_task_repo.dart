@@ -1,9 +1,13 @@
+import 'package:xpertbiz/features/task_module/create_task/model/assign_model.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/check_timer_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/customer_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/invoice_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/lead_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/proform_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/proposal_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_task_update_model.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/start_timer_model.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/time_detail_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/update_task_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/service/create_task_service.dart';
 import '../../edit_task/model/get_task_model.dart';
@@ -29,7 +33,7 @@ class CreateTaskRepository {
   }
 
   Future<List<ProposalModel>> fetchProposal(String value) async {
-    final response = await service.fetchAssigns(value);
+    final response = await service.fetchRelatedTO(value);
 
     final List data = response.data;
 
@@ -41,7 +45,7 @@ class CreateTaskRepository {
   }
 
   Future<List<ProformModel>> fetchProform(String value) async {
-    final response = await service.fetchAssigns(value);
+    final response = await service.fetchRelatedTO(value);
 
     final List data = response.data;
 
@@ -53,7 +57,7 @@ class CreateTaskRepository {
   }
 
   Future<List<CustomerModel>> fetchCustomer(String value) async {
-    final response = await service.fetchAssigns(value);
+    final response = await service.fetchRelatedTO(value);
 
     final List data = response.data;
 
@@ -65,7 +69,7 @@ class CreateTaskRepository {
   }
 
   Future<List<LeadModel>> fetchLead(String value) async {
-    final response = await service.fetchAssigns(value);
+    final response = await service.fetchRelatedTO(value);
 
     final List data = response.data;
 
@@ -77,7 +81,7 @@ class CreateTaskRepository {
   }
 
   Future<List<InvoiceModel>> fetchInvoice(String value) async {
-    final response = await service.fetchAssigns(value);
+    final response = await service.fetchRelatedTO(value);
 
     final List data = response.data;
 
@@ -85,6 +89,45 @@ class CreateTaskRepository {
         .map(
           (e) => InvoiceModel.fromJson(e as Map<String, dynamic>),
         )
+        .toList();
+  }
+
+  Future<List<AssignModel>> assignDropDown() async {
+    final response = await service.fetchAssignsDropDown();
+    final List data = response.data;
+    return data
+        .map(
+          (e) => AssignModel.fromJson(e as Map<String, dynamic>),
+        )
+        .toList();
+  }
+
+  Future<TaskLogModel> startTime(String taskId) async {
+    final res = await service.startTaskTimer(taskId);
+    return TaskLogModel.fromJson(
+      res.data as Map<String, dynamic>,
+    );
+  }
+
+  Future<String> endTime(String taskId, String note) async {
+    final res = await service.stopTaskTimer(taskId, note);
+    return res.data;
+  }
+
+  Future<CheckTimerStatusModel?> timeStatus(String taskId) async {
+    final response = await service.checkTimerStatus(taskId);
+    if (response.statusCode == 204 || response.data == null) {
+      return null;
+    }
+
+    return CheckTimerStatusModel.fromJson(response.data);
+  }
+
+  Future<List<TimeDetailsModel>> timedetailsFetch(String taskId) async {
+    final response = await service.timedetailsFetch(taskId);
+    if (response.data == null) return [];
+    return (response.data as List)
+        .map((e) => TimeDetailsModel.fromJson(e))
         .toList();
   }
 }

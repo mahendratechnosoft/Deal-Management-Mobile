@@ -77,8 +77,12 @@ class _TaskScreenState extends State<TaskScreen> {
         appBar: CommonAppBar(title: 'Task'),
         floatingActionButton: FloatingActionButton(
           backgroundColor: AppColors.primaryDark,
-          onPressed: () {
-            context.push(AppRouteName.createTask);
+          onPressed: () async {
+            final result = await context.push(AppRouteName.createTask);
+
+            if (result == true && mounted) {
+              context.read<TaskBloc>().add(const FetchTasks(isLoadMore: false));
+            }
           },
           child: const Icon(Icons.add, color: AppColors.background),
         ),
@@ -134,8 +138,15 @@ class _TaskScreenState extends State<TaskScreen> {
                               : 'Unassigned';
 
                           return InkWell(
-                            onTap: () {
-                              context.push(AppRouteName.taskDetails);
+                            onTap: () async {
+                              final res = await context.push(
+                                  AppRouteName.taskDetails,
+                                  extra: task.taskId);
+                              if (res == true && mounted) {
+                                context
+                                    .read<TaskBloc>()
+                                    .add(const FetchTasks(isLoadMore: false));
+                              }
                             },
                             child: TaskCard(
                               id: '$index',
@@ -147,11 +158,16 @@ class _TaskScreenState extends State<TaskScreen> {
                               endDate: DateFormat('dd MMM yyyy')
                                   .format(task.endDate),
                               assignee: assigneeName,
-                              onEdit: () {
-                                context.push(
+                              onEdit: () async {
+                                final result = await context.push(
                                   AppRouteName.editTask,
                                   extra: task.taskId,
                                 );
+                                if (result == true && mounted) {
+                                  context
+                                      .read<TaskBloc>()
+                                      .add(const FetchTasks(isLoadMore: false));
+                                }
                               },
                               onDelete: () {
                                 log('task Id : ${task.taskId}');

@@ -151,8 +151,9 @@ class CustomDropdown<T> extends StatelessWidget {
 class DropdownItem {
   final String id;
   final String name;
+  final bool? enable;
 
-  DropdownItem({required this.id, required this.name});
+  DropdownItem({required this.id, required this.name, this.enable});
 
   @override
   String toString() => name; // For debugging

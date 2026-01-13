@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
+import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_state.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/time_detail_model.dart';
 
-void showTimeLogsDialog(BuildContext context) {
+void showTimeLogsDialog(BuildContext context, CreateTaskState state) {
   showDialog(
     context: context,
     barrierDismissible: true,
@@ -19,20 +21,23 @@ void showTimeLogsDialog(BuildContext context) {
             maxHeight: MediaQuery.of(context).size.height * 0.75,
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min, // ✅ shrink when possible
+            mainAxisSize: MainAxisSize.min,
             children: [
               _dialogHeader(context),
-              _summarySection(),
+              _summarySection(state.timeDetailsModel),
               const Divider(height: 1),
 
               /// SMART LIST
               Flexible(
                 child: ListView.separated(
-                  shrinkWrap: true, // ✅ key point
+                  shrinkWrap: true,
                   padding: const EdgeInsets.all(16),
-                  itemCount: 2, // change dynamically
+                  itemCount: state.timeDetailsModel.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (_, index) => _timeLogTile(),
+                  itemBuilder: (_, index) {
+                    final item = state.timeDetailsModel[index];
+                    return _timeLogTile(item);
+                  },
                 ),
               ),
             ],
@@ -67,8 +72,16 @@ Widget _dialogHeader(BuildContext context) {
   );
 }
 
-/// ---------------- SUMMARY ----------------
-Widget _summarySection() {
+/// ---------------- SUMMARY (DYNAMIC) ----------------
+Widget _summarySection(List<TimeDetailsModel> logs) {
+  final totalMinutes = logs.fold<int>(0, (sum, e) => sum + e.durationInMinutes);
+
+  final hours = totalMinutes ~/ 60;
+  final minutes = totalMinutes % 60;
+
+  final totalTime = '${hours.toString().padLeft(2, '0')}:'
+      '${minutes.toString().padLeft(2, '0')}';
+
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     child: Container(
@@ -78,20 +91,20 @@ Widget _summarySection() {
         color: Colors.blue.shade50,
       ),
       child: Row(
-        children: const [
-          Icon(Icons.timer_outlined, color: Colors.blue),
-          SizedBox(width: 8),
-          Text(
+        children: [
+          const Icon(Icons.timer_outlined, color: Colors.blue),
+          const SizedBox(width: 8),
+          const Text(
             'Total Time',
             style: TextStyle(
               fontSize: 13,
               color: AppColors.textPrimary,
             ),
           ),
-          Spacer(),
+          const Spacer(),
           Text(
-            '02:45:30',
-            style: TextStyle(
+            totalTime,
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -103,8 +116,18 @@ Widget _summarySection() {
   );
 }
 
-/// ---------------- LOG TILE ----------------
-Widget _timeLogTile() {
+/// ---------------- LOG TILE (DYNAMIC) ----------------
+Widget _timeLogTile(TimeDetailsModel snap) {
+  final initials = snap.name.isNotEmpty
+      ? snap.name
+          .trim()
+          .split(' ')
+          .map((e) => e[0])
+          .take(2)
+          .join()
+          .toUpperCase()
+      : 'NA';
+
   return Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
@@ -116,12 +139,12 @@ Widget _timeLogTile() {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         /// AVATAR
-        const CircleAvatar(
+        CircleAvatar(
           radius: 18,
           backgroundColor: Colors.blue,
           child: Text(
-            'GD',
-            style: TextStyle(
+            initials,
+            style: const TextStyle(
               fontSize: 12,
               color: Colors.white,
             ),
@@ -137,30 +160,39 @@ Widget _timeLogTile() {
             children: [
               /// NAME + DURATION
               Row(
-                children: const [
+                children: [
                   Text(
-                    'Ganesh Devkar',
-                    style: TextStyle(
+                    snap.name,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Spacer(),
+                  const Spacer(),
                   Chip(
                     visualDensity: VisualDensity.compact,
                     label: Text(
-                      '45 min',
-                      style: TextStyle(fontSize: 11),
+                      '${snap.durationInMinutes} min',
+                      style: const TextStyle(fontSize: 11),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 8),
-
-              _logInfoRow('Start', '09 Jan 2026 · 10:00 AM'),
-              _logInfoRow('End', '09 Jan 2026 · 10:45 AM'),
+              // const SizedBox(height: 8),
+              _logInfoRow(
+                'Note',
+                snap.endNote,
+              ),
+              _logInfoRow(
+                'Start',
+                _formatDateTime(snap.startTime),
+              ),
+              _logInfoRow(
+                'End',
+                _formatDateTime(snap.endTime),
+              ),
             ],
           ),
         ),
@@ -196,4 +228,30 @@ Widget _logInfoRow(String label, String value) {
       ],
     ),
   );
+}
+
+/// ---------------- DATE FORMATTER ----------------
+String _formatDateTime(DateTime dt) {
+  final months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
+
+  final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final amPm = dt.hour >= 12 ? 'PM' : 'AM';
+
+  return '${dt.day.toString().padLeft(2, '0')} '
+      '${months[dt.month - 1]} ${dt.year} · '
+      '$hour:$minute $amPm';
 }

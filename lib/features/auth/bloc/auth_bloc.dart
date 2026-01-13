@@ -7,6 +7,7 @@ import 'package:xpertbiz/features/auth/data/repo/auth_repository.dart';
 import '../data/locale_data/hive_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import 'user_role.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository repository;
@@ -20,6 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final response = await repository.login(event.email, event.password);
       await AuthLocalStorage.saveUser(response);
+      RoleResolver.setRole(response.role);
       emit(AuthSuccess(response));
       apiInterceptor.updateToken(response.jwtToken);
     } on DioException catch (dioError) {

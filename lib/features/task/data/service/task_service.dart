@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
+
 class TaskApiService {
   final Dio dio;
 
@@ -13,7 +14,7 @@ class TaskApiService {
     String? search,
   }) {
     return dio.get(
-     '${ApiConstants.getTask}$page/$size',
+      '${ApiConstants.getTask}$page/$size',
       queryParameters: {
         if (status != null) 'status': status,
         if (listType != null) 'listType': listType,
@@ -23,6 +24,6 @@ class TaskApiService {
   }
 
   Future<void> deleteTask(String taskId) {
-    return dio.delete('/admin/deleteTask/$taskId');
+    return dio.delete('${ApiConstants.deleteTask}/$taskId');
   }
 }

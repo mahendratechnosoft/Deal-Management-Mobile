@@ -1,127 +1,81 @@
 import 'package:flutter/material.dart';
-import 'package:xpertbiz/core/widgtes/app_drop_down.dart';
+import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
+import 'package:xpertbiz/features/task_module/create_task/screens/create_task.dart';
+import '../../edit_task/model/get_task_model.dart';
+
+/// ---------------- TASK INFO CARD ----------------
 
 class TaskInformationCard extends StatelessWidget {
-  const TaskInformationCard({super.key});
+  final Task task;
+  const TaskInformationCard({super.key, required this.task});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// TITLE
           const Text(
             'Task Information',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
-
           const Divider(height: 24),
-
-          /// DATES
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: _InfoItem(
                   label: 'Start Date',
-                  value: '09/01/2026',
+                  value: formatDate(task.startDate),
                 ),
               ),
               Expanded(
                 child: _InfoItem(
                   label: 'Due Date',
-                  value: '09/01/2026',
+                  value: formatDate(task.endDate),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          /// RATE & ESTIMATE
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: _InfoItem(
                   label: 'Hourly Rate',
-                  value: '0.00',
+                  value: task.hourlyRate.toString(),
                 ),
               ),
               Expanded(
                 child: _InfoItem(
                   label: 'Estimate',
-                  value: '0 hours',
+                  value: task.estimatedHours.toString(),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 16),
-
-          /// CREATED BY
-          const Text(
-            'Created by',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: const [
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.blue,
-                child: Text(
-                  'GD',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Ganesh Devkar',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          /// DESCRIPTION
-          const Text(
+          Text(
             'Description',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 6),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: const Text(
-              'No description provided for this task',
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
-              ),
-            ),
+          Text(
+            task.description.isEmpty
+                ? 'No description provided'
+                : task.description,
+            style: const TextStyle(fontSize: 13),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Related To',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${task.relatedTo} - ${task.relatedToName}',
+            style: const TextStyle(fontSize: 13),
           ),
         ],
       ),
@@ -129,89 +83,81 @@ class TaskInformationCard extends StatelessWidget {
   }
 }
 
+/// ---------------- ACTION CARD ----------------
+
+class TaskActionCard extends StatelessWidget {
+  final String title;
+  final String emptyText;
+  final String name;
+  final String label;
+  final List<DropdownItem> items;
+  final String selectedId;
+  final Function(DropdownItem) onChanged;
+
+  const TaskActionCard({
+    super.key,
+    required this.title,
+    required this.name,
+    required this.emptyText,
+    required this.label,
+    required this.items,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          CustomDropdown<DropdownItem>(
+            showLabel: true,
+            labelText: label,
+            items: items,
+            value: selectedId.isEmpty
+                ? items.first
+                : items.firstWhere(
+                    (e) => e.id == selectedId,
+                    orElse: () => items.first,
+                  ),
+            onChanged: (value) {
+              if (value != null && value.id.isNotEmpty) {
+                onChanged(value);
+              }
+            },
+            itemLabel: (item) => item.name,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ---------------- HELPERS ----------------
+
 class _InfoItem extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoItem({
-    required this.label,
-    required this.value,
-  });
+  const _InfoItem({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(value,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
       ],
-    );
-  }
-}
-
-class TaskActionCard extends StatelessWidget {
-  final String title;
-  final String emptyText;
-  final String label;
-
-  const TaskActionCard({
-    super.key,
-    required this.title,
-    required this.emptyText,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            emptyText,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 12),
-          CommonDropdown<String>(
-            hintText: label,
-            items: const [
-              'A',
-              'B',
-              'C',
-              'D',
-            ],
-            onChanged: (value) {},
-          ),
-        ],
-      ),
     );
   }
 }

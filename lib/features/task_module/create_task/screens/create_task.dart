@@ -12,20 +12,34 @@ import 'package:xpertbiz/core/widgtes/app_text_field.dart';
 import 'package:xpertbiz/core/widgtes/attchment_widget.dart';
 import 'package:xpertbiz/core/widgtes/custom_date_picker.dart';
 import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
-import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_event.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_state.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_model.dart';
 import '../bloc/create_task_bloc.dart';
 
-class CreateTask extends StatelessWidget {
-  CreateTask({super.key});
+class CreateTask extends StatefulWidget {
+  const CreateTask({super.key});
+
+  @override
+  State<CreateTask> createState() => _CreateTaskState();
+}
+
+class _CreateTaskState extends State<CreateTask> {
   final subjectController = TextEditingController();
+
   final hourlyRateController = TextEditingController();
+
   final estimateHoursController = TextEditingController();
+
   final descriptionController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<CreateTaskBloc>().add(LoadAssigneesEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +56,7 @@ class CreateTask extends StatelessWidget {
                 context,
                 message: 'Task created successfully',
               );
-              context.pop();
+              context.pop(true);
             }
 
             if (state.errorMessage != null) {
@@ -55,6 +69,19 @@ class CreateTask extends StatelessWidget {
           },
           child: BlocBuilder<CreateTaskBloc, CreateTaskState>(
             builder: (context, state) {
+              log('Assignees count: ${state.assigneesList.length}');
+
+              final assigneeDropdownItems = [
+                DropdownItem(id: '', name: 'Select Assign'),
+                if (state.assigneesList.isNotEmpty)
+                  ...state.assigneesList.map(
+                    (e) => DropdownItem(
+                      id: e.employeeId,
+                      name: e.name,
+                    ),
+                  ),
+              ];
+
               final assigneeItems = [
                 DropdownItem(id: '', name: 'Non selected'),
                 ...getAssigneeItems(state),
@@ -157,60 +184,94 @@ class CreateTask extends StatelessWidget {
                         return null;
                       },
                       onChanged: (value) {
+                        log('response ${state.relatedTo}');
                         if (value != null) {
                           context.read<CreateTaskBloc>().add(RelatedChange(
                                 value,
                               ));
                           context
                               .read<CreateTaskBloc>()
-                              .add(FetchAssignEvent(value: value));
+                              .add(FetchListEvent(value: value));
                         }
                       },
                       itemLabel: (item) => item,
                     ),
-                    const SizedBox(height: 15),
+                    state.relatedTo == 'Non selected'
+                        ? SizedBox.shrink()
+                        : const SizedBox(height: 15),
 
+                    state.relatedTo == 'Non selected'
+                        ? SizedBox.shrink()
+                        : CustomDropdown<DropdownItem>(
+                            showLabel: true,
+                            labelText: state.relatedTo == 'Non selected'
+                                ? 'Assignees'
+                                : 'Select ${state.relatedTo}',
+                            items: assigneeItems,
+                            value: assigneeItems.firstWhere(
+                              (item) {
+                                return item.id == state.assignee;
+                              },
+                              orElse: () => assigneeItems[0],
+                            ),
+                            onChanged: (value) {
+                              if (value != null) {
+                                context
+                                    .read<CreateTaskBloc>()
+                                    .add(DependsLelatedtoEvent(value));
+                              }
+                            },
+                            itemLabel: (item) => item.name,
+                          ),
+
+                    const SizedBox(height: 15),
                     CustomDropdown<DropdownItem>(
                       showLabel: true,
-                      labelText: state.relatedTo == 'Non selected'
-                          ? 'Assignees'
-                          : 'Select ${state.relatedTo}',
-                      items: assigneeItems,
-                      value: assigneeItems.firstWhere(
-                        (item) {
-                          return item.id == state.assignee;
-                        },
-                        orElse: () => assigneeItems[0],
-                      ),
+                      labelText: 'Assignees',
+                      items: assigneeDropdownItems,
+                      value: state.assignIdValue.isEmpty
+                          ? assigneeDropdownItems.first
+                          : assigneeDropdownItems.firstWhere(
+                              (item) => item.id == state.assignIdValue,
+                              orElse: () => assigneeDropdownItems.first,
+                            ),
                       onChanged: (value) {
-                        if (value != null) {
-                          context
-                              .read<CreateTaskBloc>()
-                              .add(AssigneeChange(value.id));
-                        }
+                        if (value == null) return;
+
+                        context.read<CreateTaskBloc>().add(
+                              AssigneesDropDownEvent(
+                                id: value.id,
+                                name: value.name,
+                              ),
+                            );
                       },
                       itemLabel: (item) => item.name,
                     ),
 
                     const SizedBox(height: 15),
-                    CustomDropdown<String>(
+                    CustomDropdown<DropdownItem>(
                       showLabel: true,
                       labelText: 'Followers',
-                      items: const [
-                        'Non selected',
-                        'A'
-                        // Add real followers here, e.g., from API
-                      ],
-                      value: state.follower,
+                      items: assigneeDropdownItems,
+                      value: state.followerId.isEmpty
+                          ? assigneeDropdownItems.first
+                          : assigneeDropdownItems.firstWhere(
+                              (item) => item.id == state.followerId,
+                              orElse: () => assigneeDropdownItems.first,
+                            ),
                       onChanged: (value) {
-                        if (value != null) {
-                          context
-                              .read<CreateTaskBloc>()
-                              .add(FollowerChange(value));
-                        }
+                        if (value == null) return;
+
+                        context.read<CreateTaskBloc>().add(
+                              FollowerChange(
+                                value.name,
+                                value.id,
+                              ),
+                            );
                       },
-                      itemLabel: (item) => item,
+                      itemLabel: (item) => item.name,
                     ),
+
                     const SizedBox(height: 15),
 
                     /// PRIORITY DROPDOWN
@@ -304,8 +365,6 @@ class CreateTask extends StatelessWidget {
                                 return;
                               }
 
-                              final user = AuthLocalStorage.getUser();
-
                               final request = CreateTaskRequest(
                                 task: Task(
                                   subject: subjectController.text.trim(),
@@ -314,7 +373,8 @@ class CreateTask extends StatelessWidget {
                                   priority: state.priority,
                                   relatedTo: state.relatedTo,
                                   relatedToId: state.assignee,
-                                  relatedToName: '',
+                                  relatedToName: state.relatedToId ?? '',
+                                  
                                   hourlyRate: double.tryParse(
                                           hourlyRateController.text.trim()) ??
                                       0,
@@ -326,11 +386,16 @@ class CreateTask extends StatelessWidget {
                                       descriptionController.text.trim(),
                                   assignedEmployees: [
                                     Employee(
-                                      employeeId: user?.userId ?? '',
-                                      name: user?.loginUserName ?? 'User',
+                                      employeeId: state.assignIdValue,
+                                      name: state.assignNameValue,
                                     )
                                   ],
-                                  followersEmployees: [],
+                                  followersEmployees: [
+                                    Employee(
+                                      employeeId: state.followerId,
+                                      name: state.followerName,
+                                    )
+                                  ],
                                 ),
 
                                 /// Attachments converted correctly

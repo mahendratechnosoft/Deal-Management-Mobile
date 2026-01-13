@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_task_update_model.dart';
 
@@ -27,21 +28,22 @@ class PriorityChange extends CreateTaskEvent {
   List<Object?> get props => [value];
 }
 
-class AssigneeChange extends CreateTaskEvent {
-  final String value;
-  const AssigneeChange(this.value);
+class DependsLelatedtoEvent extends CreateTaskEvent {
+  final DropdownItem value;
+  const DependsLelatedtoEvent(this.value);
 
   @override
   List<Object?> get props => [value];
 }
 
 class FollowerChange extends CreateTaskEvent {
-  final String value;
+  final String name;
+  final String id;
 
-  const FollowerChange(this.value);
+  const FollowerChange(this.name, this.id);
 
   @override
-  List<Object?> get props => [value];
+  List<Object?> get props => [name, id];
 }
 
 class TaskStartDateChanged extends CreateTaskEvent {
@@ -90,7 +92,39 @@ class UpdateTaskEvent extends CreateTaskEvent {
   const UpdateTaskEvent({required this.request});
 }
 
-class FetchAssignEvent extends CreateTaskEvent {
+class FetchListEvent extends CreateTaskEvent {
   final String value;
-  const FetchAssignEvent({required this.value});
+  const FetchListEvent({required this.value});
+}
+
+class AssigneesDropDownEvent extends CreateTaskEvent {
+  final String id;
+  final String name;
+  const AssigneesDropDownEvent({required this.id, required this.name});
+}
+
+// create_task_event.dart
+class LoadAssigneesEvent extends CreateTaskEvent {}
+
+class StartTaskTimerEvent extends CreateTaskEvent {
+  final String taskId;
+  const StartTaskTimerEvent(this.taskId);
+}
+
+class StopTaskTimerEvent extends CreateTaskEvent {
+  final String taskId;
+  final String comment;
+  const StopTaskTimerEvent(this.taskId, this.comment);
+}
+
+class TimerTickEvent extends CreateTaskEvent {}
+
+class TimerStatusEvent extends CreateTaskEvent {
+  final String taskId;
+  const TimerStatusEvent({required this.taskId});
+}
+
+class TimerDetailsEvent extends CreateTaskEvent {
+  final String taskId;
+  const TimerDetailsEvent({required this.taskId});
 }
