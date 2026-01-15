@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
-import 'package:xpertbiz/features/task_module/create_task/screens/create_task.dart';
+import 'package:xpertbiz/features/task_module/create_task/screens/create_task_screen.dart';
 import '../../edit_task/model/get_task_model.dart';
 
 /// ---------------- TASK INFO CARD ----------------
@@ -84,6 +84,7 @@ class TaskInformationCard extends StatelessWidget {
 }
 
 /// ---------------- ACTION CARD ----------------
+/// ---------------- ACTION CARD ----------------
 
 class TaskActionCard extends StatelessWidget {
   final String title;
@@ -92,11 +93,13 @@ class TaskActionCard extends StatelessWidget {
   final String label;
   final List<DropdownItem> items;
   final String selectedId;
+  final bool edit;
   final Function(DropdownItem) onChanged;
 
   const TaskActionCard({
     super.key,
     required this.title,
+    required this.edit,
     required this.name,
     required this.emptyText,
     required this.label,
@@ -107,6 +110,16 @@ class TaskActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Find the currently selected value
+    DropdownItem? currentValue;
+    if (selectedId.isNotEmpty) {
+      try {
+        currentValue = items.firstWhere((e) => e.id == selectedId);
+      } catch (e) {
+        currentValue = null;
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: _cardDecoration(),
@@ -120,13 +133,9 @@ class TaskActionCard extends StatelessWidget {
           CustomDropdown<DropdownItem>(
             showLabel: true,
             labelText: label,
+            enabled: edit,
             items: items,
-            value: selectedId.isEmpty
-                ? items.first
-                : items.firstWhere(
-                    (e) => e.id == selectedId,
-                    orElse: () => items.first,
-                  ),
+            value: currentValue, // Use the found value or null
             onChanged: (value) {
               if (value != null && value.id.isNotEmpty) {
                 onChanged(value);
@@ -138,9 +147,7 @@ class TaskActionCard extends StatelessWidget {
       ),
     );
   }
-}
-
-/// ---------------- HELPERS ----------------
+}/// ---------------- HELPERS ----------------
 
 class _InfoItem extends StatelessWidget {
   final String label;

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/add_comment.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_task_update_model.dart';
 
@@ -60,6 +61,11 @@ class TaskDueDateChanged extends CreateTaskEvent {
 
   @override
   List<Object?> get props => [date];
+}
+
+class StatusEvent extends CreateTaskEvent {
+  final String status;
+  const StatusEvent(this.status);
 }
 
 class AttachmentsChanged extends CreateTaskEvent {
@@ -127,4 +133,104 @@ class TimerStatusEvent extends CreateTaskEvent {
 class TimerDetailsEvent extends CreateTaskEvent {
   final String taskId;
   const TimerDetailsEvent({required this.taskId});
+}
+
+// create_task_event.dart (add these events)
+class LoadCommentsEvent extends CreateTaskEvent {
+  final String taskId;
+  const LoadCommentsEvent({required this.taskId});
+
+  @override
+  List<Object?> get props => [taskId];
+}
+
+class AddCommentEvent extends CreateTaskEvent {
+  final String taskId;
+  final String content;
+  final List<CommentAttachment> attachments;
+
+  const AddCommentEvent({
+    required this.taskId,
+    required this.content,
+    required this.attachments,
+  });
+
+  @override
+  List<Object?> get props => [taskId, content, attachments];
+}
+
+class RefreshCommentsEvent extends CreateTaskEvent {
+  final String taskId;
+  const RefreshCommentsEvent({required this.taskId});
+
+  @override
+  List<Object?> get props => [taskId];
+}
+
+class AddAssigneeEvent extends CreateTaskEvent {
+  final String taskId;
+  final List<String> employeeIds;
+
+  const AddAssigneeEvent({
+    required this.taskId,
+    required this.employeeIds,
+  });
+
+  @override
+  List<Object?> get props => [taskId, employeeIds];
+}
+
+class AddFollowerEvent extends CreateTaskEvent {
+  final String taskId;
+  final List<String> employeeIds;
+
+  const AddFollowerEvent({
+    required this.taskId,
+    required this.employeeIds,
+  });
+
+  @override
+  List<Object?> get props => [taskId, employeeIds];
+}
+
+class LoadTaskAssigneesEvent extends CreateTaskEvent {
+  final String taskId;
+  const LoadTaskAssigneesEvent({required this.taskId});
+
+  @override
+  List<Object?> get props => [taskId];
+}
+
+class LoadTaskFollowersEvent extends CreateTaskEvent {
+  final String taskId;
+  const LoadTaskFollowersEvent({required this.taskId});
+
+  @override
+  List<Object?> get props => [taskId];
+}
+
+class AddAssigneeLocal extends CreateTaskEvent {
+  final DropdownItem item;
+  const AddAssigneeLocal(this.item);
+}
+
+class AddFollowerLocal extends CreateTaskEvent {
+  final DropdownItem item;
+  const AddFollowerLocal(this.item);
+}
+
+class RemoveAssigneeLocal extends CreateTaskEvent {
+  final String id;
+  const RemoveAssigneeLocal(this.id);
+}
+
+class RemoveFollowerLocal extends CreateTaskEvent {
+  final String id;
+  const RemoveFollowerLocal(this.id);
+}
+
+class UpdatedStatusEvent extends CreateTaskEvent {
+  final String taskId;
+  final String status;
+  const UpdatedStatusEvent(this.taskId, this.status);
 }

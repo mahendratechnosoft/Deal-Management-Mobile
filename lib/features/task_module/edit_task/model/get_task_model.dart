@@ -33,8 +33,8 @@ class Task {
   final double estimatedHours;
   final String description;
   final String status;
-  final List assignedEmployees;
-  final List followersEmployees;
+  final List<Employee> assignedEmployees;
+  final List<Employee> followersEmployees;
   final DateTime createdAt;
   final String createdBy;
 
@@ -63,7 +63,7 @@ class Task {
     return Task(
       taskId: json['taskId'],
       adminId: json['adminId'] ?? 'NA',
-      employeeId: json['employeeId'] ?? "NA",
+      employeeId: json['employeeId'],
       subject: json['subject'] ?? '',
       startDate: DateTime.parse(json['startDate']),
       endDate: DateTime.parse(json['endDate'] ?? json['startDate']),
@@ -75,10 +75,38 @@ class Task {
       estimatedHours: (json['estimatedHours'] ?? 0).toDouble(),
       description: json['description'] ?? '',
       status: json['status'] ?? '',
-      assignedEmployees: json['assignedEmployees'] ?? [],
-      followersEmployees: json['followersEmployees'] ?? [],
+      assignedEmployees: (json['assignedEmployees'] as List? ?? [])
+          .map((e) => Employee.fromJson(e))
+          .toList(),
+      followersEmployees: (json['followersEmployees'] as List? ?? [])
+          .map((e) => Employee.fromJson(e))
+          .toList(),
       createdAt: DateTime.parse(json['createdAt']),
       createdBy: json['createdBy'] ?? '',
     );
+  }
+}
+
+class Employee {
+  final String employeeId;
+  final String name;
+
+  Employee({
+    required this.employeeId,
+    required this.name,
+  });
+
+  factory Employee.fromJson(Map<String, dynamic> json) {
+    return Employee(
+      employeeId: json['employeeId'] ?? '',
+      name: json['name'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'employeeId': employeeId,
+      'name': name,
+    };
   }
 }

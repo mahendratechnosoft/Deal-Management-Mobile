@@ -15,7 +15,7 @@ class TimeDetailsModel {
   final String? employeeId;
   final String name;
   final DateTime startTime;
-  final DateTime endTime;
+  final DateTime? endTime;
   final String endNote;
   final int durationInMinutes;
   final String status;
@@ -27,7 +27,7 @@ class TimeDetailsModel {
     this.employeeId,
     required this.name,
     required this.startTime,
-    required this.endTime,
+    this.endTime,
     required this.endNote,
     required this.durationInMinutes,
     required this.status,
@@ -41,13 +41,16 @@ class TimeDetailsModel {
       employeeId: json['employeeId'],
       name: json['name'] ?? '',
       startTime: DateTime.parse(json['startTime']),
-      endTime: DateTime.parse(json['endTime']),
+      endTime: json['endTime'] == null || json['endTime'] == ''
+          ? null
+          : DateTime.parse(json['endTime']),
       endNote: json['endNote'] ?? '',
       durationInMinutes: json['durationInMinutes'] ?? 0,
       status: json['status'] ?? '',
     );
   }
 }
+
 enum Name { JOHN_DOE }
 
 final nameValues = EnumValues({"John Doe": Name.JOHN_DOE});

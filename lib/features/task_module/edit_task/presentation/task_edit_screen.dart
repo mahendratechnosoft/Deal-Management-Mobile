@@ -6,13 +6,18 @@ import 'package:xpertbiz/core/utils/responsive.dart';
 import 'package:xpertbiz/core/utils/validators.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/app_button.dart';
+import 'package:xpertbiz/core/widgtes/app_drop_down.dart';
 import 'package:xpertbiz/core/widgtes/app_text_field.dart';
 import 'package:xpertbiz/core/widgtes/custom_date_picker.dart';
 import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
+import 'package:xpertbiz/features/auth/bloc/user_role.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_event.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_state.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/assign_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_task_update_model.dart';
+import 'package:xpertbiz/features/task_module/task_deatils/screen/task_details_screen.dart';
 import '../../../../core/widgtes/app_snackbar.dart';
 
 class EditTask extends StatefulWidget {
@@ -32,14 +37,28 @@ class _EditTaskState extends State<EditTask> {
 
   DateTime? startDate;
   DateTime? endDate;
+  late bool isEditRestricted;
+  late String currentUserRole;
 
   @override
   void initState() {
     super.initState();
+
+    // Get current user role
+    final user = AuthLocalStorage.getUser();
+    currentUserRole = user?.role ?? '';
+
+    // Check if edit is restricted for this role
+    isEditRestricted = RoleResolver.isEmployeeRestricted(currentUserRole);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final taskId = GoRouterState.of(context).extra as String;
       context.read<CreateTaskBloc>().add(GetTaskEvent(taskId: taskId));
-      context.read<CreateTaskBloc>().add(LoadAssigneesEvent());
+
+      // Only load assignees if user has permission to edit
+      if (!isEditRestricted) {
+        context.read<CreateTaskBloc>().add(LoadAssigneesEvent());
+      }
     });
   }
 
@@ -58,7 +77,7 @@ class _EditTaskState extends State<EditTask> {
                 context,
                 message: 'Task updated successfully',
               );
-              context.pop(true);
+              GoRouter.of(context).pop(true);
             }
 
             if (state.errorMessage != null) {
@@ -86,37 +105,103 @@ class _EditTaskState extends State<EditTask> {
               if (state.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
+              if (state.isLoading || state.getTaskModel == null) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-              /// 🔹 Employee list for Assignee / Follower
-              final employeeDropdownItems = [
-                DropdownItem(id: '', name: 'Select'),
-                ...state.assigneesList.map(
-                  (e) => DropdownItem(
-                    id: e.employeeId,
-                    name: e.name,
-                  ),
-                ),
-              ];
+              final task = state.getTaskModel!.task;
+              final edit = state.getTaskModel!.canEdit;
+              isEditRestricted = !edit;
 
-              /// 🔹 Related-to dropdown items
+              /// 🔹 MASTER EMPLOYEE LIST
+              final allEmployees = state.assigneesList;
+
               final relatedItems = [
-                DropdownItem(id: '', name: 'Non selected'),
+                DropdownItem(id: '', name: task.relatedToName),
                 ...getAssigneeItems(state),
               ];
+
+              /// 🔹 ASSIGNEE LIST (exclude follower)
+              final assigneList = buildEmployeeDropdown(
+                allEmployees: allEmployees,
+                excludeEmployeeId: state.followerId,
+                placeholder: task.assignedEmployees.isNotEmpty
+                    ? task.assignedEmployees.first.name
+                    : 'Select Assignee',
+              );
+
+              /// 🔹 FOLLOWER LIST (exclude assignee)
+              final followerList = buildEmployeeDropdown(
+                allEmployees: allEmployees,
+                excludeEmployeeId: state.assignIdValue,
+                placeholder: task.followersEmployees.isNotEmpty
+                    ? task.followersEmployees.first.name
+                    : 'Select Follower',
+              );
 
               return Form(
                 key: _formKey,
                 child: ListView(
                   children: [
-                    Text(
-                      'Fill in the task information below',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        fontSize: Responsive.sp(14),
-                      ),
-                    ),
+                    isEditRestricted
+                        ? SizedBox.shrink()
+                        : Text(
+                            'Fill in the task information below',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                              fontSize: Responsive.sp(14),
+                            ),
+                          ),
                     const SizedBox(height: 15),
+
+                    /// Restriction Warning Message
+                    if (isEditRestricted)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.orange.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.lock_outline_rounded,
+                              color: Colors.orange.shade700,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Access Restricted',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.orange.shade800,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'You do not have permission to update this task. You can only view the information.',
+                                    style: TextStyle(
+                                      color: Colors.orange.shade700,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                     AppTextField(
                       hint: 'Subject',
@@ -125,15 +210,45 @@ class _EditTaskState extends State<EditTask> {
                       labelText: 'Subject',
                       validator: (v) => Validators.required(v, 'Subject'),
                       isRequired: true,
+                      enabled: !isEditRestricted, // Disable if restricted
                     ),
                     const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CommonDropdown<String>(
+                            height: 57,
+                            hintText: 'Status',
+                            value: resolveStatusLabel(task.status),
+                            items: taskStatusMap.values.toList(),
+                            enabled: !isEditRestricted,
+                            showLabel: true, // Add this
+                            labelText: 'Status', // Add this
+                            onChanged: (value) {
+                              if (value == null) return;
 
-                    AppTextField(
-                      hint: '0:00',
-                      controller: hourlyRateController,
-                      keyboardType: TextInputType.number,
-                      labelText: 'Hourly Rate',
-                      showLabel: true,
+                              final apiValue = taskStatusMap.entries
+                                  .firstWhere((e) => e.value == value)
+                                  .key;
+
+                              context
+                                  .read<CreateTaskBloc>()
+                                  .add(StatusEvent(apiValue));
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: AppTextField(
+                            hint: '0:00',
+                            controller: hourlyRateController,
+                            keyboardType: TextInputType.number,
+                            labelText: 'Hourly Rate',
+                            showLabel: true,
+                            enabled: !isEditRestricted,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 15),
 
@@ -148,12 +263,15 @@ class _EditTaskState extends State<EditTask> {
                             isRequired: true,
                             selectedDate: state.startDate,
                             errorText: 'Date is required',
-                            onDateSelected: (date) {
-                              startDate = date;
-                              context
-                                  .read<CreateTaskBloc>()
-                                  .add(TaskStartDateChanged(date));
-                            },
+                            onDateSelected: !isEditRestricted
+                                ? (date) {
+                                    startDate = date;
+                                    context
+                                        .read<CreateTaskBloc>()
+                                        .add(TaskStartDateChanged(date));
+                                  }
+                                : null, // Disable callback if restricted
+                            enabled: !isEditRestricted, // Disable if restricted
                           ),
                         ),
                         const SizedBox(width: 5),
@@ -165,12 +283,15 @@ class _EditTaskState extends State<EditTask> {
                             isRequired: true,
                             selectedDate: state.dueDate,
                             errorText: 'Date is required',
-                            onDateSelected: (date) {
-                              endDate = date;
-                              context
-                                  .read<CreateTaskBloc>()
-                                  .add(TaskDueDateChanged(date));
-                            },
+                            onDateSelected: !isEditRestricted
+                                ? (date) {
+                                    endDate = date;
+                                    context
+                                        .read<CreateTaskBloc>()
+                                        .add(TaskDueDateChanged(date));
+                                  }
+                                : null, // Disable callback if restricted
+                            enabled: !isEditRestricted, // Disable if restricted
                           ),
                         ),
                       ],
@@ -190,86 +311,100 @@ class _EditTaskState extends State<EditTask> {
                         'Invoice'
                       ],
                       value: state.relatedTo,
-                      onChanged: (value) {
-                        if (value != null) {
-                          context
-                              .read<CreateTaskBloc>()
-                              .add(RelatedChange(value));
-                        }
-                      },
+                      onChanged: !isEditRestricted
+                          ? (value) {
+                              if (value != null) {
+                                context
+                                    .read<CreateTaskBloc>()
+                                    .add(RelatedChange(value));
+                              }
+                            }
+                          : null, // Disable if restricted
                       itemLabel: (item) => item,
+                      enabled: !isEditRestricted, // Disable if restricted
                     ),
-                    const SizedBox(height: 15),
+                    //  const SizedBox(height: 15),
+                    task.relatedTo == 'Non selected'
+                        ? SizedBox.shrink()
+                        : const SizedBox(height: 15),
 
-                    /// RELATED ITEM
-                    CustomDropdown<DropdownItem>(
-                      showLabel: true,
-                      labelText: 'Select ${state.relatedTo}',
-                      items: relatedItems,
-                      value: relatedItems.firstWhere(
-                        (e) => e.id == state.assignee,
-                        orElse: () => relatedItems.first,
-                      ),
-                      onChanged: (value) {
-                        if (value != null) {
-                          context
-                              .read<CreateTaskBloc>()
-                              .add(DependsLelatedtoEvent(value));
-                        }
-                      },
-                      itemLabel: (item) => item.name,
-                    ),
+                    task.relatedTo == 'Non selected'
+                        ? SizedBox.shrink()
+                        :
+
+                        /// RELATED ITEM
+                        CustomDropdown<DropdownItem>(
+                            showLabel: true,
+                            labelText: 'Select ${task.relatedTo}',
+                            items: relatedItems,
+                            value: relatedItems.firstWhere(
+                              (e) => e.id == state.assignee,
+                              orElse: () => relatedItems.first,
+                            ),
+                            onChanged: !isEditRestricted
+                                ? (value) {
+                                    if (value != null) {
+                                      context
+                                          .read<CreateTaskBloc>()
+                                          .add(DependsLelatedtoEvent(value));
+                                    }
+                                  }
+                                : null, // Disable if restricted
+                            itemLabel: (item) => item.name,
+                            enabled: !isEditRestricted, // Disable if restricted
+                          ),
                     const SizedBox(height: 15),
 
                     /// ASSIGNEE
                     CustomDropdown<DropdownItem>(
                       showLabel: true,
                       labelText: 'Assignee',
-                      items: employeeDropdownItems,
+                      items: assigneList,
                       value: state.assignIdValue.isEmpty
-                          ? employeeDropdownItems.first
-                          : employeeDropdownItems.firstWhere(
+                          ? assigneList.first
+                          : assigneList.firstWhere(
                               (e) => e.id == state.assignIdValue,
-                              orElse: () => employeeDropdownItems.first,
+                              orElse: () => assigneList.first,
                             ),
-                      onChanged: (value) {
-                        if (value != null) {
-                          context.read<CreateTaskBloc>().add(
-                                AssigneesDropDownEvent(
-                                  id: value.id,
-                                  name: value.name,
-                                ),
-                              );
-                        }
-                      },
+                      onChanged: !isEditRestricted
+                          ? (value) {
+                              if (value == null) return;
+                              context.read<CreateTaskBloc>().add(
+                                    AssigneesDropDownEvent(
+                                      id: value.id,
+                                      name: value.name,
+                                    ),
+                                  );
+                            }
+                          : null, // Disable if restricted
                       itemLabel: (item) => item.name,
+                      enabled: !isEditRestricted, // Disable if restricted
                     ),
                     const SizedBox(height: 15),
 
-                    /// FOLLOWER ✅
+                    /// FOLLOWER
                     CustomDropdown<DropdownItem>(
                       showLabel: true,
                       labelText: 'Follower',
-                      items: employeeDropdownItems,
+                      items: followerList,
                       value: state.followerId.isEmpty
-                          ? employeeDropdownItems.first
-                          : employeeDropdownItems.firstWhere(
+                          ? followerList.first
+                          : followerList.firstWhere(
                               (e) => e.id == state.followerId,
-                              orElse: () => employeeDropdownItems.first,
+                              orElse: () => followerList.first,
                             ),
-                      onChanged: (value) {
-                        if (value != null) {
-                          context.read<CreateTaskBloc>().add(
-                                FollowerChange(
-                                  value.name,
-                                  value.id,
-                                ),
-                              );
-                        }
-                      },
+                      onChanged: !isEditRestricted
+                          ? (value) {
+                              if (value == null) return;
+                              context.read<CreateTaskBloc>().add(
+                                    FollowerChange(value.name, value.id),
+                                  );
+                            }
+                          : null, // Disable if restricted
                       itemLabel: (item) => item.name,
+                      enabled: !isEditRestricted, // Disable if restricted
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 20),
 
                     /// PRIORITY
                     CustomDropdown<String>(
@@ -282,15 +417,18 @@ class _EditTaskState extends State<EditTask> {
                         'High',
                         'Urgent',
                       ],
-                      value: state.priority,
-                      onChanged: (value) {
-                        if (value != null) {
-                          context
-                              .read<CreateTaskBloc>()
-                              .add(PriorityChange(value));
-                        }
-                      },
+                      value: task.priority,
+                      onChanged: !isEditRestricted
+                          ? (value) {
+                              if (value != null) {
+                                context
+                                    .read<CreateTaskBloc>()
+                                    .add(PriorityChange(value));
+                              }
+                            }
+                          : null, // Disable if restricted
                       itemLabel: (item) => item,
+                      enabled: !isEditRestricted, // Disable if restricted
                     ),
                     const SizedBox(height: 15),
 
@@ -300,6 +438,7 @@ class _EditTaskState extends State<EditTask> {
                       keyboardType: TextInputType.number,
                       labelText: 'Estimate hours',
                       showLabel: true,
+                      enabled: !isEditRestricted, // Disable if restricted
                     ),
                     const SizedBox(height: 15),
 
@@ -309,57 +448,64 @@ class _EditTaskState extends State<EditTask> {
                       maxLines: 4,
                       labelText: 'Task Description',
                       showLabel: true,
+                      enabled: !isEditRestricted, // Disable if restricted
                     ),
                     const SizedBox(height: 20),
 
-                    Button(
-                      text: 'Update Task',
-                      onPressed: () {
-                        if (!_formKey.currentState!.validate()) return;
+                    /// UPDATE BUTTON or RESTRICTED MESSAGE
+                    if (isEditRestricted)
+                      SizedBox.shrink()
+                    else
+                      Button(
+                        text: 'Update Task',
+                        onPressed: () {
+                          if (!_formKey.currentState!.validate()) return;
 
-                        final task = state.getTaskModel!.task;
+                          final task = state.getTaskModel!.task;
+                          final user = AuthLocalStorage.getUser();
+                          final time = DateTime.now();
 
-                        final payload = TaskUpdateRequest(
-                          taskId: task.taskId,
-                          adminId: task.adminId,
-                          subject: subjectController.text.trim(),
-                          startDate: formatDate(startDate ?? state.startDate),
-                          endDate: formatDate(endDate ?? state.dueDate),
-                          priority: state.priority,
-                          relatedTo: state.relatedTo,
-                          relatedToId: task.relatedToId,
-                          relatedToName: task.relatedToName,
-                          hourlyRate:
-                              double.tryParse(hourlyRateController.text) ?? 0,
-                          estimatedHours:
-                              double.tryParse(estimateHoursController.text) ??
-                                  0,
-                          description: descriptionController.text.trim(),
-                          status: task.status,
-                          assignedEmployees: [
-                            Employee(
-                              employeeId: state.assignIdValue,
-                              name: state.assignNameValue,
-                            ),
-                          ],
-                          followersEmployees: state.followerId.isEmpty
-                              ? []
-                              : [
-                                  Employee(
-                                    employeeId: state.followerId,
-                                    name: state.followerName,
-                                  ),
-                                ],
-                          createdAt: task.createdAt,
-                          createdBy: task.createdBy,
-                          employeeId: '',
-                        );
+                          final payload = TaskUpdateRequest(
+                            taskId: task.taskId,
+                            adminId: task.adminId,
+                            subject: subjectController.text.trim(),
+                            startDate: formatDate(startDate ?? state.startDate),
+                            endDate: formatDate(endDate ?? state.dueDate),
+                            priority: state.priority,
+                            relatedTo: state.relatedTo,
+                            relatedToId: task.relatedToId,
+                            relatedToName: task.relatedToName,
+                            hourlyRate:
+                                double.tryParse(hourlyRateController.text) ?? 0,
+                            estimatedHours:
+                                double.tryParse(estimateHoursController.text) ??
+                                    0,
+                            description: descriptionController.text.trim(),
+                            status: state.status,
+                            assignedEmployees: [
+                              Employee(
+                                employeeId: state.assignIdValue,
+                                name: state.assignNameValue,
+                              ),
+                            ],
+                            followersEmployees: state.followerId.isEmpty
+                                ? []
+                                : [
+                                    Employee(
+                                      employeeId: state.followerId,
+                                      name: state.followerName,
+                                    ),
+                                  ],
+                            createdAt: time,
+                            createdBy: user!.loginUserName ?? 'NA',
+                            employeeId: user.employeeId ?? 'NA',
+                          );
 
-                        context.read<CreateTaskBloc>().add(
-                              UpdateTaskEvent(request: payload),
-                            );
-                      },
-                    ),
+                          context.read<CreateTaskBloc>().add(
+                                UpdateTaskEvent(request: payload),
+                              );
+                        },
+                      ),
                   ],
                 ),
               );
@@ -412,4 +558,20 @@ List<DropdownItem> getAssigneeItems(CreateTaskState state) {
     default:
       return [];
   }
+}
+
+List<DropdownItem> buildEmployeeDropdown({
+  required List<AssignModel> allEmployees,
+  required String excludeEmployeeId,
+  required String placeholder,
+}) {
+  return [
+    DropdownItem(id: '', name: placeholder),
+    ...allEmployees.where((e) => e.employeeId != excludeEmployeeId).map(
+          (e) => DropdownItem(
+            id: e.employeeId,
+            name: e.name,
+          ),
+        ),
+  ];
 }

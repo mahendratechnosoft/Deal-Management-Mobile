@@ -49,7 +49,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
 
       // Show loading only on refresh / initial load
       if (!event.isLoadMore) emit(const TaskListLoading());
-
+      await Future.delayed(const Duration(seconds: 1));
       final response = await repository.fetchTasks(page: page, size: pageSize);
 
       final newTasks = response.taskList;
@@ -127,7 +127,6 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
 
       try {
         final response = await repository.fetchTasks(page: 0, size: pageSize);
-
         emit(TaskListSuccess(
           tasks: response.taskList,
           filter: s.filter.copyWith(priority: event.value),

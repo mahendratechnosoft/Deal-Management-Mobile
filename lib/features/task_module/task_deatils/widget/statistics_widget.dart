@@ -1,46 +1,246 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_state.dart';
 
-void showWeeklyTimeDialog(BuildContext context,CreateTaskState state) {
+void showWeeklyTimeDialog(BuildContext context, CreateTaskState state) {
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      elevation: 12,
-      backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-      contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      title: Row(
-        children: const [
-          Icon(Icons.calendar_today_rounded, color: Colors.blue, size: 26),
-          SizedBox(width: 12),
-          Text(
-            "Weekly Time Distribution",
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 20,
-            ),
-          ),
+    barrierDismissible: true,
+    builder: (_) {
+      return Dialog(
+        backgroundColor: AppColors.card,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const WeeklyTimeCRMView(),
+      );
+    },
+  );
+}
+
+/* ================= DATA MODEL ================= */
+
+class DayData {
+  final String day;
+  final double hours;
+
+  DayData(this.day, this.hours);
+}
+
+/* ================= CRM VIEW ================= */
+
+class WeeklyTimeCRMView extends StatelessWidget {
+  const WeeklyTimeCRMView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final data = <DayData>[
+      DayData('Mon', 0.0),
+      DayData('Tue', 0.0),
+      DayData('Wed', 0.0),
+      DayData('Thu', 0.0),
+      DayData('Fri', 0.0),
+      DayData('Sat', 0.9), // Active day
+      DayData('Sun', 0.0),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _header(context),
+          const SizedBox(height: 16),
+          _summaryCard(data),
+          const SizedBox(height: 16),
+          _chartCard(data),
+          const SizedBox(height: 16),
+          _footer(context),
         ],
       ),
-      content: SizedBox(
-        width: double.maxFinite,
-        height: 420,
-        child: const WeeklyTimeBarChart(),
+    );
+  }
+}
+
+/* ================= HEADER ================= */
+
+Widget _header(BuildContext context) {
+  return Row(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(
+          Icons.bar_chart_rounded,
+          color: Color(0xFF2563EB),
+        ),
       ),
-      actionsPadding: const EdgeInsets.only(right: 16, bottom: 12),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.blueGrey[700],
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      const SizedBox(width: 12),
+      const Text(
+        'Weekly Time Overview',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF1E293B),
+        ),
+      ),
+      const Spacer(),
+      IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: () => Navigator.pop(context),
+      ),
+    ],
+  );
+}
+
+/* ================= SUMMARY CARD ================= */
+
+Widget _summaryCard(List<DayData> data) {
+  final totalHours = data.fold<double>(0, (sum, item) => sum + item.hours);
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.grey.shade200),
+    ),
+    child: Row(
+      children: [
+        _summaryItem(
+          title: 'Total Time',
+          value: '${totalHours.toStringAsFixed(1)} h',
+          icon: Icons.timer_outlined,
+        ),
+        const SizedBox(width: 20),
+        _summaryItem(
+          title: 'Active Days',
+          value: data.where((e) => e.hours > 0).length.toString(),
+          icon: Icons.event_available_outlined,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _summaryItem({
+  required String title,
+  required String value,
+  required IconData icon,
+}) {
+  return Expanded(
+    child: Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: const Text(
-            "Close",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          child: Icon(icon, color: const Color(0xFF2563EB), size: 20),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+/* ================= CHART CARD ================= */
+
+Widget _chartCard(List<DayData> data) {
+  return Container(
+    height: 260,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.grey.shade200),
+    ),
+    child: SfCartesianChart(
+      plotAreaBorderWidth: 0,
+      primaryXAxis: CategoryAxis(
+        majorGridLines: const MajorGridLines(width: 0),
+        axisLine: const AxisLine(width: 0),
+        labelStyle: const TextStyle(
+          fontSize: 12,
+          color: Color(0xFF64748B),
+        ),
+      ),
+      primaryYAxis: NumericAxis(
+        minimum: 0,
+        maximum: 2,
+        interval: 0.5,
+        labelFormat: '{value}h',
+        axisLine: const AxisLine(width: 0),
+        majorTickLines: const MajorTickLines(width: 0),
+        majorGridLines: MajorGridLines(
+          color: Colors.grey.shade200,
+          dashArray: const [4, 4],
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 11,
+          color: Color(0xFF64748B),
+        ),
+      ),
+      tooltipBehavior: TooltipBehavior(
+        enable: true,
+        color: const Color(0xFF1E293B),
+        builder: (data, point, series, pointIndex, seriesIndex) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '${point.x} • ${point.y} h',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        },
+      ),
+      series: <ColumnSeries<DayData, String>>[
+        ColumnSeries<DayData, String>(
+          dataSource: data,
+          xValueMapper: (d, _) => d.day,
+          yValueMapper: (d, _) => d.hours,
+          borderRadius: BorderRadius.circular(10),
+          width: 0.5,
+          pointColorMapper: (d, _) =>
+              d.hours > 0 ? const Color(0xFF2563EB) : Colors.grey.shade300,
+          dataLabelSettings: const DataLabelSettings(
+            isVisible: true,
+            textStyle: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2563EB),
+            ),
           ),
         ),
       ],
@@ -48,136 +248,20 @@ void showWeeklyTimeDialog(BuildContext context,CreateTaskState state) {
   );
 }
 
-class DayData {
-  final String day;
-  final double hours;
-  final Color color;
+/* ================= FOOTER ================= */
 
-  DayData(this.day, this.hours, {required this.color});
-}
-
-class WeeklyTimeBarChart extends StatelessWidget {
-  const WeeklyTimeBarChart({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final List<DayData> data = [
-      DayData('Mon', 0.0, color: const Color(0xFFE3F2FD)),
-      DayData('Tue', 0.0, color: const Color(0xFFE3F2FD)),
-      DayData('Wed', 0.0, color: const Color(0xFFE3F2FD)),
-      DayData('Thu', 0.0, color: const Color(0xFFE3F2FD)),
-      DayData('Fri', 0.0, color: const Color(0xFFE3F2FD)),
-      DayData('Sat', 0.9, color: const Color(0xFF1976D2)), // Highlight
-      DayData('Sun', 0.0, color: const Color(0xFFE3F2FD)),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: SfCartesianChart(
-          margin: const EdgeInsets.all(16),
-          title: ChartTitle(
-            text: 'Time Spent This Week',
-            textStyle: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
-            ),
-          ),
-          primaryXAxis: CategoryAxis(
-            labelPlacement: LabelPlacement.onTicks,
-            majorGridLines: const MajorGridLines(width: 0),
-            axisLine: const AxisLine(width: 0),
-            labelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF616161),
-            ),
-          ),
-          primaryYAxis: NumericAxis(
-            minimum: 0,
-            maximum: 1.5,
-            interval: 0.3,
-            labelFormat: '{value}h',
-            labelStyle: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            majorGridLines: MajorGridLines(
-              width: 1,
-              color: Colors.grey[300]!,
-              dashArray: const <double>[5, 5],
-            ),
-            axisLine: const AxisLine(width: 0),
-            majorTickLines: const MajorTickLines(width: 0),
-          ),
-          tooltipBehavior: TooltipBehavior(
-            enable: true,
-            color: Colors.blueGrey[900]!.withOpacity(0.9),
-            // borderRadius: 12,
-            shadowColor: Colors.black26,
-            elevation: 6,
-            animationDuration: 300,
-            duration: 3500,
-            canShowMarker: false,
-            builder: (data, point, series, pointIndex, seriesIndex) {
-              return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.blueGrey[900]!.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${point.x} • ${point.y!.toStringAsFixed(1)} hours',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-              );
-            },
-          ),
-          plotAreaBorderWidth: 0,
-          series: <ColumnSeries<DayData, String>>[
-            ColumnSeries<DayData, String>(
-              dataSource: data,
-              xValueMapper: (DayData d, _) => d.day,
-              yValueMapper: (DayData d, _) => d.hours,
-              pointColorMapper: (DayData d, _) => d.color,
-              borderRadius:
-                  const BorderRadius.all(Radius.circular(12)), // Pill bars
-              width: 0.6,
-              animationDuration: 1200,
-              enableTooltip: true,
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF64B5F6), Color(0xFF1976D2)],
-              ),
-              dataLabelSettings: DataLabelSettings(
-                isVisible: true,
-                showZeroValue: false,
-                labelAlignment: ChartDataLabelAlignment.top,
-                textStyle: const TextStyle(
-                  color: Color(0xFF1976D2),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ],
+Widget _footer(BuildContext context) {
+  return Align(
+    alignment: Alignment.centerRight,
+    child: TextButton(
+      onPressed: () => Navigator.pop(context),
+      child: const Text(
+        'Close',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
       ),
-    );
-  }
+    ),
+  );
 }

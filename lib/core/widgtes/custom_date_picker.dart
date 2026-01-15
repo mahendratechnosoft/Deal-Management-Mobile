@@ -7,7 +7,7 @@ class CustomDatePicker extends FormField<DateTime> {
   CustomDatePicker({
     super.key,
     DateTime? selectedDate,
-    required ValueChanged<DateTime> onDateSelected,
+    ValueChanged<DateTime>? onDateSelected, // Make it nullable
     String hintText = 'Select Date',
     DateTime? firstDate,
     DateTime? lastDate,
@@ -62,7 +62,7 @@ class CustomDatePicker extends FormField<DateTime> {
 
                 /// DATE FIELD
                 InkWell(
-                  onTap: enabled
+                  onTap: enabled && onDateSelected != null
                       ? () async {
                           final picked = await showDatePicker(
                             context: field.context,

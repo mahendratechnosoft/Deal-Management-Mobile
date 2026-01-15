@@ -11,6 +11,12 @@ class CommonDropdown<T> extends StatelessWidget {
   final ValueChanged<T?>? onChanged;
   final String Function(T)? itemAsString;
   final bool isExpanded;
+  final bool enabled;
+
+  // Label properties
+  final bool showLabel;
+  final String? labelText;
+  final bool isRequired;
 
   /// 🔹 OPTIONAL controller key (NEW)
   final GlobalKey? dropdownKey;
@@ -25,50 +31,122 @@ class CommonDropdown<T> extends StatelessWidget {
     this.onChanged,
     this.itemAsString,
     this.isExpanded = true,
-    this.dropdownKey, // optional → no impact elsewhere
+    this.enabled = true,
+    this.showLabel = false,
+    this.labelText,
+    this.isRequired = false,
+    this.dropdownKey,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height ?? 40,
-      child: DropdownButtonFormField<T>(
-        key: dropdownKey,
-        value: value,
-        isExpanded: isExpanded,
-        hint: Text(
-          hintText,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        /// LABEL
+        if (showLabel && labelText != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(left: 5, bottom: 8),
+            child: RichText(
+              text: TextSpan(
+                text: labelText!,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: enabled
+                      ? AppColors.textPrimary
+                      : AppColors.textPrimary.withOpacity(0.6),
+                  fontWeight: FontWeight.w600,
+                ),
+                children: [
+                  if (isRequired && enabled)
+                    const TextSpan(
+                      text: ' *',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-        items: items
-            .map(
-              (item) => DropdownMenuItem<T>(
-                value: item,
-                child: Text(
-                  itemAsString?.call(item) ?? item.toString(),
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+        ],
+
+        /// DROPDOWN
+        SizedBox(
+          height: height ?? 40,
+          child: DropdownButtonFormField<T>(
+            key: dropdownKey,
+            value: value,
+            isExpanded: isExpanded,
+            hint: Text(
+              hintText,
+              style: TextStyle(
+                color: enabled
+                    ? AppColors.textSecondary
+                    : AppColors.textSecondary.withOpacity(0.5),
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+            items: items
+                .map(
+                  (item) => DropdownMenuItem<T>(
+                    value: item,
+                    child: Text(
+                      itemAsString?.call(item) ?? item.toString(),
+                      style: TextStyle(
+                        color: enabled
+                            ? AppColors.textPrimary
+                            : AppColors.textPrimary.withOpacity(0.5),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                )
+                .toList(),
+            onChanged: enabled ? onChanged : null,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: Colors.grey.shade300, // Light grey border
+                  width: 1,
                 ),
               ),
-            )
-            .toList(),
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: Colors.grey.shade300, // Light grey when enabled
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: AppColors.primary
+                      .withOpacity(0.5), // Subtle primary color on focus
+                  width: 1.5,
+                ),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: Colors.grey.shade200, // Very light grey when disabled
+                  width: 1,
+                ),
+              ),
+              enabled: enabled,
+              fillColor: enabled ? Colors.white : Colors.grey.shade50,
+              filled: true,
+            ),
+            menuMaxHeight: overlayHeight,
           ),
         ),
-        menuMaxHeight: overlayHeight,
-      ),
+      ],
     );
   }
 }

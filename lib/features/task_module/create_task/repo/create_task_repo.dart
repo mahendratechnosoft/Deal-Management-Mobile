@@ -1,3 +1,6 @@
+import 'dart:developer';
+
+import 'package:xpertbiz/features/task_module/create_task/model/add_comment.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/assign_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/check_timer_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/customer_model.dart';
@@ -11,6 +14,7 @@ import 'package:xpertbiz/features/task_module/create_task/model/time_detail_mode
 import 'package:xpertbiz/features/task_module/create_task/model/update_task_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/service/create_task_service.dart';
 import '../../edit_task/model/get_task_model.dart';
+import '../model/get_comment_model.dart';
 import '../model/request_model.dart';
 
 class CreateTaskRepository {
@@ -129,5 +133,29 @@ class CreateTaskRepository {
     return (response.data as List)
         .map((e) => TimeDetailsModel.fromJson(e))
         .toList();
+  }
+
+  Future<void> addComment(AddCommentRequest request) {
+    return service.addComment(request);
+  }
+
+  Future<TaskCommentResponse> getComment(String taskId) async {
+    final res = await service.getComment(taskId);
+    return TaskCommentResponse.fromJson(res.data);
+  }
+
+  Future<void> addAsignee(
+      {required String taskId, required List<String> employeeIds}) {
+    log('Ganesh : response ');
+    return service.addAssignee(taskId: taskId, employeeIds: employeeIds);
+  }
+
+  Future<void> addFollowers(
+      {required String taskId, required List<String> employeeIds}) {
+    return service.addFollower(taskId: taskId, employeeIds: employeeIds);
+  }
+
+  Future<void> updatedStatus({required String taskId, required String status}) {
+    return service.updateStatus(taskId: taskId, status: status);
   }
 }

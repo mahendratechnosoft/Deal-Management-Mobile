@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/add_comment.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/request_task_update_model.dart';
 import '../model/request_model.dart';
 
@@ -105,6 +106,60 @@ class CreateTaskService {
   Future<Response> timedetailsFetch(String taskId) {
     return dio.get(
       "${ApiConstants.timeLogUrl}/$taskId",
+    );
+  }
+
+  Future<Response> addComment(AddCommentRequest request) {
+    return dio.post(
+      ApiConstants.addCommentUrl,
+      data: jsonEncode(request.toJson()),
+      options: Options(
+        contentType: Headers.jsonContentType,
+      ),
+    );
+  }
+
+  Future<Response> getComment(String taskId) async {
+    return dio.get(
+      "${ApiConstants.getCommentUrl}/$taskId",
+    );
+  }
+
+  Future<Response> addAssignee({
+    required String taskId,
+    required List<String> employeeIds,
+  }) {
+    return dio.put(
+      '${ApiConstants.addAssignees}/$taskId',
+      data: employeeIds,
+      options: Options(
+        contentType: Headers.jsonContentType,
+      ),
+    );
+  }
+
+  Future<Response> addFollower({
+    required String taskId,
+    required List<String> employeeIds,
+  }) {
+    return dio.put(
+      '${ApiConstants.addFollowers}/$taskId',
+      data: employeeIds,
+      options: Options(
+        contentType: Headers.jsonContentType,
+      ),
+    );
+  }
+
+  Future<Response> updateStatus({
+    required String taskId,
+    required String status,
+  }) {
+    return dio.put(
+      '${ApiConstants.updateStatusUrl}/$taskId/$status',
+      options: Options(
+        contentType: Headers.jsonContentType,
+      ),
     );
   }
 }

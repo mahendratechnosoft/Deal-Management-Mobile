@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 void showStartSuccessDialog({
   required BuildContext context,
@@ -191,11 +192,19 @@ void showStopTimerDialog({
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     /// Compact Header
+                    Row(children: [
+                      Spacer(),
+                      InkWell(
+                          onTap: () {
+                            context.pop();
+                          },
+                          child: CircleAvatar(child: Icon(Icons.close)))
+                    ]),
                     Row(
                       children: [
                         Container(
-                          height: 52,
-                          width: 52,
+                          height: 48,
+                          width: 48,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [
@@ -209,7 +218,7 @@ void showStopTimerDialog({
                           ),
                           child: const Icon(
                             Icons.timer_off_rounded,
-                            size: 26,
+                            size: 20,
                             color: Colors.white,
                           ),
                         ),
@@ -221,7 +230,7 @@ void showStopTimerDialog({
                               const Text(
                                 'Stop Timer',
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Color(0xFF1A1A1A),
                                 ),
@@ -230,7 +239,7 @@ void showStopTimerDialog({
                               Text(
                                 'Add note to complete entry',
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   color: Colors.grey.shade600,
                                 ),
                               ),
@@ -240,7 +249,7 @@ void showStopTimerDialog({
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
 
                     /// Compact Duration Card
                     Container(
@@ -269,7 +278,7 @@ void showStopTimerDialog({
                           Text(
                             formatDuration(elapsedSeconds),
                             style: const TextStyle(
-                              fontSize: 28,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF1565C0),
                             ),
@@ -286,21 +295,12 @@ void showStopTimerDialog({
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 15),
 
                     /// Note Input
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Work Summary',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
                         Text(
                           'What did you work on?',
                           style: TextStyle(
@@ -312,13 +312,6 @@ void showStopTimerDialog({
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.shade200,
-                                blurRadius: 6,
-                                spreadRadius: 1,
-                              ),
-                            ],
                           ),
                           child: TextField(
                             controller: noteController,
@@ -365,22 +358,10 @@ void showStopTimerDialog({
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${noteController.text.length}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 15),
 
                     /// Compact Action Buttons
                     ValueListenableBuilder<bool>(
@@ -421,7 +402,7 @@ void showStopTimerDialog({
                                     ),
                                     child: Center(
                                       child: Text(
-                                        'Complete Entry',
+                                        'Submit Note',
                                         style: TextStyle(
                                           color: valid
                                               ? Colors.white
@@ -437,30 +418,6 @@ void showStopTimerDialog({
                             ),
 
                             const SizedBox(height: 12),
-
-                            /// Secondary Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: TextButton(
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  foregroundColor: Colors.grey.shade700,
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
                           ],
                         );
                       },

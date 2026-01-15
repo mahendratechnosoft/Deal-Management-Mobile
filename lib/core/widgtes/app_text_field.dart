@@ -10,6 +10,9 @@ class AppTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  
+  /// NEW: Enabled state
+  final bool enabled;
 
   /// 🔥 LABEL
   final bool showLabel;
@@ -30,6 +33,7 @@ class AppTextField extends StatefulWidget {
     this.suffixIcon,
     this.keyboardType = TextInputType.text,
     this.validator,
+    this.enabled = true, // Default to enabled
     this.showLabel = false,
     this.labelText,
     this.isRequired = false,
@@ -59,6 +63,11 @@ class _AppTextFieldState extends State<AppTextField> {
   }
 
   String? _internalValidator(String? value) {
+    // Skip validation if field is disabled
+    if (!widget.enabled) {
+      return null;
+    }
+    
     // use custom validator if provided
     if (widget.validator != null) {
       final result = widget.validator!(value);
@@ -100,11 +109,13 @@ class _AppTextFieldState extends State<AppTextField> {
                 text: widget.labelText!,
                 style: TextStyle(
                   fontSize: Responsive.sp(12),
-                  color: AppColors.textPrimary,
+                  color: widget.enabled 
+                      ? AppColors.textPrimary 
+                      : AppColors.textPrimary.withOpacity(0.6),
                   fontWeight: FontWeight.w600,
                 ),
                 children: [
-                  if (widget.isRequired)
+                  if (widget.isRequired && widget.enabled)
                     TextSpan(
                       text: ' *',
                       style: TextStyle(
@@ -126,15 +137,21 @@ class _AppTextFieldState extends State<AppTextField> {
           keyboardType: widget.keyboardType,
           validator: _internalValidator,
           maxLines: widget.maxLines,
+          enabled: widget.enabled,
           style: TextStyle(
             fontWeight: FontWeight.w400,
             fontSize: Responsive.sp(14),
+            color: widget.enabled 
+                ? AppColors.textPrimary 
+                : AppColors.textPrimary.withOpacity(0.6),
           ),
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: TextStyle(
               fontSize: Responsive.sp(14),
-              color: AppColors.textSecondary,
+              color: widget.enabled
+                  ? AppColors.textSecondary
+                  : AppColors.textSecondary.withOpacity(0.5),
               fontWeight: FontWeight.w500,
             ),
             contentPadding: EdgeInsets.symmetric(
@@ -142,22 +159,33 @@ class _AppTextFieldState extends State<AppTextField> {
               horizontal: Responsive.w(12),
             ),
             prefixIcon: widget.prefixIcon,
-            suffixIcon: widget.obscureText
+            suffixIcon: widget.obscureText && widget.enabled
                 ? IconButton(
                     icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility,
                       size: Responsive.sp(20),
+                      color: widget.enabled
+                          ? AppColors.textPrimary
+                          : AppColors.textPrimary.withOpacity(0.5),
                     ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
+                    onPressed: widget.enabled
+                        ? () => setState(() => _obscure = !_obscure)
+                        : null,
                   )
                 : widget.suffixIcon,
-            enabledBorder: _border(AppColors.borderDark),
-            focusedBorder: _border(AppColors.primaryDark),
+            enabledBorder: _border(widget.enabled 
+                ? AppColors.borderDark 
+                : AppColors.borderDark.withOpacity(0.5)),
+            focusedBorder: _border(widget.enabled 
+                ? AppColors.primaryDark 
+                : AppColors.primaryDark.withOpacity(0.5)),
             errorBorder: _border(Colors.red),
             focusedErrorBorder: _border(Colors.redAccent, width: 1.5),
-            disabledBorder: _border(AppColors.border.withOpacity(0.5)),
+            disabledBorder: _border(AppColors.borderDark.withOpacity(0.3)),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: widget.enabled 
+                ? Colors.white 
+                : Colors.grey.shade100,
           ),
         ),
       ],

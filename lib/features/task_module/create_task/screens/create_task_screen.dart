@@ -56,7 +56,7 @@ class _CreateTaskState extends State<CreateTask> {
                 context,
                 message: 'Task created successfully',
               );
-              context.pop(true);
+              GoRouter.of(context).pop(true);
             }
 
             if (state.errorMessage != null) {
@@ -73,13 +73,26 @@ class _CreateTaskState extends State<CreateTask> {
 
               final assigneeDropdownItems = [
                 DropdownItem(id: '', name: 'Select Assign'),
-                if (state.assigneesList.isNotEmpty)
-                  ...state.assigneesList.map(
-                    (e) => DropdownItem(
-                      id: e.employeeId,
-                      name: e.name,
+                ...state.assigneesList
+                    .where((e) => e.employeeId != state.followerId)
+                    .map(
+                      (e) => DropdownItem(
+                        id: e.employeeId,
+                        name: e.name,
+                      ),
                     ),
-                  ),
+              ];
+
+              final followerDropdownItems = [
+                DropdownItem(id: '', name: 'Select Follower'),
+                ...state.assigneesList
+                    .where((e) => e.employeeId != state.assignIdValue)
+                    .map(
+                      (e) => DropdownItem(
+                        id: e.employeeId,
+                        name: e.name,
+                      ),
+                    ),
               ];
 
               final assigneeItems = [
@@ -184,7 +197,7 @@ class _CreateTaskState extends State<CreateTask> {
                         return null;
                       },
                       onChanged: (value) {
-                        log('response ${state.relatedTo}');
+                        //  log('response ${state.relatedTo}');
                         if (value != null) {
                           context.read<CreateTaskBloc>().add(RelatedChange(
                                 value,
@@ -252,12 +265,12 @@ class _CreateTaskState extends State<CreateTask> {
                     CustomDropdown<DropdownItem>(
                       showLabel: true,
                       labelText: 'Followers',
-                      items: assigneeDropdownItems,
+                      items: followerDropdownItems,
                       value: state.followerId.isEmpty
-                          ? assigneeDropdownItems.first
-                          : assigneeDropdownItems.firstWhere(
+                          ? followerDropdownItems.first
+                          : followerDropdownItems.firstWhere(
                               (item) => item.id == state.followerId,
-                              orElse: () => assigneeDropdownItems.first,
+                              orElse: () => followerDropdownItems.first,
                             ),
                       onChanged: (value) {
                         if (value == null) return;
@@ -374,7 +387,6 @@ class _CreateTaskState extends State<CreateTask> {
                                   relatedTo: state.relatedTo,
                                   relatedToId: state.assignee,
                                   relatedToName: state.relatedToId ?? '',
-                                  
                                   hourlyRate: double.tryParse(
                                           hourlyRateController.text.trim()) ??
                                       0,

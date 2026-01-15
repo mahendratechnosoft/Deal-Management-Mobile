@@ -2,19 +2,25 @@ import 'package:equatable/equatable.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/assign_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/check_timer_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/customer_model.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/get_comment_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/invoice_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/lead_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/proform_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/proposal_model.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/start_timer_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/time_detail_model.dart';
 import 'package:xpertbiz/features/task_module/create_task/model/update_task_model.dart';
 import 'package:xpertbiz/features/task_module/edit_task/model/get_task_model.dart';
 
-import '../model/start_timer_model.dart';
+import '../../../../core/widgtes/custom_dropdown.dart';
 
 class CreateTaskState extends Equatable {
   /// loading flags
   final bool isLoading;
+  final bool updatedStatus;
+
+  final String status;
+
   final bool isSubmitting;
   final bool taskCreated;
   final bool taskUpdated;
@@ -27,6 +33,7 @@ class CreateTaskState extends Equatable {
 
   final bool isTimerRunning;
   final TaskLogModel? activeTaskLog;
+  final bool canEdit;
 
   /// form fields
   final String relatedTo;
@@ -53,6 +60,9 @@ class CreateTaskState extends Equatable {
   final TaskUpdateModel? taskUpdateModel;
   final List<dynamic> attachments;
 
+  final List<DropdownItem> selectedAssignees;
+  final List<DropdownItem> selectedFollower;
+
   /// assignee
   final String assignIdValue;
   final String assignNameValue;
@@ -60,7 +70,32 @@ class CreateTaskState extends Equatable {
   final List<AssignModel> assigneesList;
   final bool isAssigneesLoading;
 
+  /// Comment state
+  final List<TaskComment> comments;
+  final bool isLoadingComments;
+  final bool isAddingComment;
+  final String? commentError;
+
+  /// Assignee and Follower state
+  final bool isAddingAssignee;
+  final bool isAddingFollower;
+  final bool isLoadingTaskAssignees;
+  final bool isLoadingTaskFollowers;
+  final List<AssignModel> taskAssignees;
+  final List<AssignModel> taskFollowers;
+  final String? assigneeError;
+  final String? followerError;
+
   const CreateTaskState({
+    this.status = 'Not Started',
+    this.updatedStatus = false,
+    this.selectedAssignees = const [],
+    this.selectedFollower = const [],
+    this.comments = const [],
+    this.isLoadingComments = false,
+    this.isAddingComment = false,
+    this.commentError,
+    this.canEdit = false,
     this.timeDetailsModel = const [],
     this.checktimerStatus,
     this.elapsedSeconds = 0,
@@ -75,10 +110,6 @@ class CreateTaskState extends Equatable {
     this.relatedToId,
     this.priority = 'Non selected',
     this.assignee = 'Non selected',
-
-    //
-
-    // ✅ follower defaults
     this.followerId = '',
     this.followerName = 'Select Follower',
     this.startDate,
@@ -95,9 +126,26 @@ class CreateTaskState extends Equatable {
     this.assignNameValue = 'Select Assign',
     this.assigneesList = const [],
     this.isAssigneesLoading = false,
+    this.isAddingAssignee = false,
+    this.isAddingFollower = false,
+    this.isLoadingTaskAssignees = false,
+    this.isLoadingTaskFollowers = false,
+    this.taskAssignees = const [],
+    this.taskFollowers = const [],
+    this.assigneeError,
+    this.followerError,
   });
 
   CreateTaskState copyWith({
+    String? status,
+    bool? updatedStatus,
+    List<DropdownItem>? selectedAssignees,
+    List<DropdownItem>? selectedFollower,
+    List<TaskComment>? comments,
+    bool? isLoadingComments,
+    bool? isAddingComment,
+    String? commentError,
+    bool? canEdit,
     List<TimeDetailsModel>? timeDetailsModel,
     CheckTimerStatusModel? checktimerStatus,
     int? elapsedSeconds,
@@ -112,8 +160,6 @@ class CreateTaskState extends Equatable {
     String? relatedToId,
     String? priority,
     String? assignee,
-
-    // ✅ follower
     String? followerId,
     String? followerName,
     DateTime? startDate,
@@ -130,8 +176,25 @@ class CreateTaskState extends Equatable {
     String? assignNameValue,
     bool? isAssigneesLoading,
     List<AssignModel>? assigneesList,
+    bool? isAddingAssignee,
+    bool? isAddingFollower,
+    bool? isLoadingTaskAssignees,
+    bool? isLoadingTaskFollowers,
+    List<AssignModel>? taskAssignees,
+    List<AssignModel>? taskFollowers,
+    String? assigneeError,
+    String? followerError,
   }) {
     return CreateTaskState(
+      status: status ?? this.status,
+      updatedStatus: updatedStatus ?? this.updatedStatus,
+      selectedFollower: selectedFollower ?? this.selectedFollower,
+      selectedAssignees: selectedAssignees ?? this.selectedAssignees,
+      comments: comments ?? this.comments,
+      isLoadingComments: isLoadingComments ?? this.isLoadingComments,
+      isAddingComment: isAddingComment ?? this.isAddingComment,
+      commentError: commentError,
+      canEdit: canEdit ?? this.canEdit,
       timeDetailsModel: timeDetailsModel ?? this.timeDetailsModel,
       checktimerStatus: checktimerStatus,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
@@ -146,11 +209,8 @@ class CreateTaskState extends Equatable {
       relatedToId: relatedToId ?? this.relatedToId,
       priority: priority ?? this.priority,
       assignee: assignee ?? this.assignee,
-
-      // ✅ follower emit
       followerId: followerId ?? this.followerId,
       followerName: followerName ?? this.followerName,
-
       startDate: startDate ?? this.startDate,
       dueDate: dueDate ?? this.dueDate,
       leadList: leadList ?? this.leadList,
@@ -165,11 +225,22 @@ class CreateTaskState extends Equatable {
       assignNameValue: assignNameValue ?? this.assignNameValue,
       assigneesList: assigneesList ?? this.assigneesList,
       isAssigneesLoading: isAssigneesLoading ?? this.isAssigneesLoading,
+      isAddingAssignee: isAddingAssignee ?? this.isAddingAssignee,
+      isAddingFollower: isAddingFollower ?? this.isAddingFollower,
+      isLoadingTaskAssignees:
+          isLoadingTaskAssignees ?? this.isLoadingTaskAssignees,
+      isLoadingTaskFollowers:
+          isLoadingTaskFollowers ?? this.isLoadingTaskFollowers,
+      taskAssignees: taskAssignees ?? this.taskAssignees,
+      taskFollowers: taskFollowers ?? this.taskFollowers,
+      assigneeError: assigneeError,
+      followerError: followerError,
     );
   }
 
   @override
   List<Object?> get props => [
+        status,
         isLoading,
         isSubmitting,
         taskCreated,
@@ -179,14 +250,10 @@ class CreateTaskState extends Equatable {
         relatedToId,
         priority,
         assignee,
-
-        // ✅ follower
         followerId,
         followerName,
-
         isTimerRunning,
         activeTaskLog,
-
         startDate,
         dueDate,
         leadList,
@@ -204,5 +271,25 @@ class CreateTaskState extends Equatable {
         checktimerStatus,
         isAssigneesLoading,
         timeDetailsModel,
+        canEdit,
+        comments,
+        isLoadingComments,
+        isAddingComment,
+        commentError,
+        isAddingAssignee,
+        isAddingFollower,
+        isLoadingTaskAssignees,
+        isLoadingTaskFollowers,
+        taskAssignees,
+        taskFollowers,
+        assigneeError,
+        followerError,
+        selectedAssignees,
+        selectedFollower,
+        updatedStatus,
+        taskCreated,
+        taskUpdated,
       ];
 }
+
+class CompltedState extends CreateTaskState {}

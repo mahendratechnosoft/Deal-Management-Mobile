@@ -5,7 +5,7 @@ import 'package:xpertbiz/core/utils/responsive.dart';
 class CustomDropdown<T> extends StatelessWidget {
   final List<T> items;
   final T? value;
-  final ValueChanged<T?> onChanged;
+  final ValueChanged<T?>? onChanged; // Make it nullable
   final String Function(T) itemLabel;
 
   final String hintText;
@@ -30,7 +30,7 @@ class CustomDropdown<T> extends StatelessWidget {
   const CustomDropdown({
     super.key,
     required this.items,
-    required this.onChanged,
+    required this.onChanged, // Still required but nullable
     required this.itemLabel,
     this.value,
     this.hintText = 'Select',
@@ -110,7 +110,7 @@ class CustomDropdown<T> extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
               ),
-              onChanged: enabled ? onChanged : null,
+              onChanged: enabled ? onChanged : null, // This accepts null now
               items: items.map((item) {
                 return DropdownMenuItem<T>(
                   value: item,
@@ -151,10 +151,13 @@ class CustomDropdown<T> extends StatelessWidget {
 class DropdownItem {
   final String id;
   final String name;
-  final bool? enable;
+  final String? displayName; // Optional: for showing selected status
+  final bool isSelected;
 
-  DropdownItem({required this.id, required this.name, this.enable});
-
-  @override
-  String toString() => name; // For debugging
+  const DropdownItem({
+    required this.id,
+    required this.name,
+    this.displayName,
+    this.isSelected = false,
+  });
 }

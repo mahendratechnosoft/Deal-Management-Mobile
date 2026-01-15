@@ -7,14 +7,16 @@ import 'package:xpertbiz/core/utils/responsive.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/app_drop_down.dart';
 import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
+import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_event.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_state.dart';
-import 'package:xpertbiz/features/task_module/task_deatils/widget/common_widget.dart';
 import 'package:xpertbiz/features/task_module/task_deatils/widget/info_dailog_widgte.dart';
 import 'package:xpertbiz/features/task_module/task_deatils/widget/statistics_widget.dart';
 import 'package:xpertbiz/features/task_module/task_deatils/widget/task_info_widget.dart';
-
+import '../../create_task/model/assign_model.dart';
+import '../widget/comment_widget.dart';
+import '../widget/common_widget.dart';
 import '../widget/start_time_widget.dart';
 
 class TaskDetails extends StatefulWidget {
@@ -38,6 +40,52 @@ class _TaskDetailsState extends State<TaskDetails> {
     });
   }
 
+  List<DropdownItem> getAssigneeDropdownItems(
+    List<AssignModel> allItems,
+    List<DropdownItem> selectedAssignees,
+    List<DropdownItem> selectedFollowers,
+  ) {
+    final availableItems = allItems.where((assignee) {
+      return !selectedFollowers
+          .any((follower) => follower.id == assignee.employeeId);
+    });
+
+    return availableItems.map((assignee) {
+      final isSelected = selectedAssignees
+          .any((selected) => selected.id == assignee.employeeId);
+
+      return DropdownItem(
+        id: assignee.employeeId,
+        name: isSelected ? '${assignee.name} ✓' : assignee.name,
+        displayName: isSelected ? '${assignee.name} ✓' : assignee.name,
+        isSelected: isSelected,
+      );
+    }).toList();
+  }
+
+  List<DropdownItem> getFollowerDropdownItems(
+    List<AssignModel> allItems,
+    List<DropdownItem> selectedFollowers,
+    List<DropdownItem> selectedAssignees,
+  ) {
+    final availableItems = allItems.where((assignee) {
+      return !selectedAssignees
+          .any((assigneeItem) => assigneeItem.id == assignee.employeeId);
+    });
+
+    return availableItems.map((assignee) {
+      final isSelected = selectedFollowers
+          .any((selected) => selected.id == assignee.employeeId);
+
+      return DropdownItem(
+        id: assignee.employeeId,
+        name: isSelected ? '${assignee.name} ✓' : assignee.name,
+        displayName: isSelected ? '${assignee.name} ✓' : assignee.name,
+        isSelected: isSelected,
+      );
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,7 +94,12 @@ class _TaskDetailsState extends State<TaskDetails> {
       body: BlocBuilder<CreateTaskBloc, CreateTaskState>(
         builder: (context, state) {
           if (state.isLoading || state.getTaskModel == null) {
-            return const Center(child: CircularProgressIndicator());
+            return SkeletonCard(
+              isLoading: true,
+              itemCount: 10,
+              borderRadius: 16,
+              padding: EdgeInsets.symmetric(vertical: 20),
+            );
           }
 
           final task = state.getTaskModel!.task;
@@ -57,25 +110,18 @@ class _TaskDetailsState extends State<TaskDetails> {
           } else {
             log('status check ${timerStatus.status}');
           }
-          final assigneeList = state.assigneesList
-              .where((e) => e.employeeId != state.followerId)
-              .map(
-                (e) => DropdownItem(
-                  id: e.employeeId,
-                  name: e.name,
-                ),
-              )
-              .toList();
+          final assigneeDropdownItems = getAssigneeDropdownItems(
+            state.assigneesList,
+            state.selectedAssignees,
+            state.selectedFollower,
+          );
 
-          final followerList = state.assigneesList
-              .where((e) => e.employeeId != state.assignIdValue)
-              .map(
-                (e) => DropdownItem(
-                  id: e.employeeId,
-                  name: e.name,
-                ),
-              )
-              .toList();
+          final followerDropdownItems = getFollowerDropdownItems(
+            state.assigneesList,
+            state.selectedFollower,
+            state.selectedAssignees,
+          );
+
           return Padding(
             padding: EdgeInsets.symmetric(
               horizontal: Responsive.w(16),
@@ -102,29 +148,16 @@ class _TaskDetailsState extends State<TaskDetails> {
                               GoRouterState.of(context).extra as String;
                           log('Status: $value');
                           if (value == 'Time Logs') {
-                            context
-                                .read<CreateTaskBloc>()
-                                .add(TimerDetailsEvent(taskId: taskId));
-
-                            showTimeLogsDialog(context, state);
+                            showTimeLogsDialog(context, taskId);
                           } else if (value == 'Statistics') {
                             showWeeklyTimeDialog(context, state);
                           } else if (value == 'Comments') {
                             showCommentDialog(
                               context: context,
-                              onSubmit: (comment) {
-                                // Handle submitted comment
-                                print('Comment submitted: $comment');
-                              },
+                              taskId: taskId,
                             );
                           } else {
-                            showAttachmentsDialog(
-                              context: context,
-                              onFilesSelected: (files) {
-                                // Handle selected files
-                                print('Files selected: $files');
-                              },
-                            );
+                            showAttachmentsDialog(context, taskId);
                           }
                         },
                       ),
@@ -137,12 +170,15 @@ class _TaskDetailsState extends State<TaskDetails> {
                         items: taskStatusMap.values.toList(),
                         onChanged: (value) {
                           if (value == null) return;
-
+                          final taskId =
+                              GoRouterState.of(context).extra as String;
                           final apiValue = taskStatusMap.entries
                               .firstWhere((e) => e.value == value)
                               .key;
 
-                          log('Selected API status: $apiValue');
+                          context
+                              .read<CreateTaskBloc>()
+                              .add(UpdatedStatusEvent(taskId, apiValue));
                         },
                       ),
                     ),
@@ -175,10 +211,7 @@ class _TaskDetailsState extends State<TaskDetails> {
                           const Spacer(),
                           InkWell(
                             onTap: () {
-                              final bloc = context.read<CreateTaskBloc>();
-
                               if (state.isTimerRunning) {
-                                // 🟥 Timer चालू आहे → STOP
                                 showStopTimerDialog(
                                   context: context,
                                   elapsedSeconds: state.elapsedSeconds,
@@ -189,9 +222,8 @@ class _TaskDetailsState extends State<TaskDetails> {
                                   },
                                 );
                               } else {
-                                // 🟢 Timer बंद आहे / null आहे → START
                                 log('🟢 START timer');
-                                bloc.add(StartTaskTimerEvent(task.taskId));
+                                //bloc.add(StartTaskTimerEvent(task.taskId));
                                 showStartSuccessDialog(
                                   context: context,
                                   onConfirm: () {
@@ -270,37 +302,115 @@ class _TaskDetailsState extends State<TaskDetails> {
                   title: 'Assignee',
                   label: 'Add Assignee',
                   emptyText: 'No assignee selected',
-                  items: assigneeList,
-                  selectedId: state.assignIdValue,
+                  items: assigneeDropdownItems,
+                  selectedId: state.selectedAssignees.isNotEmpty
+                      ? state.selectedAssignees.first.id
+                      : '',
+                  edit: state.canEdit,
                   onChanged: (item) {
+                    if (state.selectedAssignees.any((e) => e.id == item.id)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              '${item.name} is already selected as assignee'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                      return;
+                    }
+
                     context.read<CreateTaskBloc>().add(
-                          AssigneesDropDownEvent(
-                            id: item.id,
-                            name: item.name,
+                          AddAssigneeLocal(item),
+                        );
+
+                    context.read<CreateTaskBloc>().add(
+                          AddAssigneeEvent(
+                            taskId: task.taskId,
+                            employeeIds: [item.id],
                           ),
                         );
                   },
                 ),
+
+                // Show selected assignees from state
+                state.selectedAssignees.isEmpty
+                    ? const SizedBox.shrink()
+                    : SizedBox(
+                        height: 55,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: state.selectedAssignees.length,
+                          itemBuilder: (_, index) {
+                            final item = state.selectedAssignees[index];
+                            return assigneeRow(
+                              item: item,
+                              onRemove: () {
+                                context.read<CreateTaskBloc>().add(
+                                      RemoveAssigneeLocal(item.id),
+                                    );
+                              },
+                            );
+                          },
+                        ),
+                      ),
 
                 const SizedBox(height: 16),
 
                 /// FOLLOWER
                 TaskActionCard(
+                  edit: state.canEdit,
                   name: '2',
                   title: 'Follower',
                   label: 'Add Follower',
                   emptyText: 'No follower selected',
-                  items: followerList,
-                  selectedId: state.followerId,
+                  items: followerDropdownItems,
+                  selectedId: state.selectedFollower.isNotEmpty
+                      ? state.selectedFollower.first.id
+                      : '',
                   onChanged: (item) {
+                    if (state.selectedFollower.any((e) => e.id == item.id)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              '${item.name} is already selected as follower'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                      return;
+                    }
+
                     context.read<CreateTaskBloc>().add(
-                          FollowerChange(
-                            item.name,
-                            item.id,
-                          ),
+                          AddFollowerLocal(item),
                         );
+
+                    context.read<CreateTaskBloc>().add(AddFollowerEvent(
+                          taskId: task.taskId,
+                          employeeIds: [item.id],
+                        ));
                   },
                 ),
+
+                // Show selected followers from state
+                state.selectedFollower.isEmpty
+                    ? const SizedBox.shrink()
+                    : SizedBox(
+                        height: 55,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: state.selectedFollower.length,
+                          itemBuilder: (_, index) {
+                            final item = state.selectedFollower[index];
+                            return assigneeRow(
+                              item: item,
+                              onRemove: () {
+                                context.read<CreateTaskBloc>().add(
+                                      RemoveFollowerLocal(item.id),
+                                    );
+                              },
+                            );
+                          },
+                        ),
+                      ),
               ],
             ),
           );
@@ -355,4 +465,55 @@ String formatDuration(int seconds) {
   return '${h.toString().padLeft(2, '0')}:'
       '${m.toString().padLeft(2, '0')}:'
       '${s.toString().padLeft(2, '0')}';
+}
+
+Widget assigneeRow({
+  required DropdownItem item,
+  required VoidCallback onRemove,
+}) {
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Row(
+      children: [
+        /// Avatar (Initials)
+        Chip(
+          backgroundColor: AppColors.primaryDark,
+          label: Text(
+            _getInitials(item.name),
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: Responsive.sp(8),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 5),
+
+        /// Name
+
+        /// Remove Button
+        InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onRemove,
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Icon(
+              Icons.close,
+              size: 18,
+              color: Colors.red.shade400,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+String _getInitials(String name) {
+  final parts = name.trim().split(' ');
+  if (parts.length == 1) {
+    return name;
+  }
+  return name;
 }

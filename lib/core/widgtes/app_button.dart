@@ -6,14 +6,19 @@ class Button extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
 
+  /// ✅ Optional validator flag
+  /// If false → button disabled
+  final bool isValid;
+
   const Button({
     super.key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
+    this.isValid = true, // default = valid
   });
 
-  bool get _isDisabled => onPressed == null || isLoading;
+  bool get _isDisabled => onPressed == null || isLoading || !isValid;
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +33,15 @@ class Button extends StatelessWidget {
           onTap: _isDisabled ? null : onPressed,
           child: Ink(
             decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF06B6D4).withOpacity(0.4),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ],
+              boxShadow: _isDisabled
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: const Color(0xFF06B6D4).withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 1,
+                      ),
+                    ],
               borderRadius: BorderRadius.circular(Responsive.r(12)),
               gradient: _isDisabled
                   ? null

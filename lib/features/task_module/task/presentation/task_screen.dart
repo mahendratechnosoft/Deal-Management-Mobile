@@ -1,10 +1,10 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
+import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_event.dart';
@@ -80,6 +80,7 @@ class _TaskScreenState extends State<TaskScreen> {
           onPressed: () async {
             final result = await context.push(AppRouteName.createTask);
 
+            log('$result Ganesh check resulut $mounted');
             if (result == true && mounted) {
               context.read<TaskBloc>().add(const FetchTasks(isLoadMore: false));
             }
@@ -108,7 +109,11 @@ class _TaskScreenState extends State<TaskScreen> {
               child: BlocBuilder<TaskBloc, TaskListState>(
                 builder: (context, state) {
                   if (state is TaskListLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return SkeletonCard(
+                      isLoading: true,
+                      itemCount: 10,
+                      borderRadius: 16,
+                    );
                   }
 
                   if (state is TaskListSuccess) {

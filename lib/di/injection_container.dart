@@ -11,27 +11,45 @@ import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task/data/repo/task_repo.dart';
 import 'package:xpertbiz/features/task_module/task/data/service/task_service.dart';
 
+import '../features/task_module/task_deatils/bloc/bloc.dart';
+import '../features/task_module/task_deatils/repo/repo.dart';
+import '../features/task_module/task_deatils/service/service.dart';
+
 final sl = GetIt.instance;
 
 void init() {
-  // Dio
+  /// -------------------------------
+  /// Dio
+  /// -------------------------------
   sl.registerLazySingleton<Dio>(() => DioClient.getDio());
 
-  // Services
+  /// -------------------------------
+  /// Services
+  /// -------------------------------
   sl.registerLazySingleton(() => AuthApiService(sl()));
   sl.registerLazySingleton(() => TaskApiService(sl()));
   sl.registerLazySingleton(() => CreateTaskService(sl()));
- // sl.registerLazySingleton(() => GetTaskPerService(sl()));
 
-  // Repository
+  /// 🔹 Comment / Attachment service
+  sl.registerLazySingleton(() => CommentApiService(sl()));
+
+  /// -------------------------------
+  /// Repositories
+  /// -------------------------------
   sl.registerLazySingleton(() => AuthRepository(sl()));
   sl.registerLazySingleton(() => TaskRepository(sl()));
   sl.registerLazySingleton(() => CreateTaskRepository(sl()));
- // sl.registerLazySingleton(() => GetTaskPerRepo(sl()));
-  
 
-  // Bloc
+  /// 🔹 Comment / Attachment repository
+  sl.registerLazySingleton(() => CommentRepository(sl()));
+
+  /// -------------------------------
+  /// Blocs
+  /// -------------------------------
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => TaskBloc(sl()));
   sl.registerFactory(() => CreateTaskBloc(sl()));
- }
+
+  /// 🔹 Comment / Attachment bloc
+  sl.registerFactory(() => CommentBloc(sl()));
+}
