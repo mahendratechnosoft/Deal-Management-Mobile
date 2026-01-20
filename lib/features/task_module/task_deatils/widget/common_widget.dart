@@ -1,12 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:xpertbiz/core/widgtes/app_button.dart';
 import '../bloc/bloc.dart';
 import '../bloc/event.dart';
 import '../bloc/model/doc_model.dart';
 import '../bloc/state.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 void showAttachmentsDialog(BuildContext context, String taskId) {
   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -34,7 +37,6 @@ void showAttachmentsDialog(BuildContext context, String taskId) {
                 ),
                 child: Column(
                   children: [
-                    /// Drag Handle
                     const SizedBox(height: 10),
                     Container(
                       width: 40,
@@ -67,7 +69,7 @@ void showAttachmentsDialog(BuildContext context, String taskId) {
 
                     const Divider(),
 
-                    /// Scrollable Content
+                    /// Content
                     Expanded(
                       child: SingleChildScrollView(
                         controller: scrollController,
@@ -75,7 +77,7 @@ void showAttachmentsDialog(BuildContext context, String taskId) {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            /// Attachment Options
+                            /// Attachment options
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -84,31 +86,40 @@ void showAttachmentsDialog(BuildContext context, String taskId) {
                                   label: 'Gallery',
                                   color: Colors.blue,
                                   onTap: () => context.read<CommentBloc>().add(
-                                      PickAttachmentEvent(
-                                          AttachmentPickerType.gallery)),
+                                        PickAttachmentEvent(
+                                          AttachmentPickerType.gallery,
+                                          taskId,
+                                        ),
+                                      ),
                                 ),
                                 _attachmentOption(
                                   icon: Icons.camera_alt_rounded,
                                   label: 'Camera',
                                   color: Colors.green,
                                   onTap: () => context.read<CommentBloc>().add(
-                                      PickAttachmentEvent(
-                                          AttachmentPickerType.camera)),
+                                        PickAttachmentEvent(
+                                          AttachmentPickerType.camera,
+                                          taskId,
+                                        ),
+                                      ),
                                 ),
                                 _attachmentOption(
                                   icon: Icons.picture_as_pdf_rounded,
                                   label: 'Document',
                                   color: Colors.red,
                                   onTap: () => context.read<CommentBloc>().add(
-                                      PickAttachmentEvent(
-                                          AttachmentPickerType.pdf)),
+                                        PickAttachmentEvent(
+                                          AttachmentPickerType.pdf,
+                                          taskId,
+                                        ),
+                                      ),
                                 ),
                               ],
                             ),
 
                             const SizedBox(height: 24),
 
-                            /// Existing Attachments (API)
+                            /// Server Attachments
                             if (state.serverAttachments.isNotEmpty) ...[
                               const Text(
                                 'Existing Attachments',
@@ -124,17 +135,15 @@ void showAttachmentsDialog(BuildContext context, String taskId) {
                                     Divider(color: Colors.grey.shade200),
                                 itemBuilder: (_, i) {
                                   final file = state.serverAttachments[i];
-                                  final isImage = ['jpg', 'jpeg', 'png']
-                                      .contains(file.fileName
-                                          .split('.')
-                                          .last
-                                          .toLowerCase());
+                                  final ext = file.fileName
+                                      .split('.')
+                                      .last
+                                      .toLowerCase();
 
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
                                     leading: Icon(
                                       _getFileIcon(file.fileName),
-                                      color: Colors.grey.shade700,
                                     ),
                                     title: Text(
                                       file.fileName,
@@ -146,23 +155,24 @@ void showAttachmentsDialog(BuildContext context, String taskId) {
                                       'Uploaded by ${file.uploadedBy}',
                                       style: const TextStyle(fontSize: 11),
                                     ),
-                                    onTap: isImage
-                                        ? () => _showImagePreview(
-                                              context,
-                                              file.data,
-                                            )
-                                        : null,
+                                    onTap: () {
+                                      if (['jpg', 'jpeg', 'png']
+                                          .contains(ext)) {
+                                        _showImagePreview(context, file.data);
+                                      } else if (ext == 'pdf') {
+                                        _openPdfFromBase64(context, file.data);
+                                      }
+                                    },
                                   );
                                 },
                               ),
-                              const SizedBox(height: 20),
                             ],
                           ],
                         ),
                       ),
                     ),
 
-                    /// Upload Button (Fixed Bottom)
+                    /// Upload button
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                       child: Button(
@@ -188,27 +198,44 @@ void showAttachmentsDialog(BuildContext context, String taskId) {
   );
 }
 
+/// IMAGE PREVIEW
 void _showImagePreview(BuildContext context, String base64Image) {
   showDialog(
     context: context,
     builder: (_) => Dialog(
       insetPadding: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: InteractiveViewer(
-          minScale: 0.8,
-          maxScale: 4,
-          child: Image.memory(
-            base64Decode(base64Image),
-            fit: BoxFit.contain,
-          ),
+      child: InteractiveViewer(
+        child: Image.memory(
+          base64Decode(base64Image),
+          fit: BoxFit.contain,
         ),
       ),
     ),
   );
+}
+
+/// PDF PREVIEW
+Future<void> _openPdfFromBase64(BuildContext context, String base64Data) async {
+  final file = await createPdfFromBase64(base64Data);
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => Scaffold(
+        body: SafeArea(
+            minimum: EdgeInsets.all(10), child: SfPdfViewer.file(file)),
+      ),
+    ),
+  );
+}
+
+/// BASE64 ➜ PDF FILE
+Future<File> createPdfFromBase64(String base64Data) async {
+  final bytes = base64Decode(base64Data);
+  final dir = await getTemporaryDirectory();
+  final file = File('${dir.path}/attachment.pdf');
+  await file.writeAsBytes(bytes, flush: true);
+  return file;
 }
 
 Widget _attachmentOption({
@@ -232,8 +259,10 @@ Widget _attachmentOption({
           child: Icon(icon, color: color, size: 28),
         ),
         const SizedBox(height: 6),
-        Text(label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+        ),
       ],
     ),
   );
@@ -242,6 +271,8 @@ Widget _attachmentOption({
 IconData _getFileIcon(String fileName) {
   final ext = fileName.toLowerCase().split('.').last;
   if (ext == 'pdf') return Icons.picture_as_pdf_rounded;
-  if (['jpg', 'jpeg', 'png'].contains(ext)) return Icons.image_rounded;
+  if (['jpg', 'jpeg', 'png'].contains(ext)) {
+    return Icons.image_rounded;
+  }
   return Icons.insert_drive_file_rounded;
 }

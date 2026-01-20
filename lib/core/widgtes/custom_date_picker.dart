@@ -64,8 +64,11 @@ class CustomDatePicker extends FormField<DateTime> {
                 InkWell(
                   onTap: enabled && onDateSelected != null
                       ? () async {
+                          // ✅ Capture context BEFORE await
+                          final BuildContext ctx = field.context;
+
                           final picked = await showDatePicker(
-                            context: field.context,
+                            context: ctx,
                             initialDate: field.value ?? DateTime.now(),
                             firstDate: firstDate ?? DateTime(2000),
                             lastDate: lastDate ?? DateTime(2100),
@@ -83,10 +86,14 @@ class CustomDatePicker extends FormField<DateTime> {
                             },
                           );
 
-                          if (picked != null) {
-                            field.didChange(picked);
-                            onDateSelected(picked);
-                          }
+                          if (picked == null) return;
+
+                          // ⛔ Widget disposed while dialog open
+                          if (!ctx.mounted) return;
+
+                          // ✅ SAFE
+                          field.didChange(picked);
+                          onDateSelected(picked);
                         }
                       : null,
                   borderRadius: BorderRadius.circular(6),

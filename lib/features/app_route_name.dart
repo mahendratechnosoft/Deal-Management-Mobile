@@ -3,10 +3,11 @@ class AppRouteName {
   static const String login = '/login';
   static const String dashboard = '/dashboard';
   static const String task = '/task';
-  static const String customers = '/customers';
+  static const String timesheet = '/timesheet';
   static const String settings = '/settings';
   static const String invoice = '/invoice';
   static const String editTask = '/edit_task';
-  static const String taskDetails ='/task_details';
-  static const String createTask ='/create_task';
+  static const String taskDetails = '/task_details';
+  static const String createTask = '/create_task';
+  static const String attendance = '/attendance';
 }

@@ -2,7 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/presentation/screens/login_screen.dart';
 import 'package:xpertbiz/features/auth/presentation/screens/splash_screen.dart';
-import 'package:xpertbiz/features/customers/presentation/customers_screen.dart';
+import 'package:xpertbiz/features/timesheet/presentation/timelist_screen.dart';
 import 'package:xpertbiz/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:xpertbiz/features/invoice/presentation/invoice_screen.dart';
 import 'package:xpertbiz/features/settings/presentation/settings_screen.dart';
@@ -10,6 +10,9 @@ import 'package:xpertbiz/features/task_module/create_task/screens/create_task_sc
 import 'package:xpertbiz/features/task_module/edit_task/presentation/task_edit_screen.dart';
 import 'package:xpertbiz/features/task_module/task_deatils/screen/task_details_screen.dart';
 import 'package:xpertbiz/features/task_module/task/presentation/task_screen.dart';
+import 'package:xpertbiz/features/timesheet/presentation/timesheet_screen.dart';
+
+import 'timesheet/data/model/emp_model.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -47,10 +50,10 @@ class AppRouter {
         },
       ),
       GoRoute(
-        path: AppRouteName.customers,
-        name: 'customers',
+        path: AppRouteName.timesheet,
+        name: 'timesheets',
         builder: (context, state) {
-          return CustomersScreen();
+          return EmployeeListScreen();
         },
       ),
       GoRoute(
@@ -79,6 +82,15 @@ class AppRouter {
         name: 'task details',
         builder: (context, state) {
           return TaskDetails();
+        },
+      ),
+      GoRoute(
+        path: AppRouteName.attendance,
+        name: 'attendance',
+        builder: (context, state) {
+          return AttendanceCalendarScreen(
+            employee: state.extra as Employee,
+          );
         },
       ),
     ],

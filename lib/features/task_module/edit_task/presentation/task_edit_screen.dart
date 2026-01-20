@@ -2,23 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
-import 'package:xpertbiz/core/utils/responsive.dart';
-import 'package:xpertbiz/core/utils/validators.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
-import 'package:xpertbiz/core/widgtes/app_button.dart';
-import 'package:xpertbiz/core/widgtes/app_drop_down.dart';
-import 'package:xpertbiz/core/widgtes/app_text_field.dart';
-import 'package:xpertbiz/core/widgtes/custom_date_picker.dart';
-import 'package:xpertbiz/core/widgtes/custom_dropdown.dart';
-import 'package:xpertbiz/features/auth/bloc/user_role.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_event.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_state.dart';
-import 'package:xpertbiz/features/task_module/create_task/model/assign_model.dart';
-import 'package:xpertbiz/features/task_module/create_task/model/request_task_update_model.dart';
-import 'package:xpertbiz/features/task_module/task_deatils/screen/task_details_screen.dart';
+import '../../../../core/utils/responsive.dart';
 import '../../../../core/widgtes/app_snackbar.dart';
+import '../../../../core/widgtes/custom_dropdown.dart';
+import 'task_edit_helper.dart';
+import 'package:xpertbiz/core/utils/validators.dart';
+import 'package:xpertbiz/core/widgtes/app_button.dart';
+import 'package:xpertbiz/core/widgtes/app_drop_down.dart';
+import 'package:xpertbiz/core/widgtes/app_text_field.dart';
+import 'package:xpertbiz/core/widgtes/custom_date_picker.dart';
+import 'package:xpertbiz/features/task_module/create_task/model/request_task_update_model.dart';
+import 'package:xpertbiz/features/task_module/task_deatils/screen/helper_widget.dart';
 
 class EditTask extends StatefulWidget {
   const EditTask({super.key});
@@ -28,42 +27,31 @@ class EditTask extends StatefulWidget {
 }
 
 class _EditTaskState extends State<EditTask> {
+  // bool isEditRestricted;
+  bool isEdit = true;
+  late String currentUserRole;
+  final formKey = GlobalKey<FormState>();
+
   final subjectController = TextEditingController();
   final hourlyRateController = TextEditingController();
   final estimateHoursController = TextEditingController();
   final descriptionController = TextEditingController();
 
-  final _formKey = GlobalKey<FormState>();
-
-  DateTime? startDate;
-  DateTime? endDate;
-  late bool isEditRestricted;
-  late String currentUserRole;
-
   @override
   void initState() {
     super.initState();
 
-    // Get current user role
     final user = AuthLocalStorage.getUser();
     currentUserRole = user?.role ?? '';
-
-    // Check if edit is restricted for this role
-    isEditRestricted = RoleResolver.isEmployeeRestricted(currentUserRole);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final taskId = GoRouterState.of(context).extra as String;
       context.read<CreateTaskBloc>().add(GetTaskEvent(taskId: taskId));
-
-      // Only load assignees if user has permission to edit
-      if (!isEditRestricted) {
-        context.read<CreateTaskBloc>().add(LoadAssigneesEvent());
-      }
     });
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext cnxt) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CommonAppBar(title: 'Edit Task'),
@@ -90,14 +78,15 @@ class _EditTaskState extends State<EditTask> {
 
             if (state.getTaskModel != null) {
               final task = state.getTaskModel!.task;
+
               subjectController.text = task.subject;
               hourlyRateController.text = task.hourlyRate.toString();
               estimateHoursController.text = task.estimatedHours.toString();
               descriptionController.text = task.description;
 
-              context.read<CreateTaskBloc>()
-                ..add(TaskStartDateChanged(task.startDate))
-                ..add(TaskDueDateChanged(task.endDate));
+              isEdit = state.getTaskModel!.canEdit;
+
+              /// 🔹 MASTER EMPLOYEE LIST
             }
           },
           child: BlocBuilder<CreateTaskBloc, CreateTaskState>(
@@ -108,16 +97,11 @@ class _EditTaskState extends State<EditTask> {
               if (state.isLoading || state.getTaskModel == null) {
                 return const Center(child: CircularProgressIndicator());
               }
-
               final task = state.getTaskModel!.task;
-              final edit = state.getTaskModel!.canEdit;
-              isEditRestricted = !edit;
-
-              /// 🔹 MASTER EMPLOYEE LIST
               final allEmployees = state.assigneesList;
 
               final relatedItems = [
-                DropdownItem(id: '', name: task.relatedToName),
+                DropdownItem(id: 'Select', name: task.relatedToName),
                 ...getAssigneeItems(state),
               ];
 
@@ -140,10 +124,10 @@ class _EditTaskState extends State<EditTask> {
               );
 
               return Form(
-                key: _formKey,
+                key: formKey,
                 child: ListView(
                   children: [
-                    isEditRestricted
+                    !isEdit
                         ? SizedBox.shrink()
                         : Text(
                             'Fill in the task information below',
@@ -156,7 +140,7 @@ class _EditTaskState extends State<EditTask> {
                     const SizedBox(height: 15),
 
                     /// Restriction Warning Message
-                    if (isEditRestricted)
+                    if (!isEdit)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -210,7 +194,7 @@ class _EditTaskState extends State<EditTask> {
                       labelText: 'Subject',
                       validator: (v) => Validators.required(v, 'Subject'),
                       isRequired: true,
-                      enabled: !isEditRestricted, // Disable if restricted
+                      enabled: !!isEdit, // Disable if restricted
                     ),
                     const SizedBox(height: 15),
                     Row(
@@ -219,9 +203,9 @@ class _EditTaskState extends State<EditTask> {
                           child: CommonDropdown<String>(
                             height: 57,
                             hintText: 'Status',
-                            value: resolveStatusLabel(task.status),
+                            value: statusLable(task.status),
                             items: taskStatusMap.values.toList(),
-                            enabled: !isEditRestricted,
+                            enabled: !!isEdit,
                             showLabel: true, // Add this
                             labelText: 'Status', // Add this
                             onChanged: (value) {
@@ -231,7 +215,7 @@ class _EditTaskState extends State<EditTask> {
                                   .firstWhere((e) => e.value == value)
                                   .key;
 
-                              context
+                              cnxt
                                   .read<CreateTaskBloc>()
                                   .add(StatusEvent(apiValue));
                             },
@@ -245,7 +229,7 @@ class _EditTaskState extends State<EditTask> {
                             keyboardType: TextInputType.number,
                             labelText: 'Hourly Rate',
                             showLabel: true,
-                            enabled: !isEditRestricted,
+                            enabled: !!isEdit,
                           ),
                         ),
                       ],
@@ -263,15 +247,15 @@ class _EditTaskState extends State<EditTask> {
                             isRequired: true,
                             selectedDate: state.startDate,
                             errorText: 'Date is required',
-                            onDateSelected: !isEditRestricted
+                            onDateSelected: !!isEdit
                                 ? (date) {
-                                    startDate = date;
-                                    context
+                                    //    startDate = date;
+                                    cnxt
                                         .read<CreateTaskBloc>()
                                         .add(TaskStartDateChanged(date));
                                   }
-                                : null, // Disable callback if restricted
-                            enabled: !isEditRestricted, // Disable if restricted
+                                : null,
+                            enabled: !!isEdit,
                           ),
                         ),
                         const SizedBox(width: 5),
@@ -283,15 +267,15 @@ class _EditTaskState extends State<EditTask> {
                             isRequired: true,
                             selectedDate: state.dueDate,
                             errorText: 'Date is required',
-                            onDateSelected: !isEditRestricted
+                            onDateSelected: !!isEdit
                                 ? (date) {
-                                    endDate = date;
-                                    context
+                                    //   endDate = date;
+                                    cnxt
                                         .read<CreateTaskBloc>()
                                         .add(TaskDueDateChanged(date));
                                   }
-                                : null, // Disable callback if restricted
-                            enabled: !isEditRestricted, // Disable if restricted
+                                : null,
+                            enabled: !!isEdit,
                           ),
                         ),
                       ],
@@ -311,48 +295,58 @@ class _EditTaskState extends State<EditTask> {
                         'Invoice'
                       ],
                       value: state.relatedTo,
-                      onChanged: !isEditRestricted
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Related To is required';
+                        }
+                        return null;
+                      },
+                      onChanged: !!isEdit
                           ? (value) {
+                              //  log('response ${state.relatedTo}');
                               if (value != null) {
-                                context
+                                cnxt.read<CreateTaskBloc>().add(RelatedChange(
+                                      value,
+                                    ));
+                                cnxt
                                     .read<CreateTaskBloc>()
-                                    .add(RelatedChange(value));
+                                    .add(FetchListEvent(value: value));
                               }
                             }
-                          : null, // Disable if restricted
+                          : null,
                       itemLabel: (item) => item,
-                      enabled: !isEditRestricted, // Disable if restricted
                     ),
-                    //  const SizedBox(height: 15),
-                    task.relatedTo == 'Non selected'
+                    state.relatedTo == 'Non selected'
                         ? SizedBox.shrink()
                         : const SizedBox(height: 15),
 
-                    task.relatedTo == 'Non selected'
+                    state.relatedTo == 'Non selected'
                         ? SizedBox.shrink()
-                        :
-
-                        /// RELATED ITEM
-                        CustomDropdown<DropdownItem>(
+                        : CustomDropdown<DropdownItem>(
                             showLabel: true,
-                            labelText: 'Select ${task.relatedTo}',
+                            labelText: state.relatedTo == 'Non selected'
+                                ? 'Assignees'
+                                : 'Select ${state.relatedTo}',
                             items: relatedItems,
                             value: relatedItems.firstWhere(
-                              (e) => e.id == state.assignee,
+                              (item) {
+                                return item.id == state.assignee;
+                              },
                               orElse: () => relatedItems.first,
                             ),
-                            onChanged: !isEditRestricted
+                            onChanged: !!isEdit
                                 ? (value) {
                                     if (value != null) {
-                                      context
+                                      cnxt
                                           .read<CreateTaskBloc>()
                                           .add(DependsLelatedtoEvent(value));
                                     }
                                   }
-                                : null, // Disable if restricted
+                                : null,
                             itemLabel: (item) => item.name,
-                            enabled: !isEditRestricted, // Disable if restricted
+                            enabled: !!isEdit,
                           ),
+
                     const SizedBox(height: 15),
 
                     /// ASSIGNEE
@@ -366,10 +360,10 @@ class _EditTaskState extends State<EditTask> {
                               (e) => e.id == state.assignIdValue,
                               orElse: () => assigneList.first,
                             ),
-                      onChanged: !isEditRestricted
+                      onChanged: !!isEdit
                           ? (value) {
                               if (value == null) return;
-                              context.read<CreateTaskBloc>().add(
+                              cnxt.read<CreateTaskBloc>().add(
                                     AssigneesDropDownEvent(
                                       id: value.id,
                                       name: value.name,
@@ -378,7 +372,7 @@ class _EditTaskState extends State<EditTask> {
                             }
                           : null, // Disable if restricted
                       itemLabel: (item) => item.name,
-                      enabled: !isEditRestricted, // Disable if restricted
+                      enabled: !!isEdit, // Disable if restricted
                     ),
                     const SizedBox(height: 15),
 
@@ -393,16 +387,16 @@ class _EditTaskState extends State<EditTask> {
                               (e) => e.id == state.followerId,
                               orElse: () => followerList.first,
                             ),
-                      onChanged: !isEditRestricted
+                      onChanged: !!isEdit
                           ? (value) {
                               if (value == null) return;
-                              context.read<CreateTaskBloc>().add(
+                              cnxt.read<CreateTaskBloc>().add(
                                     FollowerChange(value.name, value.id),
                                   );
                             }
-                          : null, // Disable if restricted
+                          : null,
                       itemLabel: (item) => item.name,
-                      enabled: !isEditRestricted, // Disable if restricted
+                      enabled: !!isEdit,
                     ),
                     const SizedBox(height: 20),
 
@@ -417,18 +411,21 @@ class _EditTaskState extends State<EditTask> {
                         'High',
                         'Urgent',
                       ],
-                      value: task.priority,
-                      onChanged: !isEditRestricted
+                      value: state.priority,
+                      validator: (value) {
+                        return null;
+                      },
+                      onChanged: !!isEdit
                           ? (value) {
                               if (value != null) {
-                                context
+                                cnxt
                                     .read<CreateTaskBloc>()
                                     .add(PriorityChange(value));
                               }
                             }
-                          : null, // Disable if restricted
+                          : null,
                       itemLabel: (item) => item,
-                      enabled: !isEditRestricted, // Disable if restricted
+                      enabled: !!isEdit,
                     ),
                     const SizedBox(height: 15),
 
@@ -438,7 +435,7 @@ class _EditTaskState extends State<EditTask> {
                       keyboardType: TextInputType.number,
                       labelText: 'Estimate hours',
                       showLabel: true,
-                      enabled: !isEditRestricted, // Disable if restricted
+                      enabled: !!isEdit, // Disable if restricted
                     ),
                     const SizedBox(height: 15),
 
@@ -448,18 +445,16 @@ class _EditTaskState extends State<EditTask> {
                       maxLines: 4,
                       labelText: 'Task Description',
                       showLabel: true,
-                      enabled: !isEditRestricted, // Disable if restricted
+                      enabled: !!isEdit,
                     ),
                     const SizedBox(height: 20),
-
-                    /// UPDATE BUTTON or RESTRICTED MESSAGE
-                    if (isEditRestricted)
+                    if (!isEdit)
                       SizedBox.shrink()
                     else
                       Button(
                         text: 'Update Task',
                         onPressed: () {
-                          if (!_formKey.currentState!.validate()) return;
+                          if (!formKey.currentState!.validate()) return;
 
                           final task = state.getTaskModel!.task;
                           final user = AuthLocalStorage.getUser();
@@ -469,8 +464,8 @@ class _EditTaskState extends State<EditTask> {
                             taskId: task.taskId,
                             adminId: task.adminId,
                             subject: subjectController.text.trim(),
-                            startDate: formatDate(startDate ?? state.startDate),
-                            endDate: formatDate(endDate ?? state.dueDate),
+                            startDate: formatDate(state.startDate),
+                            endDate: formatDate(state.dueDate),
                             priority: state.priority,
                             relatedTo: state.relatedTo,
                             relatedToId: task.relatedToId,
@@ -501,7 +496,7 @@ class _EditTaskState extends State<EditTask> {
                             employeeId: user.employeeId ?? 'NA',
                           );
 
-                          context.read<CreateTaskBloc>().add(
+                          cnxt.read<CreateTaskBloc>().add(
                                 UpdateTaskEvent(request: payload),
                               );
                         },
@@ -515,63 +510,4 @@ class _EditTaskState extends State<EditTask> {
       ),
     );
   }
-}
-
-/// Utils
-String formatDate(DateTime? date) {
-  if (date == null) return '';
-  return "${date.year.toString().padLeft(4, '0')}-"
-      "${date.month.toString().padLeft(2, '0')}-"
-      "${date.day.toString().padLeft(2, '0')}";
-}
-
-List<DropdownItem> getAssigneeItems(CreateTaskState state) {
-  switch (state.relatedTo) {
-    case 'Lead':
-      return state.leadList
-          .where((e) => e.clientName.isNotEmpty)
-          .map((e) => DropdownItem(id: e.leadId, name: e.clientName))
-          .toList();
-    case 'Customer':
-      return state.customerList
-          .where((e) => e.companyName.isNotEmpty)
-          .map((e) => DropdownItem(id: e.id, name: e.companyName))
-          .toList();
-    case 'Proforma':
-      return state.proformList
-          .where((e) => e.formatedProformaInvoiceNumber.isNotEmpty)
-          .map((e) => DropdownItem(
-              id: e.proformaInvoiceId, name: e.formatedProformaInvoiceNumber))
-          .toList();
-    case 'Proposal':
-      return state.proposalList
-          .where((e) => e.formatedProposalNumber.isNotEmpty)
-          .map((e) =>
-              DropdownItem(id: e.proposalId, name: e.formatedProposalNumber))
-          .toList();
-    case 'Invoice':
-      return state.invoiceList
-          .where((e) => e.formatedInvoiceNumber.isNotEmpty)
-          .map((e) =>
-              DropdownItem(id: e.invoiceId, name: e.formatedInvoiceNumber))
-          .toList();
-    default:
-      return [];
-  }
-}
-
-List<DropdownItem> buildEmployeeDropdown({
-  required List<AssignModel> allEmployees,
-  required String excludeEmployeeId,
-  required String placeholder,
-}) {
-  return [
-    DropdownItem(id: '', name: placeholder),
-    ...allEmployees.where((e) => e.employeeId != excludeEmployeeId).map(
-          (e) => DropdownItem(
-            id: e.employeeId,
-            name: e.name,
-          ),
-        ),
-  ];
 }

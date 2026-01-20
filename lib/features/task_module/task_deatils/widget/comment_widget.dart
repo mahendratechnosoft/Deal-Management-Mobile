@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/widgtes/app_text_field.dart';
 
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.dart';
@@ -40,9 +41,11 @@ void showCommentDialog({
         },
         builder: (context, state) {
           return Dialog(
+            backgroundColor: AppColors.card,
             insetPadding: const EdgeInsets.all(16),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            clipBehavior: Clip.antiAlias,
             child: SizedBox(
               height: MediaQuery.of(context).size.height * 0.7,
               child: Column(
@@ -104,7 +107,7 @@ Widget _header(BuildContext context, int count) {
         const Icon(Icons.sticky_note_2_outlined, color: Color(0xFF2563EB)),
         const SizedBox(width: 8),
         const Text(
-          'Task Notes',
+          'Task Comments',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(width: 6),
@@ -141,7 +144,7 @@ Widget _commentItem(TaskComment comment, BuildContext context) {
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.divider,
       borderRadius: BorderRadius.circular(12),
       border: Border.all(color: Colors.grey.shade300),
     ),
@@ -312,7 +315,7 @@ Widget _inputArea({
   return Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: const Color(0xFFF8FAFC),
+      color: AppColors.primaryDark,
       border: Border(top: BorderSide(color: Colors.grey.shade300)),
     ),
     child: Column(
@@ -351,7 +354,10 @@ Widget _inputArea({
               controller: controller,
             )),
             IconButton(
-              icon: const Icon(Icons.attach_file),
+              icon: const Icon(
+                Icons.attach_file,
+                color: AppColors.background,
+              ),
               onPressed: () => _showAttachmentPicker(context, attachments),
             ),
             isLoading
@@ -362,7 +368,10 @@ Widget _inputArea({
                   )
                 : IconButton(
                     onPressed: onSend,
-                    icon: const Icon(Icons.send),
+                    icon: const Icon(
+                      Icons.send,
+                      color: AppColors.background,
+                    ),
                   ),
           ],
         ),

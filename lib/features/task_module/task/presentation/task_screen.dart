@@ -117,7 +117,7 @@ class _TaskScreenState extends State<TaskScreen> {
                   }
 
                   if (state is TaskListSuccess) {
-                    if (state.filteredTasks.isEmpty) {
+                    if (state.tasks.isEmpty) {
                       return RefreshIndicator(
                         onRefresh: () => _onRefresh(context),
                         child: ListView(
@@ -186,7 +186,15 @@ class _TaskScreenState extends State<TaskScreen> {
                   }
 
                   if (state is TaskFailure) {
-                    return Center(child: Text(state.message));
+                    _onRefresh(context);
+                    return Center(
+                        child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                      ),
+                    ));
                   }
 
                   return const SizedBox.shrink();

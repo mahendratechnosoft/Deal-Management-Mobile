@@ -179,11 +179,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
     ));
 
     try {
-      // Note: You need to implement this method in your repository
-      // final followers = await repository.getTaskFollowers(event.taskId);
-      // For now, using the assigneesList as placeholder
       final followers = state.assigneesList;
-
       emit(state.copyWith(
         taskFollowers: followers,
         isLoadingTaskFollowers: false,
@@ -233,8 +229,6 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       );
 
       await repository.addComment(request);
-
-      // Refresh comments after adding
       add(RefreshCommentsEvent(taskId: event.taskId));
 
       emit(state.copyWith(isAddingComment: false));

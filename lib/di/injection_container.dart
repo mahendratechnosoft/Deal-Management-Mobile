@@ -10,6 +10,9 @@ import 'package:xpertbiz/features/task_module/create_task/service/create_task_se
 import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task/data/repo/task_repo.dart';
 import 'package:xpertbiz/features/task_module/task/data/service/task_service.dart';
+import 'package:xpertbiz/features/timesheet/block/timesheet_bloc.dart';
+import 'package:xpertbiz/features/timesheet/data/repo/repo.dart';
+import 'package:xpertbiz/features/timesheet/data/service/service.dart';
 
 import '../features/task_module/task_deatils/bloc/bloc.dart';
 import '../features/task_module/task_deatils/repo/repo.dart';
@@ -18,38 +21,23 @@ import '../features/task_module/task_deatils/service/service.dart';
 final sl = GetIt.instance;
 
 void init() {
-  /// -------------------------------
-  /// Dio
-  /// -------------------------------
   sl.registerLazySingleton<Dio>(() => DioClient.getDio());
 
-  /// -------------------------------
-  /// Services
-  /// -------------------------------
   sl.registerLazySingleton(() => AuthApiService(sl()));
   sl.registerLazySingleton(() => TaskApiService(sl()));
   sl.registerLazySingleton(() => CreateTaskService(sl()));
-
-  /// 🔹 Comment / Attachment service
   sl.registerLazySingleton(() => CommentApiService(sl()));
+  sl.registerLazySingleton(() => TimesheetService(sl()));
 
-  /// -------------------------------
-  /// Repositories
-  /// -------------------------------
   sl.registerLazySingleton(() => AuthRepository(sl()));
   sl.registerLazySingleton(() => TaskRepository(sl()));
   sl.registerLazySingleton(() => CreateTaskRepository(sl()));
-
-  /// 🔹 Comment / Attachment repository
   sl.registerLazySingleton(() => CommentRepository(sl()));
+  sl.registerLazySingleton(() => TimeSheetRepository(sl()));
 
-  /// -------------------------------
-  /// Blocs
-  /// -------------------------------
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => TaskBloc(sl()));
   sl.registerFactory(() => CreateTaskBloc(sl()));
-
-  /// 🔹 Comment / Attachment bloc
   sl.registerFactory(() => CommentBloc(sl()));
+  sl.registerFactory(() => TimeSheetBloc(sl()));
 }

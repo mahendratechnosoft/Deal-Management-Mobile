@@ -74,11 +74,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
     if (state is TaskListSuccess) {
       final s = state as TaskListSuccess;
 
-      emit(const TaskListLoading());
+      // emit(const TaskListLoading());
 
       try {
-        final response = await repository.fetchTasks(page: 0, size: pageSize);
-
+        final response = await repository.fetchTasks(
+            page: 0, size: pageSize, search: event.value);
         emit(TaskListSuccess(
           tasks: response.taskList,
           filter: s.filter.copyWith(search: event.value),

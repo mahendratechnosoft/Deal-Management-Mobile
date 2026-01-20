@@ -85,10 +85,6 @@ void showDeleteDialog(BuildContext context, String taskId) {
                     child: ElevatedButton(
                       onPressed: () {
                         context.read<TaskBloc>().add(DeleteTaskEvent(taskId: taskId));
-
-                        // context
-                        //     .read<TaskBloc>()
-                        //     .add(RemoveTaskEvent(taskId:taskId));
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(

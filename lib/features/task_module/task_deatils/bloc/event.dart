@@ -1,11 +1,10 @@
 import 'package:xpertbiz/features/task_module/task_deatils/bloc/model/doc_model.dart';
 
 abstract class CommentEvent {}
-
-/// ONE event for all picking
 class PickAttachmentEvent extends CommentEvent {
   final AttachmentPickerType type;
-  PickAttachmentEvent(this.type);
+  final String taskId;
+  PickAttachmentEvent(this.type,this.taskId);
 }
 
 class RemoveAttachmentEvent extends CommentEvent {

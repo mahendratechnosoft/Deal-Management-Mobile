@@ -47,6 +47,7 @@ dependencies:
   flutter_html: ^3.0.0
   image_picker: ^1.2.0
   skeletonizer: ^1.4.3
+  syncfusion_flutter_pdfviewer: ^29.1.38
 
 dev_dependencies:
   flutter_test:

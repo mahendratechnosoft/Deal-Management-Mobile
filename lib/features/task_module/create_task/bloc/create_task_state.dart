@@ -87,7 +87,7 @@ class CreateTaskState extends Equatable {
   final String? followerError;
 
   const CreateTaskState({
-    this.status = 'Not Started',
+    this.status = 'NOT_STARTED',
     this.updatedStatus = false,
     this.selectedAssignees = const [],
     this.selectedFollower = const [],

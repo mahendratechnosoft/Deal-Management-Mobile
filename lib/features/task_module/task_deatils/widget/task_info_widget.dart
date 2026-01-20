@@ -56,6 +56,11 @@ class TaskInformationCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+          _InfoItem(
+            label: 'Created by',
+            value: task.createdBy,
+          ),
+          const SizedBox(height: 16),
           Text(
             'Description',
             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -147,7 +152,9 @@ class TaskActionCard extends StatelessWidget {
       ),
     );
   }
-}/// ---------------- HELPERS ----------------
+}
+
+/// ---------------- HELPERS ----------------
 
 class _InfoItem extends StatelessWidget {
   final String label;

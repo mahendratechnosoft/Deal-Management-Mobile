@@ -10,7 +10,7 @@ class DrawerMenu extends StatelessWidget {
 
   static const _items = [
     ("Task", Icons.dashboard, AppRouteName.task),
-    ("Customers", Icons.people, AppRouteName.customers),
+    ("Timesheets", Icons.people, AppRouteName.timesheet),
     ("Invoices", Icons.receipt_long, AppRouteName.invoice),
     ("Settings", Icons.settings, AppRouteName.settings),
   ];
@@ -20,7 +20,6 @@ class DrawerMenu extends StatelessWidget {
     return Expanded(
       child: BlocBuilder<DrawerBloc, DrawerState>(
         builder: (context, state) {
-      
           return ListView.separated(
             padding: EdgeInsets.symmetric(vertical: Responsive.h(12)),
             itemCount: _items.length,

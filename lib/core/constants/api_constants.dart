@@ -6,7 +6,7 @@ class ApiConstants {
   static const String poppinsFont = 'Poppins';
 
   static const String baseUrl = "http://91.203.133.210:9091/";
-
+  //https://api.mtechnosoft.xpertbizsolutions.com/
   // ================= AUTH =================
   static const String login = "signin";
 
@@ -57,6 +57,12 @@ class ApiConstants {
   static String get addAssignees => "${RoleResolver.rolePath}/addAssigneesToTask";
   static String get addFollowers => "${RoleResolver.rolePath}/addFollowersToTask";
   static String get updateStatusUrl => "${RoleResolver.rolePath}/updateTaskStatus";
+  static String get getAllEmpStatusUrl => "${RoleResolver.rolePath}/getLoginStatusAllEmployee";
+  static String get empAttendanceUrl => "${RoleResolver.rolePath}/addAttendance";
+  static String get empmonthAtteUrl => "${RoleResolver.rolePath}/getAttendanceBetween";
+
+
+
 
 
 

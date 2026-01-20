@@ -67,6 +67,7 @@ const List<Map<String, String>> taskStatusList = [
   {'label': 'In Progress', 'value': 'IN_PROGRESS'},
   {'label': 'Testing', 'value': 'TESTING'},
   {'label': 'Completed', 'value': 'COMPLETED'},
+  {'label': 'Feedback', 'value': 'AWAITING_FEEDBACK'},
 ];
 
 class _FilterDropdown extends StatelessWidget {
@@ -105,7 +106,7 @@ class _FilterDropdown extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     item['label']!, // ✅ UI label
-                    style: TextStyle(fontSize: Responsive.sp(14)),
+                    style: TextStyle(fontSize: Responsive.sp(13)),
                   ),
                 ],
               ),

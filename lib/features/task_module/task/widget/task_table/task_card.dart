@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class TaskCard extends StatelessWidget {
   final String id;
@@ -69,6 +70,9 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool overdue = isOverdue(endDate);
+    final Color statusColor = overdue ? Colors.red : const Color(0xFF64748B);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -142,14 +146,18 @@ class TaskCard extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Spacer(),
-              const Icon(Icons.stop_circle_outlined,
-                  size: 16, color: Color(0xFF64748B)),
+              Icon(
+                Icons.stop_circle_outlined,
+                size: 16,
+                color: statusColor,
+              ),
               const SizedBox(width: 6),
               Text(
                 endDate,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF64748B),
+                  color: statusColor,
+                  fontWeight: overdue ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ],
@@ -265,4 +273,22 @@ class _StatusChip extends StatelessWidget {
       ),
     );
   }
+}
+
+bool isOverdue(String endDate) {
+  // 🔒 Trim string (VERY IMPORTANT)
+  final cleaned = endDate.trim();
+
+  final formatter = DateFormat('dd MMM yyyy', 'en_US');
+
+  // 🔒 Parse end date and strip time
+  final parsed = formatter.parseStrict(cleaned);
+  final end = DateTime(parsed.year, parsed.month, parsed.day);
+
+  // 🔒 Strip time from today
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+
+  // 🔴 Red ONLY after end date
+  return today.isAfter(end);
 }
