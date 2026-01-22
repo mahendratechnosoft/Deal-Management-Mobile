@@ -2,8 +2,8 @@ import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/presentation/screens/login_screen.dart';
 import 'package:xpertbiz/features/auth/presentation/screens/splash_screen.dart';
-import 'package:xpertbiz/features/timesheet/presentation/timelist_screen.dart';
-import 'package:xpertbiz/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:xpertbiz/features/timesheet/presentation/emp_list_screen.dart';
+import 'package:xpertbiz/features/Lead/presentation/screens/lead_screen.dart';
 import 'package:xpertbiz/features/invoice/presentation/invoice_screen.dart';
 import 'package:xpertbiz/features/settings/presentation/settings_screen.dart';
 import 'package:xpertbiz/features/task_module/create_task/screens/create_task_screen.dart';
@@ -32,7 +32,7 @@ class AppRouter {
         path: AppRouteName.dashboard,
         name: 'dashboard',
         builder: (context, state) {
-          return DashboardScreen();
+          return LeadScreen();
         },
       ),
       GoRoute(

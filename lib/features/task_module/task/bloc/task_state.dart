@@ -24,7 +24,7 @@ class TaskFilter extends Equatable {
 
   const TaskFilter({
     this.search = '',
-    this.status = 'All',
+    this.status = 'IN_PROGRESS',
     this.priority = 'All',
   });
 

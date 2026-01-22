@@ -26,6 +26,7 @@ class DrawerMenu extends StatelessWidget {
             separatorBuilder: (_, __) => SizedBox(height: Responsive.h(6)),
             itemBuilder: (context, index) {
               final isActive = state.selectedIndex == index;
+              if (index == 1) {}
 
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 220),

@@ -18,16 +18,14 @@ void showDayDetails(
       final checkIns = records.where((e) => e.status).toList();
       final checkOuts = records.where((e) => !e.status).toList();
 
-      DateTime? startTime = checkIns.isNotEmpty
-          ? DateTime.fromMillisecondsSinceEpoch(
-              checkIns.first.timeStamp,
-            )
+      final hasOpenSession = checkIns.length > checkOuts.length; // 🔥 key logic
+
+      final DateTime? startTime = checkIns.isNotEmpty
+          ? DateTime.fromMillisecondsSinceEpoch(checkIns.last.timeStamp)
           : null;
 
-      DateTime? endTime = checkOuts.isNotEmpty
-          ? DateTime.fromMillisecondsSinceEpoch(
-              checkOuts.last.timeStamp,
-            )
+      final DateTime? endTime = !hasOpenSession && checkOuts.isNotEmpty
+          ? DateTime.fromMillisecondsSinceEpoch(checkOuts.last.timeStamp)
           : null;
 
       return DraggableScrollableSheet(
@@ -75,22 +73,56 @@ void showDayDetails(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // ✅ START TIME (always)
                       _summaryItem(
                         'Start',
                         startTime != null ? _formatTime(startTime) : '--',
                         Icons.login,
                         Colors.green,
                       ),
-                      _summaryItem(
-                        'End',
-                        endTime != null ? _formatTime(endTime) : '--',
-                        Icons.logout,
-                        Colors.red,
-                      ),
+
+                      // ✅ IF CHECKED OUT → SHOW END TIME
+                      if (!hasOpenSession)
+                        _summaryItem(
+                          'End',
+                          endTime != null ? _formatTime(endTime) : '--',
+                          Icons.logout,
+                          Colors.red,
+                        ),
+
+                      // ✅ IF STILL WORKING → SHOW LIVE DURATION
+                      if (hasOpenSession && startTime != null)
+                        StreamBuilder<int>(
+                          stream: Stream.periodic(
+                            const Duration(seconds: 1),
+                            (_) => DateTime.now().millisecondsSinceEpoch,
+                          ),
+                          builder: (_, snap) {
+                            if (!snap.hasData) {
+                              return _summaryItem(
+                                'Duration',
+                                '--',
+                                Icons.timer,
+                                Colors.blue,
+                              );
+                            }
+
+                            final duration = Duration(
+                              milliseconds:
+                                  snap.data! - startTime.millisecondsSinceEpoch,
+                            );
+
+                            return _summaryItem(
+                              'Duration',
+                              _formatDuration(duration),
+                              Icons.timer,
+                              Colors.blue,
+                            );
+                          },
+                        ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 16),
 
                 const Text(
@@ -157,6 +189,11 @@ void showDayDetails(
       );
     },
   );
+}
+
+String _formatDuration(Duration d) {
+  String t(int n) => n.toString().padLeft(2, '0');
+  return '${t(d.inHours)}:${t(d.inMinutes.remainder(60))}:${t(d.inSeconds.remainder(60))}';
 }
 
 String _formatTime(DateTime t) {

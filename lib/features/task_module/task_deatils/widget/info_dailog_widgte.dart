@@ -200,8 +200,14 @@ class _TimeLogTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderDark),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,11 +215,12 @@ class _TimeLogTile extends StatelessWidget {
           // Avatar
           CircleAvatar(
             radius: 18,
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.blue.shade600,
             child: Text(
               initials,
               style: const TextStyle(
                 fontSize: 12,
+                fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
             ),
@@ -226,38 +233,56 @@ class _TimeLogTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name + Duration
+                /// NAME + DURATION
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                    Expanded(
+                      child: Text(
+                        item.name.trim().split(' ').first,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
-                    const Spacer(),
-                    Chip(
-                      visualDensity: VisualDensity.compact,
-                      label: Text(
-                        '${item.durationInMinutes} min',
-                        style: const TextStyle(fontSize: 11),
-                      ),
+                    const SizedBox(width: 8),
+                    _DurationBadge(
+                      text: formatDuration(item.durationInMinutes),
                     ),
                   ],
                 ),
 
-                _LogInfoRow(label: 'Note', value: item.endNote),
-                _LogInfoRow(
-                  label: 'Start',
-                  value: _formatDateTime(item.startTime),
+                const SizedBox(height: 6),
+
+                if (item.endNote.isNotEmpty)
+                  Text(
+                    item.endNote,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.3,
+                    ),
+                  ),
+
+                const SizedBox(height: 8),
+
+                _MetaRow(
+                  icon: Icons.play_arrow_rounded,
+                  text: _formatDateTime(item.startTime),
                 ),
-                _LogInfoRow(
-                  label: 'End',
-                  value: item.endTime == null
+
+                _MetaRow(
+                  icon: Icons.stop_rounded,
+                  text: item.endTime == null
                       ? 'In Progress'
                       : _formatDateTime(item.endTime!),
+                  highlight: item.endTime == null,
                 ),
               ],
             ),
@@ -267,15 +292,45 @@ class _TimeLogTile extends StatelessWidget {
     );
   }
 
+  // ================= HELPERS =================
+
+  String formatDuration(int minutes) {
+    if (minutes <= 0) return '0 min';
+
+    final totalHours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+
+    if (totalHours == 0) {
+      return '$minutes min';
+    }
+
+    if (totalHours < 12) {
+      return remainingMinutes == 0
+          ? '$totalHours hr'
+          : '$totalHours hr $remainingMinutes min';
+    }
+
+    final days = totalHours ~/ 24;
+    final remainingHours = totalHours % 24;
+
+    if (days == 0) {
+      return '$totalHours hr';
+    }
+
+    return remainingHours == 0
+        ? '$days day${days > 1 ? 's' : ''}'
+        : '$days day${days > 1 ? 's' : ''} $remainingHours hr';
+  }
+
   String _getInitials(String name) {
     if (name.isEmpty) return 'NA';
 
     return name
         .trim()
         .split(' ')
-        .where((part) => part.isNotEmpty)
+        .where((e) => e.isNotEmpty)
         .take(2)
-        .map((part) => part[0])
+        .map((e) => e[0])
         .join()
         .toUpperCase();
   }
@@ -306,11 +361,41 @@ class _TimeLogTile extends StatelessWidget {
   }
 }
 
-class _LogInfoRow extends StatelessWidget {
-  final String label;
-  final String value;
+class _DurationBadge extends StatelessWidget {
+  final String text;
 
-  const _LogInfoRow({required this.label, required this.value});
+  const _DurationBadge({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Colors.blue,
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool highlight;
+
+  const _MetaRow({
+    required this.icon,
+    required this.text,
+    this.highlight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -318,21 +403,21 @@ class _LogInfoRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: 4),
       child: Row(
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
+          Icon(
+            icon,
+            size: 14,
+            color: highlight ? Colors.orange : Colors.grey,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
-              value,
-              style: const TextStyle(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+                color: highlight ? Colors.orange : AppColors.textSecondary,
               ),
             ),
           ),

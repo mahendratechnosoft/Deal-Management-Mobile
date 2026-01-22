@@ -19,7 +19,6 @@ import 'helper_widget.dart';
 Widget detailsWidget(BuildContext context, CreateTaskState state) {
   final task = state.getTaskModel!.task;
 
-  
   final taskId = GoRouterState.of(context).extra as String;
 
   final assigneeItems = buildAssigneeDropdownItems(
@@ -182,11 +181,21 @@ Widget _timerCard(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(task.subject,
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-            const Spacer(),
+            Expanded(
+              child: Text(
+                task.subject,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: Responsive.sp(14),
+                  fontWeight: FontWeight.w600,
+                  height: 1.3, // ✅ better line spacing
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
             _startStopButton(context, state, task),
           ],
         ),

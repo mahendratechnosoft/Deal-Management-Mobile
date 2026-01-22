@@ -66,7 +66,7 @@ const List<Map<String, String>> taskStatusList = [
   {'label': 'Not Started', 'value': 'NOT_STARTED'},
   {'label': 'In Progress', 'value': 'IN_PROGRESS'},
   {'label': 'Testing', 'value': 'TESTING'},
-  {'label': 'Completed', 'value': 'COMPLETED'},
+  {'label': 'Completed', 'value': 'COMPLETE'},
   {'label': 'Feedback', 'value': 'AWAITING_FEEDBACK'},
 ];
 

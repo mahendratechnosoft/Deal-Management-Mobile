@@ -3,13 +3,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
+import 'package:xpertbiz/core/widgtes/app_text_field.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
+import 'package:xpertbiz/features/auth/bloc/user_role.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
+import '../../auth/data/locale_data/login_response.dart';
 import '../block/timesheet_bloc.dart';
 import '../block/timesheet_event.dart';
 import '../block/timesheet_state.dart';
 import '../data/model/emp_model.dart';
 import '../presentation/emp_helper.dart';
 import '../widget/emp_card.dart';
+import 'attendance_mark.dart';
 
 class EmployeeListScreen extends StatefulWidget {
   const EmployeeListScreen({super.key});
@@ -20,11 +25,13 @@ class EmployeeListScreen extends StatefulWidget {
 
 class _EmployeeListScreenState extends State<EmployeeListScreen> {
   final String _currentDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  final controller = TextEditingController();
+  LoginResponse? user = AuthLocalStorage.getUser();
+  final role = RoleResolver.rolePath;
 
   @override
   void initState() {
     super.initState();
-    // Reset state and fetch data
     _resetAndFetchData();
   }
 
@@ -91,9 +98,9 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
 
     if (state is TimeSheetLoaded) {
       final apiList = state.employees;
-      if (apiList.isEmpty) {
-        return _buildEmptyState(context);
-      }
+      // if (apiList.isEmpty) {
+      //   return _buildEmptyState(context);
+      // }
 
       final employees = apiList.map(EmployeeMapper.fromApi).toList();
       final activeCount = apiList.where((e) => e.status).length;
@@ -115,20 +122,44 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
         },
         child: Column(
           children: [
-            _buildHeader(
-              total: employees.length,
-              active: activeCount,
-              avgHoursText: avgHoursText,
-            ),
+            role == 'employee'
+                ? SizedBox.shrink()
+                : _buildHeader(
+                    total: employees.length,
+                    active: activeCount,
+                    avgHoursText: avgHoursText,
+                  ),
+            role == 'employee'
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: CheckInOutWidget(
+                    ),
+                  )
+                : Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
+                    child: AppTextField(
+                      prefixIcon: Icon(Icons.search),
+                      hint: 'Search',
+                      controller: controller,
+                      onChanged: (value) {
+                        context
+                            .read<TimeSheetBloc>()
+                            .add(FilterEmployees(value));
+                        return '';
+                      },
+                    ),
+                  ),
             Expanded(
               child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: employees.length,
-                itemBuilder: (_, i) => EmployeeCard(
-                  employee: employees[i],
-                  onTap: () => fetchMonthAttendance(context, employees[i]),
-                ),
-              ),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: employees.length,
+                  itemBuilder: (cnxt, i) {
+                    return EmployeeCard(
+                      employee: employees[i],
+                      onTap: () => fetchMonthAttendance(context, employees[i]),
+                    );
+                  }),
             ),
           ],
         ),
@@ -176,7 +207,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     required String avgHoursText,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       color: Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -208,14 +239,14 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
           value,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 12,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           title,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 10,
             color: Colors.grey,
           ),
         ),

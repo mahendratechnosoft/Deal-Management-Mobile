@@ -10,7 +10,8 @@ class AppTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
-  
+  final String Function(String)? onChanged;
+
   /// NEW: Enabled state
   final bool enabled;
 
@@ -29,6 +30,7 @@ class AppTextField extends StatefulWidget {
     required this.hint,
     required this.controller,
     this.obscureText = false,
+    this.onChanged,
     this.prefixIcon,
     this.suffixIcon,
     this.keyboardType = TextInputType.text,
@@ -67,7 +69,7 @@ class _AppTextFieldState extends State<AppTextField> {
     if (!widget.enabled) {
       return null;
     }
-    
+
     // use custom validator if provided
     if (widget.validator != null) {
       final result = widget.validator!(value);
@@ -109,8 +111,8 @@ class _AppTextFieldState extends State<AppTextField> {
                 text: widget.labelText!,
                 style: TextStyle(
                   fontSize: Responsive.sp(12),
-                  color: widget.enabled 
-                      ? AppColors.textPrimary 
+                  color: widget.enabled
+                      ? AppColors.textPrimary
                       : AppColors.textPrimary.withOpacity(0.6),
                   fontWeight: FontWeight.w600,
                 ),
@@ -138,11 +140,12 @@ class _AppTextFieldState extends State<AppTextField> {
           validator: _internalValidator,
           maxLines: widget.maxLines,
           enabled: widget.enabled,
+          onChanged: widget.onChanged,
           style: TextStyle(
             fontWeight: FontWeight.w400,
             fontSize: Responsive.sp(14),
-            color: widget.enabled 
-                ? AppColors.textPrimary 
+            color: widget.enabled
+                ? AppColors.textPrimary
                 : AppColors.textPrimary.withOpacity(0.6),
           ),
           decoration: InputDecoration(
@@ -173,19 +176,17 @@ class _AppTextFieldState extends State<AppTextField> {
                         : null,
                   )
                 : widget.suffixIcon,
-            enabledBorder: _border(widget.enabled 
-                ? AppColors.borderDark 
+            enabledBorder: _border(widget.enabled
+                ? AppColors.borderDark
                 : AppColors.borderDark.withOpacity(0.5)),
-            focusedBorder: _border(widget.enabled 
-                ? AppColors.primaryDark 
+            focusedBorder: _border(widget.enabled
+                ? AppColors.primaryDark
                 : AppColors.primaryDark.withOpacity(0.5)),
             errorBorder: _border(Colors.red),
             focusedErrorBorder: _border(Colors.redAccent, width: 1.5),
             disabledBorder: _border(AppColors.borderDark.withOpacity(0.3)),
             filled: true,
-            fillColor: widget.enabled 
-                ? Colors.white 
-                : Colors.grey.shade100,
+            fillColor: widget.enabled ? Colors.white : Colors.grey.shade100,
           ),
         ),
       ],

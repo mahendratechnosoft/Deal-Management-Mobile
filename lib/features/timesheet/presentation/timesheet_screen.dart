@@ -26,8 +26,10 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   int _absentDays = 0;
   int _halfDays = 0;
 
-  String _fmt(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  // Single instance of date formatter to avoid repeated instantiation
+  final DateFormat _dateFormatter = DateFormat('yyyy-MM-dd');
+
+  String _fmt(DateTime d) => _dateFormatter.format(d);
 
   void _mapApiToCalendar(EmpMonthAttendanceModel model) {
     _attendanceMap.clear();
@@ -35,10 +37,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
     final empData = model.data[widget.employee.name];
     if (empData == null) return;
 
-    empData.forEach((date, records) {
-      _attendanceMap[date] = records;
-    });
-
+    _attendanceMap.addAll(empData);
     _calculateMonthlyStats();
     setState(() {});
   }
@@ -62,9 +61,8 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
             ? now
             : endDate;
 
-    final String fromDate = DateFormat('yyyy-MM-dd').format(startDate);
-
-    final String toDate = DateFormat('yyyy-MM-dd').format(finalEndDate);
+    final String fromDate = _dateFormatter.format(startDate);
+    final String toDate = _dateFormatter.format(finalEndDate);
 
     context.read<TimeSheetBloc>().add(
           FetchEmpMonthAttendance(
@@ -83,8 +81,30 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
 
-    _attendanceMap.forEach((date, records) {
-      final isToday = _fmt(todayDate) == date;
+    final daysInMonth =
+        DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(_selectedMonth.year, _selectedMonth.month, day);
+
+      // ❌ Skip future dates
+      if (date.isAfter(todayDate)) continue;
+
+      // ❌ Skip weekends
+      if (date.weekday == DateTime.sunday || _isAlternateSaturday(date)) {
+        continue;
+      }
+
+      final key = _fmt(date);
+      final records = _attendanceMap[key];
+
+      // ❌ No records → ABSENT
+      if (records == null || records.isEmpty) {
+        _absentDays++;
+        continue;
+      }
+
+      final isToday = date == todayDate;
       final total = _totalWork(records, isToday: isToday);
 
       if (total.inHours >= 8) {
@@ -94,7 +114,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
       } else {
         _absentDays++;
       }
-    });
+    }
   }
 
   // ================= WORK TIME =================
@@ -136,10 +156,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   }
 
   bool _hasCheckedIn(List<Attendance> records) {
-    for (final r in records) {
-      if (r.status) return true;
-    }
-    return false;
+    return records.any((r) => r.status);
   }
 
   // ================= UI =================
@@ -147,10 +164,13 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   Widget build(BuildContext context) {
     return BlocListener<TimeSheetBloc, TimeSheetState>(
       listener: (context, state) {
-        if (state is AttendanceLoaded) {
-          _mapApiToCalendar(state.data);
+        if (state is TimeSheetLoaded) {
+          final attendance = state.monthlyAttendance;
+          if (attendance != null) {
+            _mapApiToCalendar(attendance);
+          }
         }
-        if (state is AttendanceError) {
+        if (state is TimeSheetError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
@@ -163,29 +183,26 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   Widget _buildMainContent() {
     final daysInMonth =
         DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
-
     final firstWeekdayIndex =
         DateTime(_selectedMonth.year, _selectedMonth.month, 1).weekday % 7;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: CommonAppBar(title: widget.employee.name),
-      body: Column(
-        children: [
-          _summaryCard(),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  _calendarHeader(),
-                  _weekdayHeader(),
-                  _calendarGrid(daysInMonth, firstWeekdayIndex),
-                  _attendanceLegend(),
-                ],
-              ),
-            ),
-          ),
-        ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _fetchAttendanceForSelectedMonth(context);
+        },
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 16),
+          children: [
+            _summaryCard(),
+            _calendarHeader(),
+            _weekdayHeader(),
+            _calendarGrid(daysInMonth, firstWeekdayIndex),
+            _attendanceLegend(),
+          ],
+        ),
       ),
     );
   }
@@ -217,23 +234,10 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
 
         final isSunday = date.weekday == DateTime.sunday;
         final isAltSaturday = _isAlternateSaturday(date);
-
         final isWeekend = isSunday || isAltSaturday;
 
         final key = _fmt(date);
         final records = _attendanceMap[key];
-
-        Color bgColor;
-
-        if (isWeekend) {
-          bgColor = Colors.grey.withOpacity(0.3);
-        } else if (isFuture) {
-          bgColor = AppColors.card;
-        } else if (records == null || records.isEmpty) {
-          bgColor = Colors.red.withOpacity(0.3);
-        } else {
-          bgColor = _dayColor(records, isToday: isToday);
-        }
 
         return GestureDetector(
           onTap: (records == null || isFuture || isWeekend)
@@ -242,7 +246,12 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: bgColor,
+              color: _getDayBackgroundColor(
+                records,
+                isToday: isToday,
+                isFuture: isFuture,
+                isWeekend: isWeekend,
+              ),
               borderRadius: BorderRadius.circular(10),
               border: isToday
                   ? Border.all(color: Colors.blue, width: 2)
@@ -256,6 +265,23 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
         );
       },
     );
+  }
+
+  Color _getDayBackgroundColor(
+    List<Attendance>? records, {
+    required bool isToday,
+    required bool isFuture,
+    required bool isWeekend,
+  }) {
+    if (isWeekend) {
+      return Colors.grey.withOpacity(0.3);
+    } else if (isFuture) {
+      return AppColors.card;
+    } else if (records == null || records.isEmpty) {
+      return Colors.red.withOpacity(0.3);
+    } else {
+      return _dayColor(records, isToday: isToday);
+    }
   }
 
   // ================= SUMMARY & LEGEND =================
@@ -283,9 +309,14 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   Widget _stat(String label, int value, Color color) {
     return Column(
       children: [
-        Text('$value',
-            style: TextStyle(
-                color: color, fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(
+          '$value',
+          style: TextStyle(
+            color: color,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(color: Colors.white)),
       ],
@@ -293,44 +324,36 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   }
 
   Widget _calendarHeader() {
+    final monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: () {
-              setState(() {
-                _selectedMonth =
-                    DateTime(_selectedMonth.year, _selectedMonth.month - 1);
-              });
-              _fetchAttendanceForSelectedMonth(context);
-            },
+            onPressed: () => _navigateMonth(-1),
             icon: const Icon(Icons.chevron_left),
           ),
           Text(
-            '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
+            '${monthNames[_selectedMonth.month - 1]} ${_selectedMonth.year}',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           IconButton(
-            onPressed: () {
-              final nextMonth =
-                  DateTime(_selectedMonth.year, _selectedMonth.month + 1);
-
-              final now = DateTime.now();
-
-              // ❌ Block future months
-              if (nextMonth.year > now.year ||
-                  (nextMonth.year == now.year && nextMonth.month > now.month)) {
-                return;
-              }
-
-              setState(() {
-                _selectedMonth = nextMonth;
-              });
-
-              _fetchAttendanceForSelectedMonth(context);
-            },
+            onPressed: () => _navigateMonth(1),
             icon: const Icon(Icons.chevron_right),
           ),
         ],
@@ -338,20 +361,26 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
     );
   }
 
-  String _monthName(int m) => const [
-        'January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-      ][m - 1];
+  void _navigateMonth(int direction) {
+    final newMonth = DateTime(
+      _selectedMonth.year,
+      _selectedMonth.month + direction,
+    );
+
+    final now = DateTime.now();
+
+    // ❌ Block future months
+    if (newMonth.year > now.year ||
+        (newMonth.year == now.year && newMonth.month > now.month)) {
+      return;
+    }
+
+    setState(() {
+      _selectedMonth = newMonth;
+    });
+
+    _fetchAttendanceForSelectedMonth(context);
+  }
 
   Widget _weekdayHeader() {
     final days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -360,23 +389,31 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: days
-            .map((d) => Expanded(
-                  child: Center(
-                    child: Text(
-                      d,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: d == 'S' ? Colors.red : Colors.grey[700],
-                      ),
+            .map(
+              (d) => Expanded(
+                child: Center(
+                  child: Text(
+                    d,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: d == 'S' ? Colors.red : Colors.grey[700],
                     ),
                   ),
-                ))
+                ),
+              ),
+            )
             .toList(),
       ),
     );
   }
 
   Widget _attendanceLegend() {
+    final legendItems = [
+      _legendItem('Full Day', Colors.green),
+      _legendItem('Half Day', Colors.orange),
+      _legendItem('Absent', Colors.red),
+    ];
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(12),
@@ -386,11 +423,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _legendItem('Full Day', Colors.green),
-          _legendItem('Half Day', Colors.orange),
-          _legendItem('Absent', Colors.red),
-        ],
+        children: legendItems,
       ),
     );
   }

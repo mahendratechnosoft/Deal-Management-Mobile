@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
 import 'package:xpertbiz/core/constants/app_string.dart';
 import 'package:xpertbiz/core/utils/responsive.dart';
+import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
 import 'package:xpertbiz/features/app_routes.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 import 'package:xpertbiz/features/drawer/bloc/drawer_bloc.dart';
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => di.sl<CreateTaskBloc>()),
         BlocProvider(create: (context) => di.sl<CommentBloc>()),
         BlocProvider(create: (context) => di.sl<TimeSheetBloc>()),
+        BlocProvider(create: (context) => di.sl<LeadBloc>()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

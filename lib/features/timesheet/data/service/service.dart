@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
 
@@ -38,10 +36,7 @@ class TimesheetService {
       },
     );
 
-    log('RAW RESPONSE => ${res.data}');
-
-    // ✅ HANDLE: plain text "no data"
-    if (res.data is String &&
+     if (res.data is String &&
         (res.data as String).toLowerCase().contains('no attendance')) {
       return Response(
         requestOptions: res.requestOptions,
@@ -63,5 +58,26 @@ class TimesheetService {
     }
 
     return res;
+  }
+
+  Future<Response> checkIn(bool checkIn) {
+    return dio.post(
+      "${ApiConstants.checkInUrl}/$checkIn",
+    );
+  }
+
+  Future<Map<String, dynamic>> checkInStatus(
+      {required String fromDate,
+      required String toDate,
+      required String employeeId}) async{
+    final response =await dio.post(
+      ApiConstants.checkInStatusUrl,
+      queryParameters: {
+        "fromDate": fromDate,
+        "toDate": toDate,
+        "employeeId": employeeId,
+      },
+    );
+     return Map<String, dynamic>.from(response.data);
   }
 }

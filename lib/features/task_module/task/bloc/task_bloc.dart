@@ -105,6 +105,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
 
         emit(TaskListSuccess(
           tasks: response.taskList,
+          
           filter: s.filter.copyWith(status: event.value),
           page: 0,
           hasReachedMax: response.taskList.length < pageSize,

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../data/model/checkIn_status_model.dart';
 import '../data/model/emp_month_attendance_model.dart';
 import '../data/model/get_all_emp_status.dart';
 
@@ -13,81 +14,69 @@ class TimeSheetInitial extends TimeSheetState {}
 
 class TimeSheetLoading extends TimeSheetState {}
 
-class TimeSheetLoaded extends TimeSheetState {
-  final List<GetAllEmpStatusModel> employees;
-
-  const TimeSheetLoaded(this.employees);
-
-  @override
-  List<Object?> get props => [employees];
-}
-
 class TimeSheetEmpty extends TimeSheetState {}
 
 class TimeSheetError extends TimeSheetState {
   final String message;
-
   const TimeSheetError(this.message);
 
   @override
   List<Object?> get props => [message];
 }
 
-/// ================= ATTENDANCE STATES =================
+/// 🔥 SINGLE SOURCE OF TRUTH STATE
+/// All screen-related data lives here
+class TimeSheetLoaded extends TimeSheetState {
+  /// Employee list
+  final List<GetAllEmpStatusModel> employees;
+  final List<GetAllEmpStatusModel> allEmployees;
 
-class AttendanceInitial extends TimeSheetState {}
+  /// Check-in runtime data
+  final bool isCheckedIn;
+  final int? startTimestamp;
 
-class AttendanceLoading extends TimeSheetState {
-  final EmpMonthAttendanceModel? previousData;
+  /// Monthly attendance
+  final EmpMonthAttendanceModel? monthlyAttendance;
 
-  const AttendanceLoading({this.previousData});
+  /// Today check-in status
+  final EmployeeAttendanceResponse? checkInStatus;
 
-  AttendanceLoading copyWith({
-    EmpMonthAttendanceModel? previousData,
-  }) {
-    return AttendanceLoading(
-      previousData: previousData ?? this.previousData,
-    );
-  }
-
-  @override
-  List<Object?> get props => [previousData];
-}
-
-class AttendanceLoaded extends TimeSheetState {
-  final EmpMonthAttendanceModel data;
-
-  const AttendanceLoaded(this.data);
-
-  AttendanceLoaded copyWith({
-    EmpMonthAttendanceModel? data,
-  }) {
-    return AttendanceLoaded(data ?? this.data);
-  }
-
-  @override
-  List<Object?> get props => [data];
-}
-
-class AttendanceError extends TimeSheetState {
-  final String message;
-  final EmpMonthAttendanceModel? previousData;
-
-  const AttendanceError({
-    required this.message,
-    this.previousData,
+  const TimeSheetLoaded({
+    required this.employees,
+    required this.allEmployees,
+    this.isCheckedIn = false,
+    this.startTimestamp,
+    this.monthlyAttendance,
+    this.checkInStatus,
   });
 
-  AttendanceError copyWith({
-    String? message,
-    EmpMonthAttendanceModel? previousData,
+  TimeSheetLoaded copyWith({
+    List<GetAllEmpStatusModel>? employees,
+    List<GetAllEmpStatusModel>? allEmployees,
+    bool? isCheckedIn,
+    int? startTimestamp,
+    EmpMonthAttendanceModel? monthlyAttendance,
+    EmployeeAttendanceResponse? checkInStatus,
   }) {
-    return AttendanceError(
-      message: message ?? this.message,
-      previousData: previousData ?? this.previousData,
+    return TimeSheetLoaded(
+      employees: employees ?? this.employees,
+      allEmployees: allEmployees ?? this.allEmployees,
+      isCheckedIn: isCheckedIn ?? this.isCheckedIn,
+      startTimestamp: startTimestamp ?? this.startTimestamp,
+      monthlyAttendance:
+          monthlyAttendance ?? this.monthlyAttendance,
+      checkInStatus: checkInStatus ?? this.checkInStatus,
     );
   }
 
   @override
-  List<Object?> get props => [message, previousData];
+  List<Object?> get props => [
+        employees,
+        allEmployees,
+        isCheckedIn,
+        startTimestamp,
+        monthlyAttendance,
+        checkInStatus,
+      ];
 }
+
