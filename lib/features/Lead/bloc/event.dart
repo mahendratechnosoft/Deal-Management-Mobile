@@ -10,3 +10,10 @@ abstract class LeadEvent extends Equatable {
 class FetchLeadStatus extends LeadEvent {
   const FetchLeadStatus();
 }
+
+class FetchAllLeadsEvent extends LeadEvent {
+  final bool loadMore;
+  const FetchAllLeadsEvent({this.loadMore = false});
+}
+
+class RefreshLeads extends LeadEvent {}

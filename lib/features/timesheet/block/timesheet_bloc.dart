@@ -36,7 +36,7 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     Emitter<TimeSheetState> emit,
   ) async {
     emit(TimeSheetLoading());
-
+    await Future.delayed(Duration(milliseconds: 100));
     try {
       final employees = await repository.getAllEmpStatus(event.date);
       if (employees.isEmpty) {
@@ -48,13 +48,11 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
       final user = AuthLocalStorage.getUser();
 
       List<GetAllEmpStatusModel> visibleEmployees = employees;
-
-      /// Employee sees only himself
       if (role == 'employee' && user?.employeeId != null) {
         visibleEmployees =
             employees.where((e) => e.employeeId == user!.employeeId).toList();
       }
-
+      log('API FETCHED → status: ${visibleEmployees.first.status}');
       emit(
         TimeSheetLoaded(
           employees: visibleEmployees,
@@ -115,15 +113,12 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     }
   }
 
-  /// ⏱ Check-in / Check-out
   Future<void> _onCheckIn(
     CheckInEvent event,
     Emitter<TimeSheetState> emit,
   ) async {
     try {
       final res = await repository.checkIn(event.checkIn);
-
-      log('Check-in response: ${res.status}, ${res.timeStamp}');
 
       if (state is TimeSheetLoaded) {
         emit(
@@ -154,8 +149,6 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
 
       final lastRecord = result.dates.first.records.last;
 
-      log('Check-in status fetched: ${lastRecord.status}');
-
       emit(
         (state as TimeSheetLoaded).copyWith(
           checkInStatus: result,
@@ -164,7 +157,7 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
         ),
       );
     } catch (_) {
-      emit(const TimeSheetError('Check-in status load failed'));
+      //   emit(const TimeSheetError('Check-in status load failed'));
     }
   }
 }

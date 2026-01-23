@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
 import 'package:xpertbiz/features/Lead/bloc/event.dart';
 import 'package:xpertbiz/features/Lead/bloc/state.dart';
+import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/drawer/presentation/custom_drawer.dart';
 
 class LeadScreen extends StatefulWidget {
@@ -19,6 +21,16 @@ class _LeadScreenState extends State<LeadScreen> {
   void initState() {
     super.initState();
     context.read<LeadBloc>().add(const FetchLeadStatus());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Check if we're coming back to this screen
+    if (ModalRoute.of(context)!.isCurrent) {
+      context.read<LeadBloc>().add(const FetchLeadStatus());
+    }
   }
 
   @override
@@ -53,9 +65,9 @@ class _LeadScreenState extends State<LeadScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _searchBox(),
-                    const SizedBox(height: 16),
-                    _TotalLeadCard(total: totalLeads),
+                    InkWell(
+                        onTap: () => context.push(AppRouteName.allLead),
+                        child: _TotalLeadCard(total: totalLeads)),
                     const SizedBox(height: 20),
                     GridView.builder(
                       shrinkWrap: true,
@@ -87,22 +99,6 @@ class _LeadScreenState extends State<LeadScreen> {
       ),
     );
   }
-}
-
-Widget _searchBox() {
-  return TextField(
-    decoration: InputDecoration(
-      hintText: "Search leads...",
-      prefixIcon: const Icon(Icons.search),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-    ),
-  );
 }
 
 Color _statusColor(String status) {
@@ -213,9 +209,7 @@ class _LeadStatusCard extends StatelessWidget {
       shadowColor: Colors.black12,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          // 🔜 Navigate to filtered lead list
-        },
+        onTap: () {},
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

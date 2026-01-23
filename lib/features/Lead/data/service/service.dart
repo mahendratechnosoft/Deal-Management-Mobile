@@ -11,4 +11,11 @@ class LeadService {
       ApiConstants.leadStatusUrl,
     );
   }
+
+  Future<Response> fetchAllLeads({
+     required int page,
+    required int limit,
+  }) async {
+    return dio.get('${ApiConstants.allLeadsUrl}/$page/$limit');
+  }
 }

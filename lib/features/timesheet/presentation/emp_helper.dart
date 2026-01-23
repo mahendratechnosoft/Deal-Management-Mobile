@@ -1,16 +1,22 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:xpertbiz/features/timesheet/data/model/get_all_emp_status.dart';
 import '../data/model/emp_model.dart';
 
 class EmployeeMapper {
   static Employee fromApi(GetAllEmpStatusModel api) {
+    log('status check : ${api.status}');
+
     final DateTime? eventTime = api.timeStamp != null
         ? DateTime.fromMillisecondsSinceEpoch(api.timeStamp!)
         : null;
 
-    /// Save first check-in (frontend session)
+    // ✅ Handle session tracking correctly
     if (api.status && eventTime != null) {
       HrSessionTracker.saveCheckIn(api.employeeId, eventTime);
+    } else {
+      HrSessionTracker.clear(api.employeeId); // 👈 IMPORTANT
     }
 
     final DateTime? checkIn = HrSessionTracker.getCheckIn(api.employeeId);
@@ -28,9 +34,6 @@ class EmployeeMapper {
     );
   }
 
-  /// ================================
-  /// ⏱ Hours + Minutes logic
-  /// ================================
   static String _calculateHoursWithMinutes(
     bool status,
     DateTime? checkIn,
@@ -63,17 +66,14 @@ class EmployeeMapper {
 class HrSessionTracker {
   static final Map<String, DateTime> _checkInMap = {};
 
-  /// Save first check-in
   static void saveCheckIn(String empId, DateTime time) {
-    _checkInMap.putIfAbsent(empId, () => time);
+    _checkInMap[empId] = time; // ✅ overwrite
   }
 
-  /// Get first check-in
   static DateTime? getCheckIn(String empId) {
     return _checkInMap[empId];
   }
 
-  /// Clear on logout (optional)
   static void clear(String empId) {
     _checkInMap.remove(empId);
   }

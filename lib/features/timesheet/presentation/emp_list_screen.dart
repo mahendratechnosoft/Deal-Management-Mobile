@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/app_text_field.dart';
+import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/bloc/user_role.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
@@ -57,12 +58,10 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
       appBar: CommonAppBar(title: 'Timesheet'),
       body: BlocBuilder<TimeSheetBloc, TimeSheetState>(
         builder: (context, state) {
-          // Check if we need to reset to employee list state
           if (state is! TimeSheetLoading &&
               state is! TimeSheetLoaded &&
               state is! TimeSheetEmpty &&
               state is! TimeSheetError) {
-            // If we're in attendance state, reset to employee list
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _resetAndFetchData();
             });
@@ -77,7 +76,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
 
   Widget _buildBody(BuildContext context, TimeSheetState state) {
     if (state is TimeSheetLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return SkeletonCard(isLoading: true, itemCount: 10);
     }
 
     if (state is TimeSheetError) {
@@ -132,8 +131,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             role == 'employee'
                 ? Padding(
                     padding: const EdgeInsets.all(16),
-                    child: CheckInOutWidget(
-                    ),
+                    child: CheckInOutWidget(),
                   )
                 : Padding(
                     padding:

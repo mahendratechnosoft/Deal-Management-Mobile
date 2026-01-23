@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -6,7 +7,6 @@ import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/timesheet/block/timesheet_bloc.dart';
 import 'package:xpertbiz/features/timesheet/block/timesheet_event.dart';
-import '../../../core/widgtes/skeleton_widget.dart';
 import '../block/timesheet_state.dart';
 
 class CheckInOutWidget extends StatefulWidget {
@@ -18,12 +18,13 @@ class CheckInOutWidget extends StatefulWidget {
 
 class _CheckInOutWidgetState extends State<CheckInOutWidget> {
   final String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  final user = AuthLocalStorage.getUser();
+  final String today = DateFormat('dd-MM-yyyy').format(DateTime.now());
 
   @override
   void initState() {
     super.initState();
 
-    final user = AuthLocalStorage.getUser();
     context.read<TimeSheetBloc>().add(
           CheckInStatusEvent(
             fromDate: currentDate,
@@ -56,6 +57,9 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
             final lastRecord = state.checkInStatus!.dates.first.records;
             startTs = lastRecord.first.timeStamp;
             end = lastRecord.last.timeStamp;
+          } else {
+            startTs = state.startTimestamp ?? 0;
+            log('Ganesh check it is empty or not $startTs');
           }
         }
 
@@ -64,22 +68,24 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
           builder: (_, snap) {
             Duration elapsed = Duration.zero;
 
-            if (running && snap.hasData) {
-              elapsed = Duration(milliseconds: snap.data! - startTs);
+            if (running && snap.hasData && startTs > 0) {
+              final diff = snap.data! - startTs;
+
+              // safety guard
+              if (diff > 0) {
+                elapsed = Duration(milliseconds: diff);
+              }
             }
-            return startTs == 0
-                ? SizedBox(
-                    height: 160,
-                    child: SkeletonCard(isLoading: true, itemCount: 1))
-                : _CheckInCard(
-                    endTime: end,
-                    elapsed: elapsed,
-                    isCheckedIn: running,
-                    startTimestamp: startTs,
-                    onTap: () {
-                      context.read<TimeSheetBloc>().add(CheckInEvent(!running));
-                    },
-                  );
+            return _CheckInCard(
+              endTime: end,
+              elapsed: elapsed,
+              isCheckedIn: running,
+              startTimestamp: startTs,
+              onTap: () {
+                context.read<TimeSheetBloc>().add(CheckInEvent(!running));
+                context.read<TimeSheetBloc>().add(ResetToEmployeeList(today));
+              },
+            );
           },
         );
       },

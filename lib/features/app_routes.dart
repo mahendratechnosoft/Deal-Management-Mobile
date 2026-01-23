@@ -12,6 +12,7 @@ import 'package:xpertbiz/features/task_module/task_deatils/screen/task_details_s
 import 'package:xpertbiz/features/task_module/task/presentation/task_screen.dart';
 import 'package:xpertbiz/features/timesheet/presentation/timesheet_screen.dart';
 
+import 'Lead/presentation/screens/all_lead_scren.dart';
 import 'timesheet/data/model/emp_model.dart';
 
 class AppRouter {
@@ -91,6 +92,13 @@ class AppRouter {
           return AttendanceCalendarScreen(
             employee: state.extra as Employee,
           );
+        },
+      ),
+      GoRoute(
+        path: AppRouteName.allLead,
+        name: 'all Lead',
+        builder: (context, state) {
+          return AllLeadScreen();
         },
       ),
     ],

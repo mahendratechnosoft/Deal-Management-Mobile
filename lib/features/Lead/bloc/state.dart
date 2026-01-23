@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:xpertbiz/features/Lead/data/model/all_lead_model.dart';
 
 import '../data/model/lead_status_model.dart';
 
@@ -29,4 +30,25 @@ class LeadError extends LeadState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class AllLeadInitial extends LeadState {}
+
+class AllLeadLoading extends LeadState {}
+
+class AllLeadState extends LeadState {
+  final List<AllLeadModel> leads;
+  final bool hasMore;
+  final int currentPage;
+
+  const AllLeadState({
+    required this.leads,
+    required this.hasMore,
+    required this.currentPage,
+  });
+}
+
+class AllLeadError extends LeadState {
+  final String message;
+  const AllLeadError(this.message);
 }
