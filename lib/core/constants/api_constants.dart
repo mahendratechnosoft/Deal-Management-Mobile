@@ -65,7 +65,14 @@ class ApiConstants {
   static String get checkInStatusUrl => "${RoleResolver.rolePath}/getAttendanceBetweenForParticalurEmployee";
   static String get leadStatusUrl => "${RoleResolver.rolePath}/getLeadStatusAndCount";
   static String get allLeadsUrl => "${RoleResolver.rolePath}/getAllLeads";
-  //static String get allLeadsUrl => "${RoleResolver.rolePath}/getAllLeads";
+  static String get allLeadsDetailsUrl => "${RoleResolver.rolePath}/getLeadById";
+  static String get activityUrl => "${RoleResolver.rolePath}/getModuleActivity";
+  static String get reminderUrl => "${RoleResolver.rolePath}/getAllReminderForSpecificModule/LEAD";
+  static String get createReminderUrl => "${RoleResolver.rolePath}/createReminder";
+  
+  
+  
+  
   
   
   

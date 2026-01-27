@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:hive/hive.dart';
 import 'package:xpertbiz/core/network/dio_client.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
@@ -10,7 +12,7 @@ class AuthLocalStorage {
 
   static Box<LoginResponse> get _box => Hive.box<LoginResponse>(_boxName);
 
-   static Future<void> saveUser(LoginResponse data) async {
+  static Future<void> saveUser(LoginResponse data) async {
     await _box.put(_userKey, data);
   }
 
@@ -30,5 +32,6 @@ class AuthLocalStorage {
 
   static Future<void> clear() async {
     await _box.clear();
+    log('clear data');
   }
 }

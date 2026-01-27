@@ -11,5 +11,6 @@ class AppRouteName {
   static const String createTask = '/create_task';
   static const String attendance = '/attendance';
   static const String allLead = '/all_lead';
-
+  static const String leadDetails = '/lead_deatils';
+  static const String createLead = '/create_lead';
 }

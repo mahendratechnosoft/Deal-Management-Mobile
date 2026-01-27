@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/utils/responsive.dart';
+import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
+import 'package:xpertbiz/features/Lead/bloc/event.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 
+import '../../auth/bloc/auth_bloc.dart';
+import '../../auth/bloc/auth_event.dart';
 import 'logout_dialog.dart';
 
 class DrawerFooter extends StatelessWidget {
@@ -35,6 +40,8 @@ class DrawerFooter extends StatelessWidget {
               final bool? shouldLogout = await showLogoutDialog(context);
               if (shouldLogout == true) {
                 AuthLocalStorage.clear();
+                context.read<LeadBloc>().add(const ResetLeadEvent());
+                context.read<AuthBloc>().add(LogoutEvent());
                 context.go(AppRouteName.login);
               }
             },

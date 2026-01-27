@@ -50,4 +50,30 @@ class Validators {
     }
     return null;
   }
+
+  static String? name(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Name is required';
+    if (v.length < 3) return 'Minimum 3 characters required';
+    return null;
+  }
+
+  static String? phone(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Phone number required';
+    if (!RegExp(r'^[0-9]{10}$').hasMatch(v)) {
+      return 'Enter valid 10 digit number';
+    }
+    return null;
+  }
+
+  static String? url(String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    if (!Uri.tryParse(v)!.isAbsolute) return 'Invalid URL';
+    return null;
+  }
+
+  static String? zip(String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    if (v.length < 4) return 'Invalid ZIP code';
+    return null;
+  }
 }

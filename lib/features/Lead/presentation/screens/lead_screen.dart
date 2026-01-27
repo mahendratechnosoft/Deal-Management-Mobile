@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
@@ -41,6 +42,13 @@ class _LeadScreenState extends State<LeadScreen> {
       drawer: const CustomDrawer(),
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: CommonAppBar(title: 'Leads'),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primaryDark,
+        onPressed: () async {
+          context.push(AppRouteName.createLead);
+        },
+        child: const Icon(Icons.add, color: AppColors.background),
+      ),
       body: BlocBuilder<LeadBloc, LeadState>(
         builder: (context, state) {
           if (state is LeadLoading) {
@@ -85,6 +93,11 @@ class _LeadScreenState extends State<LeadScreen> {
                           title: item.status,
                           count: item.count,
                           color: _statusColor(item.status),
+                          onTap: () {
+                            context.push(
+                              '${AppRouteName.allLead}?status=${Uri.encodeComponent(item.status)}',
+                            );
+                          },
                         );
                       },
                     ),
@@ -193,11 +206,13 @@ class _LeadStatusCard extends StatelessWidget {
   final String title;
   final int count;
   final Color color;
+  final VoidCallback? onTap;
 
   const _LeadStatusCard({
     required this.title,
     required this.count,
     required this.color,
+    this.onTap,
   });
 
   @override
@@ -209,7 +224,7 @@ class _LeadStatusCard extends StatelessWidget {
       shadowColor: Colors.black12,
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () {},
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -227,9 +242,7 @@ class _LeadStatusCard extends StatelessWidget {
                   size: 15,
                 ),
               ),
-              //   const Spacer(),
               const SizedBox(height: 10),
-
               Text(
                 title,
                 maxLines: 1,

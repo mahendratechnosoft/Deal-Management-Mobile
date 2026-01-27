@@ -14,6 +14,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc(this.repository) : super(AuthInitial()) {
     on<LoginEvent>(_onLogin);
+    
+    on<LogoutEvent>((event, emit) async {
+      await AuthLocalStorage.clear();
+      emit(AuthInitial());
+    });
   }
 
   Future<void> _onLogin(LoginEvent event, Emitter<AuthState> emit) async {

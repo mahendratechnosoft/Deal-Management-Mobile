@@ -9,6 +9,7 @@ class ApiInterceptor extends Interceptor {
 
   void updateToken(String token) {
     _token = token;
+    log('Token Update new');
   }
 
   @override
