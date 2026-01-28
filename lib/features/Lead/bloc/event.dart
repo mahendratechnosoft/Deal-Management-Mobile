@@ -101,7 +101,3 @@ class CreateReminderSubmitEvent extends LeadEvent {
 }
 
 // create lead
-class SubmitCreateLead extends LeadEvent {
-  final Map<String, dynamic> payload;
-  const SubmitCreateLead(this.payload);
-}

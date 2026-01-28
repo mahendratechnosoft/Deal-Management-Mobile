@@ -41,23 +41,9 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     on<FetchLeadActivityEvent>(_fetchLeadActivity);
     on<FetchReminderEvent>(_onReminder);
     on<CreateReminderSubmitEvent>(_createReminder);
-    on<SubmitCreateLead>(_onSubmit);
-  }
-  //
-  Future<void> _onSubmit(
-    SubmitCreateLead event,
-    Emitter<LeadState> emit,
-  ) async {
-    emit(CreateLeadLoading());
-    try {
-      // 👉 API CALL HERE
-      await Future.delayed(const Duration(seconds: 1));
-      emit(CreateLeadSuccess());
-    } catch (e) {
-      emit(CreateLeadError('Failed to create lead'));
-    }
-  }
-  //
+   }
+  
+  
 
   Future<void> _fetchLeadActivity(
     FetchLeadActivityEvent event,

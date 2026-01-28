@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
+import 'package:xpertbiz/features/Lead/data/model/create_lead_payload.dart';
 
 import '../model/create_reminder_payload.dart';
 
@@ -56,6 +57,14 @@ class LeadService {
     return dio.post(
       data: request.toJson(),
       ApiConstants.createReminderUrl,
+    );
+  }
+
+  Future<Response> createLead(
+      {required CreateLeadRequest request}) async {
+    return dio.post(
+      data: request.toJson(),
+      ApiConstants.createLeadUrl,
     );
   }
 }

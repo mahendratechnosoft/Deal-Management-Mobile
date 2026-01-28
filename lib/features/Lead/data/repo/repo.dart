@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:xpertbiz/features/Lead/data/model/activity_log_model.dart';
+import 'package:xpertbiz/features/Lead/data/model/create_lead_payload.dart';
 import 'package:xpertbiz/features/Lead/data/model/lead_details_model.dart';
 import 'package:xpertbiz/features/Lead/data/model/reminder_model.dart';
 
@@ -56,5 +57,11 @@ class LeadRepository {
     final res = await apiService.createReminder(request: request);
     log('response : $res');
     //  return LeadResponseModel.fromJson(res.data);
+  }
+
+  Future createLead({required CreateLeadRequest request}) async {
+    final res = await apiService.createLead(request: request);
+    log('response : $res');
+    return res.data;
   }
 }

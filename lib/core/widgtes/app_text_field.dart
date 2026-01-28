@@ -12,18 +12,21 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final String Function(String)? onChanged;
 
-  /// NEW: Enabled state
+  /// Enabled / Disabled
   final bool enabled;
 
-  /// 🔥 LABEL
+  /// Label
   final bool showLabel;
   final String? labelText;
   final bool isRequired;
 
-  /// 🔥 NEW: multi-line & max-length support
+  /// Multi-line & length
   final int maxLines;
   final int? minLength;
   final int? maxLength;
+
+  /// 🔥 NEW: 10 digit phone validation (numbers only)
+  final bool isTenDigitPhone;
 
   const AppTextField({
     super.key,
@@ -35,13 +38,14 @@ class AppTextField extends StatefulWidget {
     this.suffixIcon,
     this.keyboardType = TextInputType.text,
     this.validator,
-    this.enabled = true, // Default to enabled
+    this.enabled = true,
     this.showLabel = false,
     this.labelText,
     this.isRequired = false,
     this.maxLines = 1,
     this.minLength,
     this.maxLength,
+    this.isTenDigitPhone = false, // ✅ default OFF
   });
 
   @override
@@ -64,26 +68,34 @@ class _AppTextFieldState extends State<AppTextField> {
     );
   }
 
+  /// 🔥 VALIDATION LOGIC
   String? _internalValidator(String? value) {
-    // Skip validation if field is disabled
-    if (!widget.enabled) {
-      return null;
-    }
+    if (!widget.enabled) return null;
 
-    // use custom validator if provided
+    // Custom validator (if provided)
     if (widget.validator != null) {
       final result = widget.validator!(value);
       if (result != null) return result;
     }
 
-    // if required
+    // Required field
     if (widget.isRequired) {
       if (value == null || value.trim().isEmpty) {
         return 'This field is required';
       }
     }
 
-    // optional minLength / maxLength (only if user typed something)
+    // 🔥 10 DIGIT PHONE VALIDATION (NUMBERS ONLY)
+    if (widget.isTenDigitPhone && value != null && value.trim().isNotEmpty) {
+      final phone = value.trim();
+      final regex = RegExp(r'^\d{10}$');
+
+      if (!regex.hasMatch(phone)) {
+        return 'Enter valid 10 digit mobile number';
+      }
+    }
+
+    // Min / Max length
     if (value != null && value.trim().isNotEmpty) {
       final length = value.trim().length;
       if (widget.minLength != null && length < widget.minLength!) {
@@ -118,12 +130,9 @@ class _AppTextFieldState extends State<AppTextField> {
                 ),
                 children: [
                   if (widget.isRequired && widget.enabled)
-                    TextSpan(
+                    const TextSpan(
                       text: ' *',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(color: Colors.red),
                     ),
                 ],
               ),
@@ -167,21 +176,13 @@ class _AppTextFieldState extends State<AppTextField> {
                     icon: Icon(
                       _obscure ? Icons.visibility_off : Icons.visibility,
                       size: Responsive.sp(20),
-                      color: widget.enabled
-                          ? AppColors.textPrimary
-                          : AppColors.textPrimary.withOpacity(0.5),
+                      color: AppColors.textPrimary,
                     ),
-                    onPressed: widget.enabled
-                        ? () => setState(() => _obscure = !_obscure)
-                        : null,
+                    onPressed: () => setState(() => _obscure = !_obscure),
                   )
                 : widget.suffixIcon,
-            enabledBorder: _border(widget.enabled
-                ? AppColors.borderDark
-                : AppColors.borderDark.withOpacity(0.5)),
-            focusedBorder: _border(widget.enabled
-                ? AppColors.primaryDark
-                : AppColors.primaryDark.withOpacity(0.5)),
+            enabledBorder: _border(AppColors.borderDark),
+            focusedBorder: _border(AppColors.primaryDark),
             errorBorder: _border(Colors.red),
             focusedErrorBorder: _border(Colors.redAccent, width: 1.5),
             disabledBorder: _border(AppColors.borderDark.withOpacity(0.3)),

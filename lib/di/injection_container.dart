@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/network/dio_client.dart';
 import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
+import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_bloc.dart';
 import 'package:xpertbiz/features/Lead/data/service/service.dart';
 import 'package:xpertbiz/features/auth/bloc/auth_bloc.dart';
 import 'package:xpertbiz/features/auth/data/repo/auth_repository.dart';
@@ -33,7 +34,6 @@ void init() {
   sl.registerLazySingleton(() => TimesheetService(sl()));
   sl.registerLazySingleton(() => LeadService(sl()));
 
-
   sl.registerLazySingleton(() => AuthRepository(sl()));
   sl.registerLazySingleton(() => TaskRepository(sl()));
   sl.registerLazySingleton(() => CreateTaskRepository(sl()));
@@ -41,12 +41,11 @@ void init() {
   sl.registerLazySingleton(() => TimeSheetRepository(sl()));
   sl.registerLazySingleton(() => LeadRepository(sl()));
 
-
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => TaskBloc(sl()));
   sl.registerFactory(() => CreateTaskBloc(sl()));
   sl.registerFactory(() => CommentBloc(sl()));
   sl.registerFactory(() => TimeSheetBloc(sl()));
   sl.registerFactory(() => LeadBloc(sl()));
-
+  sl.registerFactory(() => CreateLeadBloc(sl()));
 }
