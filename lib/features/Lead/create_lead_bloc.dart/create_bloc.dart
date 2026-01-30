@@ -18,6 +18,7 @@ class CreateLeadBloc extends Bloc<CreateLeadEvent, CreateLeadState> {
     on<CitySelectedEvent>(_onCitySelected);
     on<ClearLocationEvent>(_onClearLocation);
     on<SubmitCreateLeadEvent>(_onSubmitCreateLead);
+    on<DeleteLeadEvent>(_deleteLead);
   }
 
   Future<void> _loadCountries(
@@ -200,7 +201,8 @@ class CreateLeadBloc extends Bloc<CreateLeadEvent, CreateLeadState> {
 
     try {
       // API call here - replace with your actual API call
-      final res = await repository.createLead(request: event.request);
+      final res =
+          await repository.createLead(request: event.request, edit: event.edit);
       log('response check $res');
 
       // Simulate API success
@@ -218,6 +220,17 @@ class CreateLeadBloc extends Bloc<CreateLeadEvent, CreateLeadState> {
         submitting: false,
         error: 'Failed to create lead: $e',
       ));
+    }
+  }
+
+  Future<void> _deleteLead(
+      DeleteLeadEvent event, Emitter<CreateLeadState> emit) async {
+    try {
+      final res = await repository.deleteLead(event.leadId);
+      log('Delete $res');
+    } catch (e) {
+      ApiError.getMessage(e);
+      print('Error : $e');
     }
   }
 }

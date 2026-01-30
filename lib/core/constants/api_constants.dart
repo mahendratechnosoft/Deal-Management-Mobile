@@ -70,6 +70,10 @@ class ApiConstants {
   static String get reminderUrl => "${RoleResolver.rolePath}/getAllReminderForSpecificModule/LEAD";
   static String get createReminderUrl => "${RoleResolver.rolePath}/createReminder";
   static String get createLeadUrl => "${RoleResolver.rolePath}/createLead";
+  static String get updateLeadUrl => "${RoleResolver.rolePath}/updateLead";
+  static String get deleteLeadUrl => "${RoleResolver.rolePath}/deleteLead";
+  
+  
   
   
   

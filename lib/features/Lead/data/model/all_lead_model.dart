@@ -13,8 +13,9 @@ class LeadResponseModel {
 
   factory LeadResponseModel.fromJson(Map<String, dynamic> json) {
     return LeadResponseModel(
-      leads:
-          (json['leadList'] as List).map((e) => AllLeadModel.fromJson(e)).toList(),
+      leads: (json['leadList'] as List)
+          .map((e) => AllLeadModel.fromJson(e))
+          .toList(),
       currentPage: json['currentPage'] ?? 0,
       totalPages: json['totalPages'] ?? 0,
       totalLeads: json['totalLeads'] ?? 0,
@@ -47,7 +48,7 @@ class AllLeadModel {
   final String? zipCode;
   final String? description;
   final DateTime? followUp;
-  final DateTime createdDate;
+  final DateTime? createdDate;
   final DateTime? updatedDate;
 
   AllLeadModel({
@@ -75,7 +76,7 @@ class AllLeadModel {
     this.zipCode,
     this.description,
     this.followUp,
-    required this.createdDate,
+     this.createdDate,
     this.updatedDate,
   });
 
@@ -106,7 +107,9 @@ class AllLeadModel {
       description: json['description'],
       followUp:
           json['followUp'] != null ? DateTime.tryParse(json['followUp']) : null,
-      createdDate: DateTime.parse(json['createdDate']),
+      createdDate: json['createdDate'] != null
+          ? DateTime.tryParse(json['createdDate'])
+          : null,
       updatedDate: json['updatedDate'] != null
           ? DateTime.tryParse(json['updatedDate'])
           : null,

@@ -60,8 +60,19 @@ class ClearLocationEvent extends CreateLeadEvent {
 
 class SubmitCreateLeadEvent extends CreateLeadEvent {
   final CreateLeadRequest request;
-  const SubmitCreateLeadEvent(this.request);
+  final bool edit;
+  const SubmitCreateLeadEvent(this.request, this.edit);
 
   @override
   List<Object?> get props => [request];
+}
+
+class UpdateLeadEvent extends CreateLeadEvent {
+  final CreateLeadRequest request;
+  const UpdateLeadEvent({required this.request});
+}
+
+class DeleteLeadEvent extends CreateLeadEvent {
+  final String leadId;
+  const DeleteLeadEvent({required this.leadId});
 }

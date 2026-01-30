@@ -9,6 +9,7 @@ import 'package:xpertbiz/core/widgtes/app_text_field.dart';
 import 'package:xpertbiz/core/widgtes/custom_date_picker.dart';
 import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/Lead/bloc/event.dart';
+import 'package:xpertbiz/features/Lead/presentation/widgets/lead_delete.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/state.dart';
@@ -300,10 +301,34 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
           email: lead.email ?? '',
           phone: lead.mobileNumber ?? '',
           status: lead.status,
-          createdDate: lead.createdDate,
+          createdDate: lead.createdDate ?? DateTime.now(),
+          onPressed: () async {
+            context.read<LeadBloc>().add(
+                  LeadDetailsEvent(leadId: lead.id),
+                );
+
+            final result = await context.push(
+              AppRouteName.createLead,
+              extra: true,
+            );
+            if (result == true) {
+              context.read<LeadBloc>().add(
+                    FetchAllLeadsEvent(status: widget.status),
+                  );
+            }
+          },
           onTap: () {
             context.read<LeadBloc>().add(LeadDetailsEvent(leadId: lead.id));
             context.push(AppRouteName.leadDetails, extra: lead);
+          },
+          delete: () async {
+            final result = await leadDelete(context, lead.id);
+            Future.delayed(Duration(seconds: 2));
+            if (result == true) {
+              context.read<LeadBloc>().add(
+                    FetchAllLeadsEvent(status: widget.status),
+                  );
+            }
           },
         );
       },

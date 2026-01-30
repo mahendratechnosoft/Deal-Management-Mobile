@@ -204,6 +204,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     } on DioException catch (e) {
       emit(LeadError(ApiError.getMessage(e)));
     } catch (e) {
+      log('error ${e.toString()}');
       emit(LeadError('Failed to load leads: ${e.toString()}'));
     } finally {
       _isFetching = false;
@@ -347,7 +348,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     return leads.where((lead) {
       try {
         final leadDate = lead.createdDate;
-        return leadDate.year == date.year &&
+        return leadDate!.year == date.year &&
             leadDate.month == date.month &&
             leadDate.day == date.day;
       } catch (e) {

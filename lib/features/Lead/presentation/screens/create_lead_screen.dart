@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dropdown_flutter/custom_dropdown.dart';
@@ -7,15 +9,24 @@ import 'package:xpertbiz/core/widgtes/app_text_field.dart';
 import 'package:xpertbiz/core/widgtes/app_button.dart';
 import 'package:xpertbiz/core/utils/validators.dart';
 import 'package:xpertbiz/core/widgtes/custom_date_picker.dart';
+import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
+import 'package:xpertbiz/features/Lead/bloc/state.dart'
+    hide
+        CreateLeadSuccess,
+        CreateLeadError,
+        CreateLeadLoading,
+        CreateLeadInitial;
 import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_bloc.dart';
 import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_event.dart';
 import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_state.dart';
 import 'package:xpertbiz/features/Lead/data/model/create_lead_payload.dart';
 import 'package:xpertbiz/features/Lead/presentation/widgets/search_dropdown.dart';
+import '../../data/model/lead_details_model.dart';
 import '../widgets/helper_code.dart';
 
 class CreateLeadScreen extends StatefulWidget {
-  const CreateLeadScreen({super.key});
+  final bool edit;
+  const CreateLeadScreen({super.key, required this.edit});
 
   @override
   State<CreateLeadScreen> createState() => _CreateLeadScreenState();
@@ -29,12 +40,15 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
   String? _selectedLeadSource;
   String? _selectedIndustry;
   DateTime? _selectedFollowUpDate;
+  String? _editingLeadId;
+  String? _existingLeadStatus;
 
   // Form controllers
   final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
+    log('check it is edit ${widget.edit}');
     super.initState();
     _initializeControllers();
     CreateLeadHelper.loadCountries(context);
@@ -52,6 +66,18 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     _additionalNoteController.dispose();
     _controllers.forEach((_, controller) => controller.dispose());
     super.dispose();
+  }
+
+  void _updateLead() {
+    log('updated lead');
+
+    final bloc = context.read<CreateLeadBloc>();
+    final currentState = bloc.state;
+
+    if (currentState is! CreateLeadDataState) return;
+
+    final request = _buildCreateLeadRequest(currentState);
+    bloc.add(SubmitCreateLeadEvent(request, true));
   }
 
   void _onSubmit() {
@@ -73,17 +99,20 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
       CreateLeadHelper.showInfoSnackbar(context, 'Please select a lead source');
       return;
     }
+    //ac110005-9add-1891-819a-dda683b20017
+    //ac110005-9be4-18aa-819c-0dccfd600088
 
     // Create and submit request
     final request = _buildCreateLeadRequest(currentState);
-    bloc.add(SubmitCreateLeadEvent(request));
+    bloc.add(SubmitCreateLeadEvent(request, false));
   }
 
   CreateLeadRequest _buildCreateLeadRequest(CreateLeadDataState state) {
     return CreateLeadRequest(
+      id: widget.edit ? _editingLeadId : null,
       companyName: _controllers['companyName']!.text.trim(),
       clientName: _controllers['clientName']!.text.trim(),
-      status: 'New Lead',
+      status: widget.edit ? (_existingLeadStatus ?? 'New Lead') : 'New Lead',
       source: _selectedLeadSource ?? '',
       revenue: 0,
       mobileNumber: CreateLeadHelper.formatPhoneNumber(
@@ -114,23 +143,70 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.background,
-      appBar: const CommonAppBar(title: 'Create Leads'),
-      body: BlocConsumer<CreateLeadBloc, CreateLeadState>(
-        listener: _handleBlocListeners,
-        builder: (context, state) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+      appBar:
+          CommonAppBar(title: !widget.edit ? 'Create Leads' : "Update Lead"),
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<CreateLeadBloc, CreateLeadState>(
+            listener: _handleBlocListeners,
           ),
-          child: _buildBody(context, state),
+          BlocListener<LeadBloc, LeadState>(
+            listener: _handleAllLeadListener,
+          ),
+        ],
+        child: BlocBuilder<CreateLeadBloc, CreateLeadState>(
+          builder: (context, state) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: _buildBody(context, state),
+            );
+          },
         ),
       ),
     );
   }
 
+  void _handleAllLeadListener(BuildContext context, LeadState state) {
+    if (state is AllLeadState && state.leadDetailsModel != null) {
+      _prefillFromLeadDetails(state.leadDetailsModel!);
+    }
+  }
+
+  void _prefillFromLeadDetails(LeadDetailsModel lead) {
+    _editingLeadId = lead.lead.id; // 👈 set ONLY in edit
+    _existingLeadStatus = lead.lead.status;
+    _controllers['clientName']?.text = lead.lead.clientName;
+    _controllers['companyName']?.text = lead.lead.companyName;
+    _controllers['primaryNumber']?.text = lead.lead.mobileNumber;
+    _controllers['secondaryNumber']?.text = lead.lead.phoneNumber;
+    _controllers['email']?.text = lead.lead.email;
+    _controllers['website']?.text = lead.lead.website;
+    _controllers['address']?.text = lead.lead.street;
+    _controllers['zipCode']?.text = lead.lead.zipCode;
+
+    _descriptionController.text = lead.lead.description;
+
+    // Check for null/empty before parsing date
+    if (lead.lead.followUp != null && lead.lead.followUp!.isNotEmpty) {
+      try {
+        _selectedFollowUpDate = DateTime.parse(lead.lead.followUp!);
+      } catch (e) {
+        _selectedFollowUpDate = null;
+      }
+    }
+
+    setState(() {
+      _selectedLeadSource = lead.lead.source;
+      _selectedIndustry = lead.lead.industry;
+    });
+  }
+
   void _handleBlocListeners(BuildContext context, CreateLeadState state) {
     if (state is CreateLeadSuccess) {
       CreateLeadHelper.showSuccessSnackbar(context);
-      Navigator.pop(context);
+      Navigator.pop(context, true);
     } else if (state is CreateLeadError) {
       CreateLeadHelper.showErrorSnackbar(context, state.message);
     } else if (state is CreateLeadDataState && state.error != null) {
@@ -207,7 +283,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
           // Lead Information Section
           CreateLeadHelper.buildSectionHeader('Lead Information'),
           const SizedBox(height: 20),
-          _buildLeadInformationFields(),
+          _buildLeadInformationFields(state),
           const SizedBox(height: 16),
           _buildDescriptionAndNotes(),
           const SizedBox(height: 24),
@@ -221,6 +297,40 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         ],
       ),
     );
+  }
+
+  // ======================== Helper Methods ========================
+
+  // Helper to find matching string in list
+  String? _findMatchingString(String? value, List<String> list) {
+    if (value == null || value.isEmpty || list.isEmpty) return null;
+
+    // Direct match
+    if (list.contains(value)) return value;
+
+    // Case-insensitive match
+    for (var item in list) {
+      if (item.toLowerCase() == value.toLowerCase()) {
+        return item;
+      }
+    }
+
+    return null;
+  }
+
+  // Helper to find matching object in list by name
+  T? _findMatchingObject<T>(
+      T? selected, List<T> items, String Function(T) getName) {
+    if (selected == null || items.isEmpty) return null;
+
+    final selectedName = getName(selected);
+    for (var item in items) {
+      if (getName(item) == selectedName) {
+        return item;
+      }
+    }
+
+    return null;
   }
 
   // ======================== Form Sections ========================
@@ -245,7 +355,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     );
   }
 
-  Widget _buildLeadInformationFields() {
+  Widget _buildLeadInformationFields(CreateLeadDataState state) {
     return Column(
       children: [
         _buildLeadSourceDropdown(),
@@ -281,7 +391,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
       keyboardType: keyboardType,
       validator: validator,
       isRequired: isRequired,
-      isTenDigitPhone: isTenDigitPhone, // <-- Now matches
+      isTenDigitPhone: isTenDigitPhone,
       labelText: CreateLeadConstants.fieldLabels[fieldKey]!,
       hint: CreateLeadConstants.fieldHints[fieldKey]!,
       controller: _controllers[fieldKey]!,
@@ -294,7 +404,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
       fieldKey: 'primaryNumber',
       isRequired: true,
       keyboardType: TextInputType.number,
-      isTenDigitPhone: true, // <-- Change to match new parameter name
+      isTenDigitPhone: true,
     );
   }
 
@@ -302,7 +412,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     return _buildTextField(
       fieldKey: 'secondaryNumber',
       keyboardType: TextInputType.number,
-      isTenDigitPhone: true, // <-- Change to match new parameter name
+      isTenDigitPhone: true,
     );
   }
 
@@ -370,13 +480,16 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
   // ======================== Dropdown Widgets ========================
 
   Widget _buildLeadSourceDropdown() {
+    final matchingSource = _findMatchingString(
+        _selectedLeadSource, CreateLeadConstants.leadSources);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CreateLeadHelper.buildLabel('Lead Source', isRequired: true),
         const SizedBox(height: 8),
         DropdownFlutter<String>(
-          initialItem: _selectedLeadSource,
+          initialItem: matchingSource,
           decoration: CustomDropdownDecoration(
             closedBorder: Border.all(color: AppColors.border),
           ),
@@ -389,13 +502,16 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
   }
 
   Widget _buildIndustryDropdown() {
+    final matchingIndustry =
+        _findMatchingString(_selectedIndustry, CreateLeadConstants.industries);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CreateLeadHelper.buildLabel('Industry'),
         const SizedBox(height: 8),
         DropdownFlutter<String>(
-          initialItem: _selectedIndustry,
+          initialItem: matchingIndustry,
           decoration: CustomDropdownDecoration(
             closedBorder: Border.all(color: AppColors.border),
           ),
@@ -441,6 +557,12 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildCountryDropdown(
       BuildContext context, CreateLeadDataState state) {
+    final matchingCountry = _findMatchingObject(
+      state.selectedCountry,
+      state.countries,
+      (country) => country.name,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -449,7 +571,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         state.countriesLoading
             ? CreateLeadHelper.buildDropdownLoading()
             : DropdownFlutter<CountryName>.search(
-                initialItem: state.selectedCountry,
+                initialItem: matchingCountry,
                 decoration: CustomDropdownDecoration(
                   closedBorder: Border.all(color: AppColors.border),
                 ),
@@ -468,6 +590,12 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
   }
 
   Widget _buildStateDropdown(BuildContext context, CreateLeadDataState state) {
+    final matchingState = _findMatchingObject(
+      state.selectedState,
+      state.states,
+      (stateObj) => stateObj.name,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -476,7 +604,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         state.statesLoading
             ? CreateLeadHelper.buildDropdownLoading()
             : DropdownFlutter<StateName>.search(
-                initialItem: state.selectedState,
+                initialItem: matchingState,
                 decoration: CustomDropdownDecoration(
                   closedBorder: Border.all(color: AppColors.border),
                 ),
@@ -495,6 +623,12 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
   }
 
   Widget _buildCityDropdown(BuildContext context, CreateLeadDataState state) {
+    final matchingCity = _findMatchingObject(
+      state.selectedCity,
+      state.cities,
+      (city) => city.name,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -503,7 +637,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         state.citiesLoading
             ? CreateLeadHelper.buildDropdownLoading()
             : DropdownFlutter<CityName>.search(
-                initialItem: state.selectedCity,
+                initialItem: matchingCity,
                 decoration: CustomDropdownDecoration(
                   closedBorder: Border.all(color: AppColors.border),
                 ),
@@ -527,8 +661,8 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     return state.submitting
         ? const Center(child: CircularProgressIndicator())
         : Button(
-            text: 'Create Lead',
-            onPressed: _onSubmit,
+            text: widget.edit ? 'Update Lead' : 'Create Lead',
+            onPressed: widget.edit ? _updateLead : _onSubmit,
           );
   }
 }

@@ -105,3 +105,19 @@ class CreateLeadError extends CreateLeadState {
   @override
   List<Object?> get props => [message];
 }
+
+class UpdateLeadLoading extends CreateLeadState {
+  final String message;
+  
+  const UpdateLeadLoading(this.message);
+}
+
+class UpdateLeadSuccess extends CreateLeadState {
+  const UpdateLeadSuccess();
+}
+
+class UpdateLeadError extends CreateLeadState {
+  final String message;
+  
+  const UpdateLeadError(this.message);
+}

@@ -61,10 +61,24 @@ class LeadService {
   }
 
   Future<Response> createLead(
-      {required CreateLeadRequest request}) async {
-    return dio.post(
-      data: request.toJson(),
-      ApiConstants.createLeadUrl,
+      {required CreateLeadRequest request, required bool edit}) async {
+    return edit
+        ? dio.put(
+            ApiConstants.updateLeadUrl,
+            data: request.toJson(),
+          )
+        : dio.post(
+            ApiConstants.createLeadUrl,
+            data: request.toJson(),
+          );
+  }
+
+  Future<Response> deletelead(String taskId) {
+    return dio.delete(
+      '${ApiConstants.deleteLeadUrl}/$taskId',
+      options: Options(
+        responseType: ResponseType.plain,
+      ),
     );
   }
 }

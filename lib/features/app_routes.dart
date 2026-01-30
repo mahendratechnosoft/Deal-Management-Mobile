@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/features/Lead/data/model/all_lead_model.dart';
 import 'package:xpertbiz/features/Lead/presentation/screens/all_lead_details_screen.dart';
@@ -139,13 +141,16 @@ class AppRouter {
           return AllLeadDetailsScreen(lead: lead);
         },
       ),
-
       GoRoute(
         path: AppRouteName.createLead,
-        pageBuilder: (context, state) => AppTransition.slide(
-          state: state,
-          child: const CreateLeadScreen(),
-        ),
+        pageBuilder: (context, state) {
+          final bool edit = state.extra as bool? ?? true;
+          log('ROUTE extra = ${state.extra}'); // 👈 debug
+          return AppTransition.slide(
+            state: state,
+            child: CreateLeadScreen(edit: edit),
+          );
+        },
       ),
     ],
   );

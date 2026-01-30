@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
 import '../utils/responsive.dart';
 
@@ -25,7 +26,7 @@ class AppTextField extends StatefulWidget {
   final int? minLength;
   final int? maxLength;
 
-  /// 🔥 NEW: 10 digit phone validation (numbers only)
+  /// 🔥 Phone number (10 digit, numeric only)
   final bool isTenDigitPhone;
 
   const AppTextField({
@@ -45,7 +46,7 @@ class AppTextField extends StatefulWidget {
     this.maxLines = 1,
     this.minLength,
     this.maxLength,
-    this.isTenDigitPhone = false, // ✅ default OFF
+    this.isTenDigitPhone = false,
   });
 
   @override
@@ -68,40 +69,36 @@ class _AppTextFieldState extends State<AppTextField> {
     );
   }
 
-  /// 🔥 VALIDATION LOGIC
+  /// 🔥 VALIDATION
   String? _internalValidator(String? value) {
     if (!widget.enabled) return null;
 
-    // Custom validator (if provided)
+    // Custom validator
     if (widget.validator != null) {
       final result = widget.validator!(value);
       if (result != null) return result;
     }
 
-    // Required field
+    // Required
     if (widget.isRequired) {
       if (value == null || value.trim().isEmpty) {
         return 'This field is required';
       }
     }
 
-    // 🔥 10 DIGIT PHONE VALIDATION (NUMBERS ONLY)
-    if (widget.isTenDigitPhone && value != null && value.trim().isNotEmpty) {
-      final phone = value.trim();
-      final regex = RegExp(r'^\d{10}$');
-
-      if (!regex.hasMatch(phone)) {
+    // 10 digit phone validation
+    if (widget.isTenDigitPhone && value != null && value.isNotEmpty) {
+      if (value.length != 10) {
         return 'Enter valid 10 digit mobile number';
       }
     }
 
     // Min / Max length
-    if (value != null && value.trim().isNotEmpty) {
-      final length = value.trim().length;
-      if (widget.minLength != null && length < widget.minLength!) {
+    if (value != null && value.isNotEmpty) {
+      if (widget.minLength != null && value.length < widget.minLength!) {
         return 'Must be at least ${widget.minLength} characters';
       }
-      if (widget.maxLength != null && length > widget.maxLength!) {
+      if (widget.maxLength != null && value.length > widget.maxLength!) {
         return 'Must be at most ${widget.maxLength} characters';
       }
     }
@@ -145,11 +142,22 @@ class _AppTextFieldState extends State<AppTextField> {
         TextFormField(
           controller: widget.controller,
           obscureText: _obscure,
-          keyboardType: widget.keyboardType,
+          keyboardType: widget.isTenDigitPhone
+              ? TextInputType.number
+              : widget.keyboardType,
           validator: _internalValidator,
           maxLines: widget.maxLines,
           enabled: widget.enabled,
           onChanged: widget.onChanged,
+
+          /// 🔥 HARD INPUT RESTRICTION
+          inputFormatters: widget.isTenDigitPhone
+              ? [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ]
+              : null,
+
           style: TextStyle(
             fontWeight: FontWeight.w400,
             fontSize: Responsive.sp(14),
@@ -192,5 +200,6 @@ class _AppTextFieldState extends State<AppTextField> {
         ),
       ],
     );
+    
   }
 }

@@ -45,7 +45,7 @@ class _LeadScreenState extends State<LeadScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primaryDark,
         onPressed: () async {
-          context.push(AppRouteName.createLead);
+          context.push(AppRouteName.createLead, extra: false);
         },
         child: const Icon(Icons.add, color: AppColors.background),
       ),

@@ -10,6 +10,8 @@ class PremiumLeadCard extends StatelessWidget {
   final String status;
   final DateTime createdDate;
   final VoidCallback? onTap;
+  final VoidCallback? onPressed;
+  final VoidCallback? delete;
 
   const PremiumLeadCard({
     super.key,
@@ -20,6 +22,8 @@ class PremiumLeadCard extends StatelessWidget {
     required this.status,
     required this.createdDate,
     this.onTap,
+    this.onPressed,
+    this.delete,
   });
 
   @override
@@ -119,11 +123,19 @@ class PremiumLeadCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: statusColor,
+                      IconButton(
+                        onPressed: onPressed,
+                        icon: Icon(
+                          Icons.edit_square,
+                          color: statusColor,
+                        ),
                       ),
+                      IconButton(
+                          onPressed: delete,
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: Colors.redAccent,
+                          ))
                     ],
                   ),
                 ],

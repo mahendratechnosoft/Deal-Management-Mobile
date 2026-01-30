@@ -59,8 +59,15 @@ class LeadRepository {
     //  return LeadResponseModel.fromJson(res.data);
   }
 
-  Future createLead({required CreateLeadRequest request}) async {
-    final res = await apiService.createLead(request: request);
+  Future createLead(
+      {required CreateLeadRequest request, required bool edit}) async {
+    final res = await apiService.createLead(request: request, edit: edit);
+    log('response : $res');
+    return res.data;
+  }
+
+  Future deleteLead(String leadId) async {
+    final res = await apiService.deletelead(leadId);
     log('response : $res');
     return res.data;
   }

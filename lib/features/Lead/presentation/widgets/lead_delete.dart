@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
-import 'package:xpertbiz/features/task_module/task/bloc/task_event.dart';
-import '../bloc/task_bloc.dart';
+import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_bloc.dart';
+import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_event.dart';
 
-void showDeleteDialog(BuildContext context, String taskId) {
-  showDialog(
+Future<bool?> leadDelete(
+  BuildContext context,
+  String leadId,
+) {
+  return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (_) {
       return Dialog(
+        backgroundColor: AppColors.background,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -36,7 +40,7 @@ void showDeleteDialog(BuildContext context, String taskId) {
 
               /// TITLE
               const Text(
-                "Delete Task?",
+                "Delete Lead?",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -48,7 +52,7 @@ void showDeleteDialog(BuildContext context, String taskId) {
 
               /// DESCRIPTION
               const Text(
-                "This action cannot be undone. Are you sure you want to delete this task?",
+                "This action cannot be undone. Are you sure you want to delete this Lead?",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
@@ -85,9 +89,9 @@ void showDeleteDialog(BuildContext context, String taskId) {
                     child: ElevatedButton(
                       onPressed: () {
                         context
-                            .read<TaskBloc>()
-                            .add(DeleteTaskEvent(taskId: taskId));
-                        Navigator.pop(context);
+                            .read<CreateLeadBloc>()
+                            .add(DeleteLeadEvent(leadId: leadId));
+                        Navigator.pop(context, true);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFDC2626),

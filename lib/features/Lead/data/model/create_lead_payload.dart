@@ -1,4 +1,5 @@
 class CreateLeadRequest {
+  final String? id; // 👈 optional
   final String companyName;
   final String clientName;
   final String? assignTo;
@@ -20,6 +21,7 @@ class CreateLeadRequest {
   final String? followUp;
 
   CreateLeadRequest({
+    this.id,
     required this.companyName,
     required this.clientName,
     this.assignTo,
@@ -43,6 +45,7 @@ class CreateLeadRequest {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id, // 👈 only present if edit = true
       'companyName': companyName,
       'assignTo': assignTo,
       'status': status,
@@ -62,30 +65,8 @@ class CreateLeadRequest {
       'zipCode': zipCode,
       'description': description,
       'followUp': followUp,
-    }..removeWhere((key, value) => value == null || value == '');
-  }
-
-  factory CreateLeadRequest.fromJson(Map<String, dynamic> json) {
-    return CreateLeadRequest(
-      companyName: json['companyName'] ?? '',
-      assignTo: json['assignTo'],
-      status: json['status'] ?? 'New Lead',
-      source: json['source'] ?? '',
-      clientName: json['clientName'] ?? '',
-      revenue: json['revenue']?.toDouble() ?? 0,
-      mobileNumber: json['mobileNumber'] ?? '',
-      phoneNumber: json['phoneNumber'],
-      email: json['email'],
-      website: json['website'],
-      industry: json['industry'],
-      priority: json['priority'],
-      street: json['street'] ?? '',
-      country: json['country'],
-      state: json['state'],
-      city: json['city'],
-      zipCode: json['zipCode'] ?? '',
-      description: json['description'],
-      followUp: json['followUp'],
-    );
+    }
+      // 🔥 THIS GUARANTEES id is removed when null
+      ..removeWhere((key, value) => value == null || value == '');
   }
 }
