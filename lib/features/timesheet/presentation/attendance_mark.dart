@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -24,7 +23,6 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
   @override
   void initState() {
     super.initState();
-
     context.read<TimeSheetBloc>().add(
           CheckInStatusEvent(
             fromDate: currentDate,
@@ -59,7 +57,6 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
             end = lastRecord.last.timeStamp;
           } else {
             startTs = state.startTimestamp ?? 0;
-            log('Ganesh check it is empty or not $startTs');
           }
         }
 

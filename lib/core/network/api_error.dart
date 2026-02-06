@@ -12,7 +12,7 @@ class ApiError {
   static String _handleDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
-        return "Connection timeout. Please check your internet.";
+        return "timeout. Please check your internet.";
 
       case DioExceptionType.sendTimeout:
         return "Request timeout. Please try again.";

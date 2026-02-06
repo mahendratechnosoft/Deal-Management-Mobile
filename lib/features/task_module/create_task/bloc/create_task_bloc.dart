@@ -110,7 +110,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       log('Add assignee error: $e');
       emit(state.copyWith(
         isAddingAssignee: false,
-        assigneeError: e.toString(),
+        assigneeError: ApiError.getMessage(e),
       ));
     }
   }
@@ -140,7 +140,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       log('Add follower error: $e');
       emit(state.copyWith(
         isAddingFollower: false,
-        followerError: e.toString(),
+        followerError: ApiError.getMessage(e),
       ));
     }
   }
@@ -164,7 +164,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       log('Load task assignees error: $e');
       emit(state.copyWith(
         isLoadingTaskAssignees: false,
-        assigneeError: e.toString(),
+        assigneeError: ApiError.getMessage(e),
       ));
     }
   }
@@ -188,7 +188,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       log('Load task followers error: $e');
       emit(state.copyWith(
         isLoadingTaskFollowers: false,
-        followerError: e.toString(),
+        followerError: ApiError.getMessage(e),
       ));
     }
   }
@@ -210,7 +210,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       log('Load comments error: $e');
       emit(state.copyWith(
         isLoadingComments: false,
-        commentError: e.toString(),
+        commentError: ApiError.getMessage(e),
       ));
     }
   }
@@ -236,7 +236,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       log('Add comment error: $e');
       emit(state.copyWith(
         isAddingComment: false,
-        commentError: e.toString(),
+        commentError: ApiError.getMessage(e),
       ));
     }
   }
@@ -249,6 +249,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       final response = await repository.getComment(event.taskId);
       emit(state.copyWith(comments: response.content));
     } catch (e) {
+      ApiError.getMessage(e);
       log('Refresh comments error: $e');
     }
   }
@@ -293,7 +294,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
         elapsedSeconds: 0,
       ));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(state.copyWith(errorMessage: ApiError.getMessage(e)));
     }
   }
 
@@ -435,7 +436,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       }
     } catch (e) {
       log('FetchAssign error: $e');
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(state.copyWith(errorMessage: ApiError.getMessage(e)));
     }
   }
 
@@ -512,7 +513,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
     } catch (e) {
       emit(state.copyWith(
         taskUpdated: false,
-        errorMessage: e.toString(),
+        errorMessage: ApiError.getMessage(e),
       ));
     }
   }
@@ -525,7 +526,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
       final res = await repository.timedetailsFetch(event.taskId);
       emit(state.copyWith(timeDetailsModel: res));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(state.copyWith(errorMessage: ApiError.getMessage(e)));
     }
   }
 
@@ -539,7 +540,7 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
           taskId: event.taskId, status: event.status);
       emit(state.copyWith(updatedStatus: false, isLoading: false));
     } catch (e) {
-      emit(state.copyWith(errorMessage: e.toString()));
+      emit(state.copyWith(errorMessage: ApiError.getMessage(e)));
     }
   }
 }

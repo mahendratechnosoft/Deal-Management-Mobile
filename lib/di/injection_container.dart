@@ -7,6 +7,10 @@ import 'package:xpertbiz/features/Lead/data/service/service.dart';
 import 'package:xpertbiz/features/auth/bloc/auth_bloc.dart';
 import 'package:xpertbiz/features/auth/data/repo/auth_repository.dart';
 import 'package:xpertbiz/features/auth/data/services/auth_api_service.dart';
+import 'package:xpertbiz/features/customers/bloc/customer_bloc.dart';
+import 'package:xpertbiz/features/customers/create_customer/bloc/create_customer_bloc.dart';
+import 'package:xpertbiz/features/customers/data/repo.dart';
+import 'package:xpertbiz/features/customers/data/service.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.dart';
 import 'package:xpertbiz/features/task_module/create_task/repo/create_task_repo.dart';
 import 'package:xpertbiz/features/task_module/create_task/service/create_task_service.dart';
@@ -33,6 +37,7 @@ void init() {
   sl.registerLazySingleton(() => CommentApiService(sl()));
   sl.registerLazySingleton(() => TimesheetService(sl()));
   sl.registerLazySingleton(() => LeadService(sl()));
+  sl.registerLazySingleton(() => CustomerService(sl()));
 
   sl.registerLazySingleton(() => AuthRepository(sl()));
   sl.registerLazySingleton(() => TaskRepository(sl()));
@@ -40,6 +45,7 @@ void init() {
   sl.registerLazySingleton(() => CommentRepository(sl()));
   sl.registerLazySingleton(() => TimeSheetRepository(sl()));
   sl.registerLazySingleton(() => LeadRepository(sl()));
+  sl.registerLazySingleton(() => CustomerRepository(sl()));
 
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => TaskBloc(sl()));
@@ -48,4 +54,7 @@ void init() {
   sl.registerFactory(() => TimeSheetBloc(sl()));
   sl.registerFactory(() => LeadBloc(sl()));
   sl.registerFactory(() => CreateLeadBloc(sl()));
+  sl.registerFactory(() => CustomerBloc(sl()));
+  sl.registerFactory(() => CreateCustomerBloc(sl()));
+
 }

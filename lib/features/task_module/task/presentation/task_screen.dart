@@ -6,6 +6,8 @@ import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_event.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_state.dart';
@@ -23,12 +25,18 @@ class TaskScreen extends StatefulWidget {
 }
 
 class _TaskScreenState extends State<TaskScreen> {
-  final ScrollController _controller = ScrollController();
+  final _controller = ScrollController();
+  LoginResponse? user;
+  bool? access;
+  bool? delete;
 
   @override
   void initState() {
     super.initState();
-
+    user = AuthLocalStorage.getUser();
+    access = user?.moduleAccess.taskCreate;
+    delete = user?.moduleAccess.taskDelete;
+    log('check access : $access');
     _controller.addListener(() {
       if (_controller.position.pixels >=
           _controller.position.maxScrollExtent - 200) {
@@ -75,18 +83,20 @@ class _TaskScreenState extends State<TaskScreen> {
       child: Scaffold(
         backgroundColor: const Color.fromARGB(237, 248, 250, 252),
         appBar: CommonAppBar(title: 'Task'),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: AppColors.primaryDark,
-          onPressed: () async {
-            final result = await context.push(AppRouteName.createTask);
-
-            log('$result Ganesh check resulut $mounted');
-            if (result == true && mounted) {
-              context.read<TaskBloc>().add(const FetchTasks(isLoadMore: false));
-            }
-          },
-          child: const Icon(Icons.add, color: AppColors.background),
-        ),
+        floatingActionButton: access == false
+            ? SizedBox.shrink()
+            : FloatingActionButton(
+                backgroundColor: AppColors.primaryDark,
+                onPressed: () async {
+                  final result = await context.push(AppRouteName.createTask);
+                  if (result == true && mounted) {
+                    context
+                        .read<TaskBloc>()
+                        .add(const FetchTasks(isLoadMore: false));
+                  }
+                },
+                child: const Icon(Icons.add, color: AppColors.background),
+              ),
         body: Column(
           children: [
             BlocBuilder<TaskBloc, TaskListState>(
@@ -142,6 +152,8 @@ class _TaskScreenState extends State<TaskScreen> {
                               ? task.assignedEmployees.first.name
                               : 'Unassigned';
 
+                          log('Ganesh => ${state.filteredTasks.length}');
+
                           return InkWell(
                             onTap: () async {
                               final res = await context.push(
@@ -154,6 +166,7 @@ class _TaskScreenState extends State<TaskScreen> {
                               }
                             },
                             child: TaskCard(
+                              enable: delete,
                               id: '$index',
                               title: task.subject,
                               status: task.status.toReadableStatus(),
@@ -186,7 +199,7 @@ class _TaskScreenState extends State<TaskScreen> {
                   }
 
                   if (state is TaskFailure) {
-                    _onRefresh(context);
+                    //_onRefresh(context);
                     return Center(
                         child: Padding(
                       padding: const EdgeInsets.all(8.0),

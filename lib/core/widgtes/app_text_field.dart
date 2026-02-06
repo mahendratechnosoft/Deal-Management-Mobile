@@ -11,7 +11,7 @@ class AppTextField extends StatefulWidget {
   final Widget? suffixIcon;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
-  final String Function(String)? onChanged;
+  final ValueChanged<String>? onChanged;
 
   /// Enabled / Disabled
   final bool enabled;
@@ -168,7 +168,7 @@ class _AppTextFieldState extends State<AppTextField> {
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: TextStyle(
-              fontSize: Responsive.sp(14),
+              fontSize: Responsive.sp(12),
               color: widget.enabled
                   ? AppColors.textSecondary
                   : AppColors.textSecondary.withOpacity(0.5),
@@ -200,6 +200,5 @@ class _AppTextFieldState extends State<AppTextField> {
         ),
       ],
     );
-    
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:developer';
-
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/core/network/api_error.dart';
 import 'package:xpertbiz/features/Lead/bloc/state.dart';
@@ -41,9 +41,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     on<FetchLeadActivityEvent>(_fetchLeadActivity);
     on<FetchReminderEvent>(_onReminder);
     on<CreateReminderSubmitEvent>(_createReminder);
-   }
-  
-  
+  }
 
   Future<void> _fetchLeadActivity(
     FetchLeadActivityEvent event,
@@ -73,12 +71,16 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
       emit(currentState.copyWith(
         activityLogsLoader: false,
       ));
-      print('Activity logs error: ${ApiError.getMessage(e)}');
+      if (kDebugMode) {
+        print('Activity logs error: ${ApiError.getMessage(e)}');
+      }
     } catch (e) {
       emit(currentState.copyWith(
         activityLogsLoader: false,
       ));
-      print('Activity logs error: $e');
+      if (kDebugMode) {
+        print('Activity logs error: $e');
+      }
     } finally {
       _isFetchingActivity = false;
     }
@@ -94,7 +96,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     FetchLeadStatus event,
     Emitter<LeadState> emit,
   ) async {
-    if (state is LeadLoaded) return;
+    //   if (state is LeadLoaded) return;
     emit(LeadLoading());
     try {
       final leads = await repository.fetchLeadStatus();
@@ -102,7 +104,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     } on DioException catch (e) {
       emit(LeadError(ApiError.getMessage(e)));
     } catch (e) {
-      emit(LeadError(e.toString()));
+      emit(LeadError(ApiError.getMessage(e)));
     }
   }
 
@@ -177,7 +179,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
       final response = await repository.fecthAllLeads(
         page: _page,
         limit: limit,
-        status: _currentStatus, // Pass status to API
+        status: _currentStatus,
       );
 
       _leads.addAll(response.leads);

@@ -106,7 +106,7 @@ class CustomDropdown<T> extends StatelessWidget {
               hint: Text(
                 hintText,
                 style: TextStyle(
-                  fontSize: Responsive.sp(14),
+                  fontSize: Responsive.sp(12),
                   color: AppColors.textSecondary,
                 ),
               ),

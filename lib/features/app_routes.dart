@@ -9,7 +9,7 @@ import 'package:xpertbiz/features/auth/presentation/screens/login_screen.dart';
 import 'package:xpertbiz/features/auth/presentation/screens/splash_screen.dart';
 import 'package:xpertbiz/features/Lead/presentation/screens/lead_screen.dart';
 import 'package:xpertbiz/features/Lead/presentation/screens/all_lead_scren.dart';
-import 'package:xpertbiz/features/invoice/presentation/invoice_screen.dart';
+import 'package:xpertbiz/features/customers/presentation/customer_screen.dart';
 import 'package:xpertbiz/features/settings/presentation/settings_screen.dart';
 import 'package:xpertbiz/features/task_module/task/presentation/task_screen.dart';
 import 'package:xpertbiz/features/task_module/create_task/screens/create_task_screen.dart';
@@ -101,10 +101,10 @@ class AppRouter {
 
       /// INVOICE
       GoRoute(
-        path: AppRouteName.invoice,
+        path: AppRouteName.customers,
         pageBuilder: (context, state) => AppTransition.slide(
           state: state,
-          child: const InvoiceScreen(),
+          child: const CustomerScreen(),
         ),
       ),
       GoRoute(

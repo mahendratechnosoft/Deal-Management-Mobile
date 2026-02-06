@@ -11,6 +11,7 @@ class TaskCard extends StatelessWidget {
   final String assignee;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final bool? enable;
 
   const TaskCard({
     super.key,
@@ -22,6 +23,7 @@ class TaskCard extends StatelessWidget {
     required this.endDate,
     required this.assignee,
     this.onEdit,
+    this.enable,
     this.onDelete,
   });
 
@@ -192,11 +194,13 @@ class TaskCard extends StatelessWidget {
                 icon: const Icon(Icons.edit, size: 20),
                 onPressed: onEdit,
               ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline,
-                    size: 20, color: Colors.red),
-                onPressed: onDelete,
-              ),
+              enable == true
+                  ? IconButton(
+                      icon: const Icon(Icons.delete_outline,
+                          size: 20, color: Colors.red),
+                      onPressed: onDelete,
+                    )
+                  : SizedBox.shrink(),
             ],
           ),
         ],

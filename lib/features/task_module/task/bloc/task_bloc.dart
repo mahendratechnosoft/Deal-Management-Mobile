@@ -63,7 +63,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
     } on DioException catch (e) {
       emit(TaskFailure(ApiError.getMessage(e)));
     } catch (e) {
-      emit(TaskFailure(e.toString()));
+      emit(TaskFailure(ApiError.getMessage(e)));
     }
   }
 
@@ -86,7 +86,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
           hasReachedMax: response.taskList.length < pageSize,
         ));
       } catch (e) {
-        emit(TaskFailure(e.toString()));
+        emit(TaskFailure(ApiError.getMessage(e)));
       }
     }
   }
@@ -105,13 +105,12 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
 
         emit(TaskListSuccess(
           tasks: response.taskList,
-          
           filter: s.filter.copyWith(status: event.value),
           page: 0,
           hasReachedMax: response.taskList.length < pageSize,
         ));
       } catch (e) {
-        emit(TaskFailure(e.toString()));
+        emit(TaskFailure(ApiError.getMessage(e)));
       }
     }
   }
@@ -135,7 +134,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
           hasReachedMax: response.taskList.length < pageSize,
         ));
       } catch (e) {
-        emit(TaskFailure(e.toString()));
+        emit(TaskFailure( ApiError.getMessage(e)));
       }
     }
   }

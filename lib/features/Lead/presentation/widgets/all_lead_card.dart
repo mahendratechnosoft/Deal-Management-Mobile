@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 
 class PremiumLeadCard extends StatelessWidget {
   final String clientName;
@@ -30,6 +32,10 @@ class PremiumLeadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width > 600;
     final statusColor = _statusColor(status);
+    final LoginResponse? user;
+    final bool? isDelete;
+    user = AuthLocalStorage.getUser();
+    isDelete = user?.moduleAccess.leadDelete;
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -130,12 +136,14 @@ class PremiumLeadCard extends StatelessWidget {
                           color: statusColor,
                         ),
                       ),
-                      IconButton(
-                          onPressed: delete,
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: Colors.redAccent,
-                          ))
+                      isDelete == true
+                          ? IconButton(
+                              onPressed: delete,
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                              ))
+                          : SizedBox.shrink()
                     ],
                   ),
                 ],

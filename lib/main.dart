@@ -7,6 +7,8 @@ import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
 import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_bloc.dart';
 import 'package:xpertbiz/features/app_routes.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
+import 'package:xpertbiz/features/customers/bloc/customer_bloc.dart';
+import 'package:xpertbiz/features/customers/create_customer/bloc/create_customer_bloc.dart';
 import 'package:xpertbiz/features/drawer/bloc/drawer_bloc.dart';
 import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
@@ -44,6 +46,8 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => di.sl<TimeSheetBloc>()),
         BlocProvider(create: (context) => di.sl<LeadBloc>()),
         BlocProvider(create: (context) => di.sl<CreateLeadBloc>()),
+        BlocProvider(create: (context) => di.sl<CustomerBloc>()),
+        BlocProvider(create: (context) => di.sl<CreateCustomerBloc>()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

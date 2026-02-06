@@ -10,6 +10,9 @@ import 'package:xpertbiz/features/Lead/bloc/state.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/drawer/presentation/custom_drawer.dart';
 
+import '../../../auth/data/locale_data/hive_service.dart';
+import '../../../auth/data/locale_data/login_response.dart';
+
 class LeadScreen extends StatefulWidget {
   const LeadScreen({super.key});
 
@@ -18,8 +21,13 @@ class LeadScreen extends StatefulWidget {
 }
 
 class _LeadScreenState extends State<LeadScreen> {
+  LoginResponse? user;
+  bool? access;
+
   @override
   void initState() {
+    user = AuthLocalStorage.getUser();
+    access = user?.moduleAccess.leadCreate;
     super.initState();
     context.read<LeadBloc>().add(const FetchLeadStatus());
   }
@@ -28,7 +36,8 @@ class _LeadScreenState extends State<LeadScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Check if we're coming back to this screen
+    //Check if we're coming back to this screen
+
     if (ModalRoute.of(context)!.isCurrent) {
       context.read<LeadBloc>().add(const FetchLeadStatus());
     }
@@ -42,13 +51,24 @@ class _LeadScreenState extends State<LeadScreen> {
       drawer: const CustomDrawer(),
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: CommonAppBar(title: 'Leads'),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryDark,
-        onPressed: () async {
-          context.push(AppRouteName.createLead, extra: false);
-        },
-        child: const Icon(Icons.add, color: AppColors.background),
-      ),
+      floatingActionButton: access == false
+          ? SizedBox.shrink()
+          : FloatingActionButton(
+              backgroundColor: AppColors.primaryDark,
+              onPressed: () async {
+                await context.push(
+                  AppRouteName.createLead,
+                  extra: false,
+                );
+
+                // if (result == true) {
+                //   await Future.delayed(const Duration(seconds: 2));
+                //   context.read<LeadBloc>().add(const FetchLeadStatus());
+                //   log('reload data');
+                // }
+              },
+              child: const Icon(Icons.add, color: AppColors.background),
+            ),
       body: BlocBuilder<LeadBloc, LeadState>(
         builder: (context, state) {
           if (state is LeadLoading) {

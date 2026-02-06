@@ -21,6 +21,8 @@ import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_event.dart';
 import 'package:xpertbiz/features/Lead/create_lead_bloc.dart/create_state.dart';
 import 'package:xpertbiz/features/Lead/data/model/create_lead_payload.dart';
 import 'package:xpertbiz/features/Lead/presentation/widgets/search_dropdown.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 import '../../data/model/lead_details_model.dart';
 import '../widgets/helper_code.dart';
 
@@ -42,16 +44,29 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
   DateTime? _selectedFollowUpDate;
   String? _editingLeadId;
   String? _existingLeadStatus;
+  LoginResponse? user;
+  bool access = true;
+
+  void accessStatus() {
+    if (widget.edit == true) {
+      access = user?.moduleAccess.leadEdit ?? true;
+    } else {
+      access = user?.moduleAccess.leadCreate ?? true;
+    }
+  }
 
   // Form controllers
   final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
+    user = AuthLocalStorage.getUser();
+
     log('check it is edit ${widget.edit}');
     super.initState();
     _initializeControllers();
     CreateLeadHelper.loadCountries(context);
+    accessStatus();
   }
 
   void _initializeControllers() {
@@ -231,9 +246,9 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     }
 
     if (state is CreateLeadSuccess) {
-      return CreateLeadHelper.buildSuccessView(
-        onBackPressed: () => Navigator.pop(context),
-      );
+      return CreateLeadHelper.buildSuccessView(onBackPressed: () {
+        Navigator.pop(context, true);
+      });
     }
 
     if (state is CreateLeadDataState) {
@@ -384,8 +399,10 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     String? Function(String?)? validator,
     int maxLines = 1,
     bool isTenDigitPhone = false,
+    bool enable = true,
   }) {
     return AppTextField(
+      enabled: enable,
       prefixIcon: Icon(CreateLeadConstants.fieldIcons[fieldKey]),
       showLabel: true,
       keyboardType: keyboardType,
@@ -401,6 +418,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildPrimaryNumberField() {
     return _buildTextField(
+      enable: access,
       fieldKey: 'primaryNumber',
       isRequired: true,
       keyboardType: TextInputType.number,
@@ -410,6 +428,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildSecondaryNumberField() {
     return _buildTextField(
+      enable: access,
       fieldKey: 'secondaryNumber',
       keyboardType: TextInputType.number,
       isTenDigitPhone: true,
@@ -418,6 +437,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildClientNameField() {
     return _buildTextField(
+      enable: access,
       fieldKey: 'clientName',
       isRequired: true,
       keyboardType: TextInputType.name,
@@ -427,6 +447,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildCompanyNameField() {
     return _buildTextField(
+      enable: access,
       fieldKey: 'companyName',
       isRequired: true,
       keyboardType: TextInputType.name,
@@ -436,6 +457,8 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildEmailField() {
     return _buildTextField(
+      isRequired: true,
+      enable: access,
       fieldKey: 'email',
       keyboardType: TextInputType.emailAddress,
       validator: Validators.email,
@@ -444,6 +467,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildWebsiteField() {
     return _buildTextField(
+      enable: access,
       fieldKey: 'website',
       keyboardType: TextInputType.url,
       validator: Validators.url,
@@ -452,6 +476,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildAddressField() {
     return _buildTextField(
+      enable: access,
       fieldKey: 'address',
       keyboardType: TextInputType.streetAddress,
       maxLines: 2,
@@ -460,6 +485,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildZipCodeField() {
     return _buildTextField(
+      enable: access,
       fieldKey: 'zipCode',
       keyboardType: TextInputType.text,
       validator: Validators.zip,
@@ -468,6 +494,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
 
   Widget _buildDescriptionField() {
     return AppTextField(
+      enabled: access,
       showLabel: true,
       keyboardType: TextInputType.multiline,
       labelText: 'Description',
@@ -489,6 +516,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         CreateLeadHelper.buildLabel('Lead Source', isRequired: true),
         const SizedBox(height: 8),
         DropdownFlutter<String>(
+          enabled: access,
           initialItem: matchingSource,
           decoration: CustomDropdownDecoration(
             closedBorder: Border.all(color: AppColors.border),
@@ -511,6 +539,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         CreateLeadHelper.buildLabel('Industry'),
         const SizedBox(height: 8),
         DropdownFlutter<String>(
+          enabled: access,
           initialItem: matchingIndustry,
           decoration: CustomDropdownDecoration(
             closedBorder: Border.all(color: AppColors.border),
@@ -530,6 +559,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         CreateLeadHelper.buildLabel('Follow-Up Date & Time'),
         const SizedBox(height: 8),
         CustomDatePicker(
+          enabled: access,
           showLabel: false,
           labelText: '',
           hintText: 'Select Follow-Up Date & Time',
@@ -571,6 +601,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
         state.countriesLoading
             ? CreateLeadHelper.buildDropdownLoading()
             : DropdownFlutter<CountryName>.search(
+                enabled: access,
                 initialItem: matchingCountry,
                 decoration: CustomDropdownDecoration(
                   closedBorder: Border.all(color: AppColors.border),
@@ -661,6 +692,7 @@ class _CreateLeadScreenState extends State<CreateLeadScreen> {
     return state.submitting
         ? const Center(child: CircularProgressIndicator())
         : Button(
+            isValid: access,
             text: widget.edit ? 'Update Lead' : 'Create Lead',
             onPressed: widget.edit ? _updateLead : _onSubmit,
           );

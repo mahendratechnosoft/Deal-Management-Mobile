@@ -40,7 +40,6 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Check if we're coming back to this screen
     if (ModalRoute.of(context)!.isCurrent) {
       _resetAndFetchData();
     }
@@ -144,7 +143,6 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
                         context
                             .read<TimeSheetBloc>()
                             .add(FilterEmployees(value));
-                        return '';
                       },
                     ),
                   ),

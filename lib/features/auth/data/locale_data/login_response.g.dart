@@ -21,17 +21,21 @@ class LoginResponseAdapter extends TypeAdapter<LoginResponse> {
       userId: fields[1] as String,
       loginEmail: fields[2] as String,
       role: fields[3] as String,
-      loginUserName: fields[4] as String?,
-      employeeId: fields[5] as String?,
-      adminId: fields[6] as String?,
-      moduleAccess: fields[7] as ModuleAccess,
+      expiryDate: fields[4] as String?,
+      loginUserName: fields[5] as String?,
+      employeeId: fields[6] as String?,
+      adminId: fields[7] as String?,
+      customerId: fields[8] as String?,
+      logo: fields[9] as String?,
+      contactId: fields[10] as String?,
+      moduleAccess: fields[11] as ModuleAccess,
     );
   }
 
   @override
   void write(BinaryWriter writer, LoginResponse obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.jwtToken)
       ..writeByte(1)
@@ -41,12 +45,20 @@ class LoginResponseAdapter extends TypeAdapter<LoginResponse> {
       ..writeByte(3)
       ..write(obj.role)
       ..writeByte(4)
-      ..write(obj.loginUserName)
+      ..write(obj.expiryDate)
       ..writeByte(5)
-      ..write(obj.employeeId)
+      ..write(obj.loginUserName)
       ..writeByte(6)
-      ..write(obj.adminId)
+      ..write(obj.employeeId)
       ..writeByte(7)
+      ..write(obj.adminId)
+      ..writeByte(8)
+      ..write(obj.customerId)
+      ..writeByte(9)
+      ..write(obj.logo)
+      ..writeByte(10)
+      ..write(obj.contactId)
+      ..writeByte(11)
       ..write(obj.moduleAccess);
   }
 

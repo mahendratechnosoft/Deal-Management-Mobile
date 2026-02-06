@@ -26,7 +26,6 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   int _absentDays = 0;
   int _halfDays = 0;
 
-  // Single instance of date formatter to avoid repeated instantiation
   final DateFormat _dateFormatter = DateFormat('yyyy-MM-dd');
 
   String _fmt(DateTime d) => _dateFormatter.format(d);
@@ -86,11 +85,7 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
 
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_selectedMonth.year, _selectedMonth.month, day);
-
-      // ❌ Skip future dates
       if (date.isAfter(todayDate)) continue;
-
-      // ❌ Skip weekends
       if (date.weekday == DateTime.sunday || _isAlternateSaturday(date)) {
         continue;
       }

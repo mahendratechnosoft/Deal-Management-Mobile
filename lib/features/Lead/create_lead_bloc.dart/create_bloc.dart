@@ -190,9 +190,6 @@ class CreateLeadBloc extends Bloc<CreateLeadEvent, CreateLeadState> {
     Emitter<CreateLeadState> emit,
   ) async {
     final currentState = state as CreateLeadDataState;
-
-    // Validate required fields
-
     emit(currentState.copyWith(
       submitting: true,
       error: null,
@@ -200,15 +197,8 @@ class CreateLeadBloc extends Bloc<CreateLeadEvent, CreateLeadState> {
     ));
 
     try {
-      // API call here - replace with your actual API call
-      final res =
-          await repository.createLead(request: event.request, edit: event.edit);
-      log('response check $res');
-
-      // Simulate API success
+      await repository.createLead(request: event.request, edit: event.edit);
       emit(CreateLeadSuccess());
-
-      // You could also emit CreateLeadDataState with success flag
       emit(currentState.copyWith(
         submitting: false,
         submitSuccess: true,

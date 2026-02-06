@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/features/auth/bloc/user_role.dart';
@@ -52,7 +51,6 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
         visibleEmployees =
             employees.where((e) => e.employeeId == user!.employeeId).toList();
       }
-      log('API FETCHED → status: ${visibleEmployees.first.status}');
       emit(
         TimeSheetLoaded(
           employees: visibleEmployees,
@@ -101,8 +99,6 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
         employeeId: event.employeeId,
       );
 
-      log('Attendance fetched: ${data.data.length}');
-
       emit(
         (state as TimeSheetLoaded).copyWith(
           monthlyAttendance: data,
@@ -138,8 +134,7 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     CheckInStatusEvent event,
     Emitter<TimeSheetState> emit,
   ) async {
-    if (state is! TimeSheetLoaded) return;
-
+    // if (state is! TimeSheetLoaded) return;
     try {
       final result = await repository.checkInStatus(
         fromDate: event.fromDate,

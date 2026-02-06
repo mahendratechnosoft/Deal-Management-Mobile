@@ -2,32 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:xpertbiz/core/utils/responsive.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/drawer/bloc/drawer_bloc.dart';
 import '../../app_route_name.dart';
 
 class DrawerMenu extends StatelessWidget {
   const DrawerMenu({super.key});
 
-  static const _items = [
-    ("Task", Icons.dashboard, AppRouteName.task),
-    ("Timesheets", Icons.people, AppRouteName.timesheet),
-    ("Invoices", Icons.receipt_long, AppRouteName.invoice),
-    ("Settings", Icons.settings, AppRouteName.settings),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final user = AuthLocalStorage.getUser();
+
+    final menuItems = <DrawerMenuItem>[
+      DrawerMenuItem(
+        title: 'Task',
+        icon: Icons.dashboard,
+        route: AppRouteName.task,
+        visible: user?.moduleAccess.taskAccess == true,
+      ),
+      DrawerMenuItem(
+        title: 'Timesheets',
+        icon: Icons.people,
+        route: AppRouteName.timesheet,
+        visible: user?.moduleAccess.timeSheetAccess == true,
+      ),
+      DrawerMenuItem(
+        title: 'Customers',
+        icon: Icons.receipt_long,
+        route: AppRouteName.customers,
+        visible: user?.moduleAccess.customerAccess == true,
+      ),
+    ].where((item) => item.visible).toList();
+
     return Expanded(
       child: BlocBuilder<DrawerBloc, DrawerState>(
         builder: (context, state) {
           return ListView.separated(
             padding: EdgeInsets.symmetric(vertical: Responsive.h(12)),
-            itemCount: _items.length,
+            itemCount: menuItems.length,
             separatorBuilder: (_, __) => SizedBox(height: Responsive.h(6)),
             itemBuilder: (context, index) {
+              final item = menuItems[index];
               final isActive = state.selectedIndex == index;
-              if (index == 1) {}
-
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 margin: EdgeInsets.symmetric(
@@ -43,8 +59,7 @@ class DrawerMenu extends StatelessWidget {
                   splashColor: Colors.white.withOpacity(0.08),
                   onTap: () {
                     context.read<DrawerBloc>().add(DrawerItemSelected(index));
-
-                    context.push(_items[index].$3);
+                    context.push(item.route);
                   },
                   child: Padding(
                     padding: EdgeInsets.symmetric(
@@ -54,14 +69,14 @@ class DrawerMenu extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(
-                          _items[index].$2,
+                          item.icon,
                           size: Responsive.h(22),
                           color: isActive ? Colors.white : Colors.white70,
                         ),
                         SizedBox(width: Responsive.h(16)),
                         Expanded(
                           child: Text(
-                            _items[index].$1,
+                            item.title,
                             style: TextStyle(
                               fontSize: Responsive.h(15),
                               fontWeight:

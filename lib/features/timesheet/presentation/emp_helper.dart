@@ -1,22 +1,17 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:xpertbiz/features/timesheet/data/model/get_all_emp_status.dart';
 import '../data/model/emp_model.dart';
 
 class EmployeeMapper {
   static Employee fromApi(GetAllEmpStatusModel api) {
-    log('status check : ${api.status}');
-
     final DateTime? eventTime = api.timeStamp != null
         ? DateTime.fromMillisecondsSinceEpoch(api.timeStamp!)
         : null;
-
     // ✅ Handle session tracking correctly
     if (api.status && eventTime != null) {
       HrSessionTracker.saveCheckIn(api.employeeId, eventTime);
     } else {
-      HrSessionTracker.clear(api.employeeId); // 👈 IMPORTANT
+      HrSessionTracker.clear(api.employeeId);
     }
 
     final DateTime? checkIn = HrSessionTracker.getCheckIn(api.employeeId);
