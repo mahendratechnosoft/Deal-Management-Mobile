@@ -62,7 +62,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
               state is! TimeSheetEmpty &&
               state is! TimeSheetError) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _resetAndFetchData();
+              //  _resetAndFetchData();
             });
             return const Center(child: CircularProgressIndicator());
           }

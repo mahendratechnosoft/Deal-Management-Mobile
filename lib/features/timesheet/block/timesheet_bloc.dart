@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/features/auth/bloc/user_role.dart';
@@ -134,7 +135,7 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     CheckInStatusEvent event,
     Emitter<TimeSheetState> emit,
   ) async {
-    // if (state is! TimeSheetLoaded) return;
+    //  if (state is! TimeSheetLoaded) return;
     try {
       final result = await repository.checkInStatus(
         fromDate: event.fromDate,
@@ -143,7 +144,7 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
       );
 
       final lastRecord = result.dates.first.records.last;
-
+      log('check lenth : ${result.dates.first.records.length}');
       emit(
         (state as TimeSheetLoaded).copyWith(
           checkInStatus: result,
@@ -151,8 +152,9 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
           startTimestamp: lastRecord.timeStamp,
         ),
       );
-    } catch (_) {
-      //   emit(const TimeSheetError('Check-in status load failed'));
+    } catch (e) {
+      log('error: $e');
+      //   emit(TimeSheetError(ApiError.getMessage(e)));
     }
   }
 }

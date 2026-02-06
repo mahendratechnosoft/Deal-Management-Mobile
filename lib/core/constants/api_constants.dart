@@ -4,7 +4,7 @@ class ApiConstants {
   static const String boxName = 'loginResponse';
   static const String userKey = 'currentUser';
   static const String poppinsFont = 'Poppins';
-  static const String baseUrl = 'https://api.mtechnosoft.xpertbizsolutions.com/';//"http://91.203.133.210:9091/"; //https://api.mtechnosoft.xpertbizsolutions.com/
+  static const String baseUrl = 'http://91.203.133.210:9091/';//"http://91.203.133.210:9091/"; //https://api.mtechnosoft.xpertbizsolutions.com/
   
   static const String login = "signin";
   static String get getTask => "/${RoleResolver.rolePath}/getAllTaskList/";

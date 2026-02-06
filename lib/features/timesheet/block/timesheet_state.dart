@@ -41,6 +41,8 @@ class TimeSheetLoaded extends TimeSheetState {
   /// Today check-in status
   final EmployeeAttendanceResponse? checkInStatus;
 
+  
+
   const TimeSheetLoaded({
     required this.employees,
     required this.allEmployees,
@@ -48,6 +50,7 @@ class TimeSheetLoaded extends TimeSheetState {
     this.startTimestamp,
     this.monthlyAttendance,
     this.checkInStatus,
+
   });
 
   TimeSheetLoaded copyWith({
@@ -63,8 +66,7 @@ class TimeSheetLoaded extends TimeSheetState {
       allEmployees: allEmployees ?? this.allEmployees,
       isCheckedIn: isCheckedIn ?? this.isCheckedIn,
       startTimestamp: startTimestamp ?? this.startTimestamp,
-      monthlyAttendance:
-          monthlyAttendance ?? this.monthlyAttendance,
+      monthlyAttendance: monthlyAttendance ?? this.monthlyAttendance,
       checkInStatus: checkInStatus ?? this.checkInStatus,
     );
   }
@@ -79,4 +81,6 @@ class TimeSheetLoaded extends TimeSheetState {
         checkInStatus,
       ];
 }
+
+
 
