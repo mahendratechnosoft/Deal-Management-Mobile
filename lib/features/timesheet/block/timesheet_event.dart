@@ -45,22 +45,37 @@ class FilterEmployees extends TimeSheetEvent {
   const FilterEmployees(this.query);
 }
 
-class CheckInEvent extends TimeSheetEvent {
+class CheckStatusEvent extends TimeSheetEvent {
   final bool checkIn;
-  const CheckInEvent(this.checkIn);
+  const CheckStatusEvent(this.checkIn);
 }
 
-class CheckInStatusEvent extends TimeSheetEvent {
-  final String fromDate;
-  final String toDate;
-  final String employeeId;
+// class CheckInStatusEvent extends TimeSheetEvent {
+//   final String fromDate;
+//   final String toDate;
+//   final String employeeId;
 
-  const CheckInStatusEvent({
-    required this.fromDate,
-    required this.toDate,
-    required this.employeeId,
-  });
+//   const CheckInStatusEvent({
+//     required this.fromDate,
+//     required this.toDate,
+//     required this.employeeId,
+//   });
 
-  @override
-  List<Object?> get props => [fromDate, toDate, employeeId];
-}
+//   @override
+//   List<Object?> get props => [fromDate, toDate, employeeId];
+// }
+
+// class CheckInUser extends TimeSheetEvent {
+//   final String fromDate;
+//   final String toDate;
+//   final String employeeId;
+
+//   const CheckInUser({
+//     required this.fromDate,
+//     required this.toDate,
+//     required this.employeeId,
+//   });
+
+//   @override
+//   List<Object?> get props => [fromDate, toDate, employeeId];
+// }

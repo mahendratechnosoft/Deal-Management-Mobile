@@ -18,6 +18,7 @@ import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task/data/repo/task_repo.dart';
 import 'package:xpertbiz/features/task_module/task/data/service/task_service.dart';
 import 'package:xpertbiz/features/timesheet/block/timesheet_bloc.dart';
+import 'package:xpertbiz/features/timesheet/checInUser_bloc/bloc.dart';
 import 'package:xpertbiz/features/timesheet/data/repo/repo.dart';
 import 'package:xpertbiz/features/timesheet/data/service/service.dart';
 
@@ -56,5 +57,5 @@ void init() {
   sl.registerFactory(() => CreateLeadBloc(sl()));
   sl.registerFactory(() => CustomerBloc(sl()));
   sl.registerFactory(() => CreateCustomerBloc(sl()));
-
+  sl.registerFactory(() => CheckInBloc(sl()));
 }

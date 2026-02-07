@@ -6,7 +6,9 @@ import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/timesheet/block/timesheet_bloc.dart';
 import 'package:xpertbiz/features/timesheet/block/timesheet_event.dart';
-import '../block/timesheet_state.dart';
+import 'package:xpertbiz/features/timesheet/checInUser_bloc/bloc.dart';
+import 'package:xpertbiz/features/timesheet/checInUser_bloc/event.dart';
+import 'package:xpertbiz/features/timesheet/checInUser_bloc/state.dart';
 
 class CheckInOutWidget extends StatefulWidget {
   const CheckInOutWidget({super.key});
@@ -19,12 +21,15 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
   final String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
   final user = AuthLocalStorage.getUser();
   final String today = DateFormat('dd-MM-yyyy').format(DateTime.now());
+  bool running = false;
+  int startTs = 0;
+  int end = 0;
 
   @override
   void initState() {
     super.initState();
-    context.read<TimeSheetBloc>().add(
-          CheckInStatusEvent(
+    context.read<CheckInBloc>().add(
+          CheckInUserEvent(
             fromDate: currentDate,
             toDate: currentDate,
             employeeId: user?.employeeId ?? '',
@@ -34,30 +39,32 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<TimeSheetBloc, TimeSheetState>(
+    return BlocConsumer<CheckInBloc, CheckInUserState>(
       listener: (context, state) {
-        if (state is TimeSheetError) {
+        if (state is CheckInError) {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (context, state) {
-        bool running = false;
-        int startTs = 0;
-        int end = 0;
+        // if (state is TimeSheetLoaded) {
+        //   // running = state.isCheckedIn;
 
-        if (state is TimeSheetLoaded) {
+        //   if (state.checkInStatus != null &&
+        //       state.checkInStatus!.dates.isNotEmpty &&
+        //       state.checkInStatus!.dates.first.records.isNotEmpty) {
+        //     final lastRecord = state.checkInStatus!.dates.first.records;
+        //     startTs = lastRecord.first.timeStamp;
+        //     end = lastRecord.last.timeStamp;
+        //   } else {
+        //     startTs = state.startTimestamp ?? 0;
+        //   }
+        // }
+        if (state is CheckInLoaded) {
           running = state.isCheckedIn;
-
-          if (state.checkInStatus != null &&
-              state.checkInStatus!.dates.isNotEmpty &&
-              state.checkInStatus!.dates.first.records.isNotEmpty) {
-            final lastRecord = state.checkInStatus!.dates.first.records;
-            startTs = lastRecord.first.timeStamp;
-            end = lastRecord.last.timeStamp;
-          } else {
-            startTs = state.startTimestamp ?? 0;
-          }
+          final lastRecord = state.checkInStatus.dates.first.records;
+          startTs = lastRecord.first.timeStamp;
+          end = lastRecord.last.timeStamp;
         }
 
         return StreamBuilder<int>(
@@ -79,7 +86,7 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
               isCheckedIn: running,
               startTimestamp: startTs,
               onTap: () {
-                context.read<TimeSheetBloc>().add(CheckInEvent(!running));
+                context.read<TimeSheetBloc>().add(CheckStatusEvent(!running));
                 context.read<TimeSheetBloc>().add(ResetToEmployeeList(today));
               },
             );

@@ -15,6 +15,7 @@ import 'package:xpertbiz/features/task_module/create_task/bloc/create_task_bloc.
 import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task_deatils/bloc/bloc.dart';
 import 'package:xpertbiz/features/timesheet/block/timesheet_bloc.dart';
+import 'package:xpertbiz/features/timesheet/checInUser_bloc/bloc.dart';
 import 'di/injection_container.dart' as di;
 import 'features/auth/bloc/auth_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => di.sl<CreateLeadBloc>()),
         BlocProvider(create: (context) => di.sl<CustomerBloc>()),
         BlocProvider(create: (context) => di.sl<CreateCustomerBloc>()),
+        BlocProvider(create: (context) => di.sl<CheckInBloc>()),
       ],
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,

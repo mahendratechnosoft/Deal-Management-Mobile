@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/app_text_field.dart';
 import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
@@ -64,7 +65,8 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               //  _resetAndFetchData();
             });
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(color: AppColors.error));
           }
 
           return _buildBody(context, state);

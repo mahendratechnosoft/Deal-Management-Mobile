@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/features/auth/bloc/user_role.dart';
@@ -17,8 +16,8 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     on<FetchEmpMonthAttendance>(_onFetchEmpMonthAttendance);
     on<ResetToEmployeeList>(_onResetToEmployeeList);
     on<FilterEmployees>(_onFilterEmployees);
-    on<CheckInEvent>(_onCheckIn);
-    on<CheckInStatusEvent>(_onCheckInStatus);
+    on<CheckStatusEvent>(_onCheckIn);
+    //  on<CheckInStatusEvent>(_onCheckInStatus);
   }
 
   /// 🔁 Reset and reload employee list
@@ -111,7 +110,7 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
   }
 
   Future<void> _onCheckIn(
-    CheckInEvent event,
+    CheckStatusEvent event,
     Emitter<TimeSheetState> emit,
   ) async {
     try {
@@ -131,30 +130,30 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
   }
 
   /// 🟢 Get today check-in status
-  Future<void> _onCheckInStatus(
-    CheckInStatusEvent event,
-    Emitter<TimeSheetState> emit,
-  ) async {
-    //  if (state is! TimeSheetLoaded) return;
-    try {
-      final result = await repository.checkInStatus(
-        fromDate: event.fromDate,
-        toDate: event.toDate,
-        employeeId: event.employeeId,
-      );
+  // Future<void> _onCheckInStatus(
+  //   CheckInStatusEvent event,
+  //   Emitter<TimeSheetState> emit,
+  // ) async {
+  //   //  if (state is! TimeSheetLoaded) return;
+  //   try {
+  //     final result = await repository.checkInStatus(
+  //       fromDate: event.fromDate,
+  //       toDate: event.toDate,
+  //       employeeId: event.employeeId,
+  //     );
 
-      final lastRecord = result.dates.first.records.last;
-      log('check lenth : ${result.dates.first.records.length}');
-      emit(
-        (state as TimeSheetLoaded).copyWith(
-          checkInStatus: result,
-          isCheckedIn: lastRecord.status,
-          startTimestamp: lastRecord.timeStamp,
-        ),
-      );
-    } catch (e) {
-      log('error: $e');
-      //   emit(TimeSheetError(ApiError.getMessage(e)));
-    }
-  }
+  //     final lastRecord = result.dates.first.records.last;
+  //     log('check lenth : ${result.dates.first.records.length}');
+  //     emit(
+  //       (state as TimeSheetLoaded).copyWith(
+  //         checkInStatus: result,
+  //         isCheckedIn: lastRecord.status,
+  //         startTimestamp: lastRecord.timeStamp,
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     log('error: $e');
+  //     //   emit(TimeSheetError(ApiError.getMessage(e)));
+  //   }
+  // }
 }
