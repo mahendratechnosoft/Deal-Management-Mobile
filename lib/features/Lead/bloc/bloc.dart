@@ -19,7 +19,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
   bool _isFetching = false;
   String? _currentSearchQuery;
   DateTime? _currentSelectedDate;
-  String? _currentStatus; // Track current status
+  String? _currentStatus;
   bool _isFetchingDetails = false;
   bool _isFetchingActivity = false;
   bool _reminder = false;

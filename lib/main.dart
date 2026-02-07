@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
 import 'package:xpertbiz/core/constants/app_string.dart';
@@ -27,6 +28,9 @@ void main() async {
   Hive.registerAdapter(ModuleAccessAdapter());
   Hive.registerAdapter(LoginResponseAdapter());
   await Hive.openBox<LoginResponse>(ApiConstants.boxName);
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
 
   runApp(const MyApp());
 }

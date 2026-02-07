@@ -296,17 +296,14 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
 
         final lead = displayLeads[index];
         return PremiumLeadCard(
-          clientName: lead.clientName??'',
-          companyName: lead.companyName??'',
+          clientName: lead.clientName ?? '',
+          companyName: lead.companyName ?? '',
           email: lead.email ?? '',
           phone: lead.mobileNumber ?? '',
           status: lead.status,
           createdDate: lead.createdDate ?? DateTime.now(),
           onPressed: () async {
-            context.read<LeadBloc>().add(
-                  LeadDetailsEvent(leadId: lead.id),
-                );
-
+            context.read<LeadBloc>().add(LeadDetailsEvent(leadId: lead.id));  
             final result = await context.push(
               AppRouteName.createLead,
               extra: true,
