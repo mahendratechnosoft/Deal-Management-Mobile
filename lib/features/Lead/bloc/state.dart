@@ -41,8 +41,9 @@ class AllLeadInitial extends LeadState {}
 class AllLeadLoading extends LeadState {}
 
 class AllLeadState extends LeadState {
-  final List<AllLeadModel> leads;
-  final List<AllLeadModel> filteredLeads;
+  final List<LeadModel> leads;
+  final List<StatusCountModel> statusAndCount;
+  final List<LeadModel> filteredLeads;
   final bool hasMore;
   final int currentPage;
   final String? searchQuery;
@@ -60,6 +61,7 @@ class AllLeadState extends LeadState {
   final String? createReminderError;
 
   const AllLeadState({
+    required this.statusAndCount,
     required this.leads,
     required this.hasMore,
     required this.currentPage,
@@ -80,8 +82,9 @@ class AllLeadState extends LeadState {
   });
 
   AllLeadState copyWith({
-    List<AllLeadModel>? leads,
-    List<AllLeadModel>? filteredLeads,
+    List<StatusCountModel>? statusAndCount,
+    List<LeadModel>? leads,
+    List<LeadModel>? filteredLeads,
     bool? createReminder,
     String? createReminderError,
     bool? hasMore,
@@ -99,6 +102,7 @@ class AllLeadState extends LeadState {
     bool? reminder,
   }) {
     return AllLeadState(
+      statusAndCount: statusAndCount?? this.statusAndCount,
       createReminder: createReminder ?? this.createReminder,
       createReminderError: createReminderError ?? this.createReminderError,
       reminder: reminder ?? this.reminder,

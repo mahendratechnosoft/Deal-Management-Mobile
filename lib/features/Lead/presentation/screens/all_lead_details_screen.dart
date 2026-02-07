@@ -16,7 +16,7 @@ import '../widgets/proposal_card.dart';
 import '../widgets/reminders_view.dart';
 
 class AllLeadDetailsScreen extends StatefulWidget {
-  final AllLeadModel lead;
+  final LeadModel lead;
   const AllLeadDetailsScreen({super.key, required this.lead});
 
   @override

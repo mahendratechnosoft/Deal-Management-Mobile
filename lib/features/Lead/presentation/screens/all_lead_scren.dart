@@ -275,7 +275,7 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
 
   Widget _buildLeadsListView(
     AllLeadState state,
-    List<AllLeadModel> displayLeads,
+    List<LeadModel> displayLeads,
     bool hasFilters,
   ) {
     final shouldLoadMore = state.hasMore &&
@@ -296,8 +296,8 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
 
         final lead = displayLeads[index];
         return PremiumLeadCard(
-          clientName: lead.clientName,
-          companyName: lead.companyName,
+          clientName: lead.clientName??'',
+          companyName: lead.companyName??'',
           email: lead.email ?? '',
           phone: lead.mobileNumber ?? '',
           status: lead.status,

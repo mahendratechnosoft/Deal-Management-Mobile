@@ -1,37 +1,62 @@
 class LeadResponseModel {
-  final List<AllLeadModel> leads;
+  final List<String> columnSequence;
+  final List<StatusCountModel> statusAndCount;
+  final List<LeadModel> leadList;
   final int currentPage;
-  final int totalPages;
   final int totalLeads;
+  final int totalPages;
 
   LeadResponseModel({
-    required this.leads,
+    required this.columnSequence,
+    required this.statusAndCount,
+    required this.leadList,
     required this.currentPage,
-    required this.totalPages,
     required this.totalLeads,
+    required this.totalPages,
   });
 
   factory LeadResponseModel.fromJson(Map<String, dynamic> json) {
     return LeadResponseModel(
-      leads: (json['leadList'] as List)
-          .map((e) => AllLeadModel.fromJson(e))
+      columnSequence: List<String>.from(json['columnSequence'] ?? []),
+      statusAndCount: (json['statusAndCount'] as List<dynamic>? ?? [])
+          .map((e) => StatusCountModel.fromJson(e))
+          .toList(),
+      leadList: (json['leadList'] as List<dynamic>? ?? [])
+          .map((e) => LeadModel.fromJson(e))
           .toList(),
       currentPage: json['currentPage'] ?? 0,
-      totalPages: json['totalPages'] ?? 0,
       totalLeads: json['totalLeads'] ?? 0,
+      totalPages: json['totalPages'] ?? 0,
     );
   }
 }
 
-class AllLeadModel {
+class StatusCountModel {
+  final String status;
+  final int count;
+
+  StatusCountModel({
+    required this.status,
+    required this.count,
+  });
+
+  factory StatusCountModel.fromJson(Map<String, dynamic> json) {
+    return StatusCountModel(
+      status: json['status'] ?? '',
+      count: json['count'] ?? 0,
+    );
+  }
+}
+
+class LeadModel {
   final String id;
-  final String adminId;
+  final String? adminId;
   final String? employeeId;
   final String? assignTo;
   final String status;
   final String? source;
-  final String clientName;
-  final String companyName;
+  final String? clientName;
+  final String? companyName;
   final String? customerId;
   final double? revenue;
   final String? mobileNumber;
@@ -47,19 +72,21 @@ class AllLeadModel {
   final String? city;
   final String? zipCode;
   final String? description;
-  final DateTime? followUp;
+  final String? followUp;
   final DateTime? createdDate;
   final DateTime? updatedDate;
+  final dynamic fields;
+  final dynamic columns;
 
-  AllLeadModel({
+  LeadModel({
     required this.id,
-    required this.adminId,
+    this.adminId,
     this.employeeId,
     this.assignTo,
     required this.status,
     this.source,
-    required this.clientName,
-    required this.companyName,
+    this.clientName,
+    this.companyName,
     this.customerId,
     this.revenue,
     this.mobileNumber,
@@ -76,22 +103,26 @@ class AllLeadModel {
     this.zipCode,
     this.description,
     this.followUp,
-     this.createdDate,
+    this.createdDate,
     this.updatedDate,
+    this.fields,
+    this.columns,
   });
 
-  factory AllLeadModel.fromJson(Map<String, dynamic> json) {
-    return AllLeadModel(
+  factory LeadModel.fromJson(Map<String, dynamic> json) {
+    return LeadModel(
       id: json['id'] ?? '',
-      adminId: json['adminId'] ?? '',
+      adminId: json['adminId'],
       employeeId: json['employeeId'],
       assignTo: json['assignTo'],
       status: json['status'] ?? '',
       source: json['source'],
-      clientName: json['clientName'] ?? '',
-      companyName: json['companyName'] ?? '',
+      clientName: json['clientName'],
+      companyName: json['companyName'],
       customerId: json['customerId'],
-      revenue: (json['revenue'] as num?)?.toDouble(),
+      revenue: json['revenue'] != null
+          ? double.tryParse(json['revenue'].toString())
+          : null,
       mobileNumber: json['mobileNumber'],
       phoneNumber: json['phoneNumber'],
       email: json['email'],
@@ -105,14 +136,15 @@ class AllLeadModel {
       city: json['city'],
       zipCode: json['zipCode'],
       description: json['description'],
-      followUp:
-          json['followUp'] != null ? DateTime.tryParse(json['followUp']) : null,
+      followUp: json['followUp'],
       createdDate: json['createdDate'] != null
           ? DateTime.tryParse(json['createdDate'])
           : null,
       updatedDate: json['updatedDate'] != null
           ? DateTime.tryParse(json['updatedDate'])
           : null,
+      fields: json['fields'],
+      columns: json['columns'],
     );
   }
 }

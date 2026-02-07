@@ -29,7 +29,8 @@ class _LeadScreenState extends State<LeadScreen> {
     user = AuthLocalStorage.getUser();
     access = user?.moduleAccess.leadCreate;
     super.initState();
-    context.read<LeadBloc>().add(const FetchLeadStatus());
+    // context.read<LeadBloc>().add(const FetchLeadStatus());
+    context.read<LeadBloc>().add(FetchAllLeadsEvent());
   }
 
   @override
@@ -39,7 +40,7 @@ class _LeadScreenState extends State<LeadScreen> {
     //Check if we're coming back to this screen
 
     if (ModalRoute.of(context)!.isCurrent) {
-      context.read<LeadBloc>().add(const FetchLeadStatus());
+      context.read<LeadBloc>().add(FetchAllLeadsEvent());
     }
   }
 
@@ -60,32 +61,26 @@ class _LeadScreenState extends State<LeadScreen> {
                   AppRouteName.createLead,
                   extra: false,
                 );
-
-                // if (result == true) {
-                //   await Future.delayed(const Duration(seconds: 2));
-                //   context.read<LeadBloc>().add(const FetchLeadStatus());
-                //   log('reload data');
-                // }
               },
               child: const Icon(Icons.add, color: AppColors.background),
             ),
       body: BlocBuilder<LeadBloc, LeadState>(
         builder: (context, state) {
-          if (state is LeadLoading) {
+          if (state is AllLeadLoading) {
             return SkeletonCard(isLoading: true, itemCount: 6);
           }
 
-          if (state is LeadError) {
+          if (state is AllLeadError) {
             return Center(child: Text(state.message));
           }
 
-          if (state is LeadLoaded) {
+          if (state is AllLeadState) {
             final totalLeads =
-                state.leads.fold<int>(0, (sum, e) => sum + e.count);
+                state.statusAndCount.fold<int>(0, (sum, e) => sum + e.count);
 
             return RefreshIndicator(
               onRefresh: () async {
-                context.read<LeadBloc>().add(const FetchLeadStatus());
+                context.read<LeadBloc>().add(FetchAllLeadsEvent());
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -100,7 +95,7 @@ class _LeadScreenState extends State<LeadScreen> {
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: state.leads.length,
+                      itemCount: state.statusAndCount.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: isTablet ? 3 : 2,
                         mainAxisSpacing: 12,
@@ -108,7 +103,7 @@ class _LeadScreenState extends State<LeadScreen> {
                         childAspectRatio: 1.4,
                       ),
                       itemBuilder: (_, index) {
-                        final item = state.leads[index];
+                        final item = state.statusAndCount[index];
                         return _LeadStatusCard(
                           title: item.status,
                           count: item.count,
@@ -127,7 +122,7 @@ class _LeadScreenState extends State<LeadScreen> {
             );
           }
 
-          return const SizedBox.shrink();
+          return Center(child: CircularProgressIndicator());
         },
       ),
     );

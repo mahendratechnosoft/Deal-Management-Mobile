@@ -136,7 +136,7 @@ class AppRouter {
         path: AppRouteName.leadDetails,
         name: AppRouteName.leadDetails,
         builder: (context, state) {
-          final lead = state.extra as AllLeadModel;
+          final lead = state.extra as LeadModel;
 
           return AllLeadDetailsScreen(lead: lead);
         },

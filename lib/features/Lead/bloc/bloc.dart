@@ -12,7 +12,7 @@ import 'event.dart';
 class LeadBloc extends Bloc<LeadEvent, LeadState> {
   final LeadRepository repository;
 
-  static const int limit = 100;
+  static const int limit = 10;
 
   int _page = 0;
   bool _hasMore = true;
@@ -23,7 +23,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
   bool _isFetchingDetails = false;
   bool _isFetchingActivity = false;
   bool _reminder = false;
-  final List<AllLeadModel> _leads = [];
+  final List<LeadModel> _leads = [];
   final List<ActivityLogModel> _activityLogs = [];
 
   LeadBloc(this.repository) : super(LeadInitial()) {
@@ -115,6 +115,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     final currentState = state;
     if (currentState is! AllLeadState) {
       emit(AllLeadState(
+        statusAndCount: const [],
         leads: const [],
         filteredLeads: const [],
         hasMore: false,
@@ -181,16 +182,18 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
         limit: limit,
         status: _currentStatus,
       );
-
-      _leads.addAll(response.leads);
+      _leads.addAll(response.leadList);
       _hasMore = response.currentPage < response.totalPages;
       _page++;
+
+      log('check resposne : ${response.statusAndCount.first.status}');
 
       // Apply current filters to the newly loaded data
       final filteredLeads = _applyFilters(_leads);
 
       emit(
         AllLeadState(
+          statusAndCount: response.statusAndCount,
           leads: List.unmodifiable(_leads),
           filteredLeads: filteredLeads,
           hasMore: _hasMore,
@@ -207,7 +210,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
       emit(LeadError(ApiError.getMessage(e)));
     } catch (e) {
       log('error ${e.toString()}');
-      emit(LeadError('Failed to load leads: ${e.toString()}'));
+      emit(LeadError(ApiError.getMessage(e)));
     } finally {
       _isFetching = false;
     }
@@ -315,8 +318,8 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
   }
 
   // ================= HELPER: APPLY ALL FILTERS =================
-  List<AllLeadModel> _applyFilters(List<AllLeadModel> leads) {
-    List<AllLeadModel> filtered = leads;
+  List<LeadModel> _applyFilters(List<LeadModel> leads) {
+    List<LeadModel> filtered = leads;
 
     // Apply search filter
     if (_currentSearchQuery != null && _currentSearchQuery!.isNotEmpty) {
@@ -332,12 +335,12 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
   }
 
   // ================= HELPER: FILTER BY SEARCH =================
-  List<AllLeadModel> _filterBySearch(List<AllLeadModel> leads, String query) {
+  List<LeadModel> _filterBySearch(List<LeadModel> leads, String query) {
     final lowerCaseQuery = query.toLowerCase();
 
     return leads.where((lead) {
-      return (lead.clientName.toLowerCase().contains(lowerCaseQuery)) ||
-          (lead.companyName.toLowerCase().contains(lowerCaseQuery)) ||
+      return (lead.clientName!.toLowerCase().contains(lowerCaseQuery)) ||
+          (lead.companyName!.toLowerCase().contains(lowerCaseQuery)) ||
           (lead.email?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (lead.mobileNumber?.toLowerCase().contains(lowerCaseQuery) ??
               false) ||
@@ -346,7 +349,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
   }
 
   // ================= HELPER: FILTER BY DATE =================
-  List<AllLeadModel> _filterByDate(List<AllLeadModel> leads, DateTime date) {
+  List<LeadModel> _filterByDate(List<LeadModel> leads, DateTime date) {
     return leads.where((lead) {
       try {
         final leadDate = lead.createdDate;
