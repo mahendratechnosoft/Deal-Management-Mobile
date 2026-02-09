@@ -82,9 +82,9 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
     context.read<LeadBloc>().add(const ClearSearchEvent());
   }
 
-  // void _clearDate() {
-  //   context.read<LeadBloc>().add(const FilterByDateEvent(null));
-  // }
+  void _clearDate() {
+    context.read<LeadBloc>().add(const FilterByDateEvent(null));
+  }
 
   void _clearAllFilters() {
     _searchController.clear();
@@ -110,7 +110,7 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: CommonAppBar(
-        title: widget.status != null ? '${widget.status} Leads' : 'All Leads',
+        title: widget.status != null ? '${widget.status}' : 'All Leads',
       ),
       body: BlocBuilder<LeadBloc, LeadState>(
         builder: (context, state) {
@@ -168,6 +168,14 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
                     onDateSelected: _onDateSelected,
                   ),
                 ),
+                displayLeads.isEmpty
+                    ? IconButton(
+                        onPressed: _clearDate,
+                        icon: Icon(
+                          Icons.clear,
+                        ),
+                      )
+                    : SizedBox.shrink(),
               ],
             ),
           ),
@@ -303,7 +311,7 @@ class _AllLeadScreenState extends State<AllLeadScreen> {
           status: lead.status,
           createdDate: lead.createdDate ?? DateTime.now(),
           onPressed: () async {
-            context.read<LeadBloc>().add(LeadDetailsEvent(leadId: lead.id));  
+            context.read<LeadBloc>().add(LeadDetailsEvent(leadId: lead.id));
             final result = await context.push(
               AppRouteName.createLead,
               extra: true,
