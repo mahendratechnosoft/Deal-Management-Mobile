@@ -1,4 +1,4 @@
-package com.example.xpertbiz
+package xpertbiz.crm
 
 import io.flutter.embedding.android.FlutterActivity
 

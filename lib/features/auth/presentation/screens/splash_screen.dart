@@ -60,8 +60,8 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: _animation,
             child: Image.asset(
               AppImages.logo,
-              width: Responsive.sp(150),
-              height: Responsive.sp(150),
+              width: Responsive.sp(200),
+              height: Responsive.sp(200),
             ),
           ),
         ),
