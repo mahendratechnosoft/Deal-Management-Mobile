@@ -100,7 +100,7 @@ class _LeadScreenState extends State<LeadScreen> {
                         crossAxisCount: isTablet ? 3 : 2,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
-                        childAspectRatio: 1.38,
+                        childAspectRatio: 1.4,
                       ),
                       itemBuilder: (_, index) {
                         final item = state.statusAndCount[index];
