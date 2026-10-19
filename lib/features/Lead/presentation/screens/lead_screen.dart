@@ -66,11 +66,15 @@ class _LeadScreenState extends State<LeadScreen> {
             ),
       body: BlocBuilder<LeadBloc, LeadState>(
         builder: (context, state) {
-          if (state is AllLeadLoading) {
+          if (state is AllLeadLoading || state is LeadLoading) {
             return SkeletonCard(isLoading: true, itemCount: 6);
           }
 
           if (state is AllLeadError) {
+            return Center(child: Text(state.message));
+          }
+
+          if (state is LeadError) {
             return Center(child: Text(state.message));
           }
 

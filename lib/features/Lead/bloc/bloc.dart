@@ -186,7 +186,9 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
       _hasMore = response.currentPage < response.totalPages;
       _page++;
 
-      log('check resposne : ${response.statusAndCount.first.status}');
+      if (response.statusAndCount.isNotEmpty) {
+        log('check resposne : ${response.statusAndCount.first.status}');
+      }
 
       // Apply current filters to the newly loaded data
       final filteredLeads = _applyFilters(_leads);

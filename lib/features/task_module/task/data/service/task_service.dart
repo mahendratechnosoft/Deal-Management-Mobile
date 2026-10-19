@@ -13,7 +13,7 @@ class TaskApiService {
     String? listType,
     String? search,
   }) {
-    return dio.get(
+    return dio.put(
       '${ApiConstants.getTask}$page/$size',
       queryParameters: {
         if (status != null) 'status': status,
