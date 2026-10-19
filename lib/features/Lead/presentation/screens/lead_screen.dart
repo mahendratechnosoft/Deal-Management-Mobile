@@ -9,6 +9,8 @@ import 'package:xpertbiz/features/Lead/bloc/event.dart';
 import 'package:xpertbiz/features/Lead/bloc/state.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/drawer/presentation/custom_drawer.dart';
+import 'package:xpertbiz/features/Lead/presentation/widgets/all_lead_card.dart';
+import 'package:xpertbiz/features/Lead/presentation/widgets/lead_delete.dart';
 
 import '../../../auth/data/locale_data/hive_service.dart';
 import '../../../auth/data/locale_data/login_response.dart';
@@ -33,16 +35,6 @@ class _LeadScreenState extends State<LeadScreen> {
     context.read<LeadBloc>().add(FetchAllLeadsEvent());
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    //Check if we're coming back to this screen
-
-    if (ModalRoute.of(context)!.isCurrent) {
-      context.read<LeadBloc>().add(FetchAllLeadsEvent());
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,8 +71,11 @@ class _LeadScreenState extends State<LeadScreen> {
           }
 
           if (state is AllLeadState) {
-            final totalLeads =
+            final statusTotal =
                 state.statusAndCount.fold<int>(0, (sum, e) => sum + e.count);
+            final totalLeads = state.totalLeads > 0
+                ? state.totalLeads
+                : (statusTotal > 0 ? statusTotal : state.leads.length);
 
             return RefreshIndicator(
               onRefresh: () async {
@@ -96,30 +91,106 @@ class _LeadScreenState extends State<LeadScreen> {
                         onTap: () => context.push(AppRouteName.allLead),
                         child: _TotalLeadCard(total: totalLeads)),
                     const SizedBox(height: 20),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: state.statusAndCount.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isTablet ? 3 : 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1.38,
+                    if (state.statusAndCount.isNotEmpty) ...[
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: state.statusAndCount.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: isTablet ? 3 : 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.38,
+                        ),
+                        itemBuilder: (_, index) {
+                          final item = state.statusAndCount[index];
+                          return _LeadStatusCard(
+                            title: item.status,
+                            count: item.count,
+                            color: _statusColor(item.status),
+                            onTap: () {
+                              context.push(
+                                '${AppRouteName.allLead}?status=${Uri.encodeComponent(item.status)}',
+                              );
+                            },
+                          );
+                        },
                       ),
-                      itemBuilder: (_, index) {
-                        final item = state.statusAndCount[index];
-                        return _LeadStatusCard(
-                          title: item.status,
-                          count: item.count,
-                          color: _statusColor(item.status),
-                          onTap: () {
-                            context.push(
-                              '${AppRouteName.allLead}?status=${Uri.encodeComponent(item.status)}',
-                            );
-                          },
-                        );
-                      },
+                      const SizedBox(height: 20),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Recent Leads',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => context.push(AppRouteName.allLead),
+                          child: const Text('View All'),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 8),
+                    if (state.leads.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Text(
+                            'No leads found',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: state.leads.length,
+                        itemBuilder: (context, index) {
+                          final lead = state.leads[index];
+                          return PremiumLeadCard(
+                            clientName: lead.clientName ?? '',
+                            companyName: lead.companyName ?? '',
+                            email: lead.email ?? '',
+                            phone: lead.mobileNumber ?? '',
+                            status: lead.status,
+                            createdDate: lead.createdDate ?? DateTime.now(),
+                            onTap: () {
+                              context
+                                  .read<LeadBloc>()
+                                  .add(LeadDetailsEvent(leadId: lead.id));
+                              context.push(AppRouteName.leadDetails, extra: lead);
+                            },
+                            onPressed: () async {
+                              context
+                                  .read<LeadBloc>()
+                                  .add(LeadDetailsEvent(leadId: lead.id));
+                              final result = await context.push(
+                                AppRouteName.createLead,
+                                extra: true,
+                              );
+                              if (result == true) {
+                                context
+                                    .read<LeadBloc>()
+                                    .add(FetchAllLeadsEvent());
+                              }
+                            },
+                            delete: () async {
+                              final result = await leadDelete(context, lead.id);
+                              if (result == true) {
+                                context
+                                    .read<LeadBloc>()
+                                    .add(FetchAllLeadsEvent());
+                              }
+                            },
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),

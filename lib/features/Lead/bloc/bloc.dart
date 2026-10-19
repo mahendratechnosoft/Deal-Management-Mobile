@@ -186,8 +186,16 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
       _hasMore = response.currentPage < response.totalPages;
       _page++;
 
-      if (response.statusAndCount.isNotEmpty) {
-        log('check resposne : ${response.statusAndCount.first.status}');
+      List<StatusCountModel> statusAndCount = response.statusAndCount;
+      if (statusAndCount.isEmpty) {
+        try {
+          final statuses = await repository.fetchLeadStatus();
+          statusAndCount = statuses
+              .map((s) => StatusCountModel(status: s.status, count: s.count))
+              .toList();
+        } catch (e) {
+          log('fetchLeadStatus fallback error: $e');
+        }
       }
 
       // Apply current filters to the newly loaded data
@@ -195,11 +203,12 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
 
       emit(
         AllLeadState(
-          statusAndCount: response.statusAndCount,
+          statusAndCount: statusAndCount,
           leads: List.unmodifiable(_leads),
           filteredLeads: filteredLeads,
           hasMore: _hasMore,
           currentPage: response.currentPage,
+          totalLeads: response.totalLeads,
           searchQuery: _currentSearchQuery,
           selectedDate: _currentSelectedDate,
           status: _currentStatus,

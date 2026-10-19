@@ -18,13 +18,25 @@ class TaskListModel {
     required this.currentPage,
   });
 
-  factory TaskListModel.fromJson(Map<String, dynamic> json) => TaskListModel(
-        totalElement: json["totalElement"],
-        totalPages: json["totalPages"],
-        taskList: List<TaskList>.from(
-            json["taskList"].map((x) => TaskList.fromJson(x))),
-        currentPage: json["currentPage"],
-      );
+  factory TaskListModel.fromJson(Map<String, dynamic> json) {
+    final listRaw = json["taskList"] ?? json["content"] ?? json["tasks"] ?? [];
+    return TaskListModel(
+      totalElement: (json["totalElement"] ?? json["totalElements"] ?? 0) is int
+          ? (json["totalElement"] ?? json["totalElements"] ?? 0)
+          : int.tryParse((json["totalElement"] ?? json["totalElements"] ?? 0).toString()) ?? 0,
+      totalPages: (json["totalPages"] ?? 0) is int
+          ? (json["totalPages"] ?? 0)
+          : int.tryParse((json["totalPages"] ?? 0).toString()) ?? 0,
+      taskList: listRaw is List
+          ? listRaw
+              .map((x) => TaskList.fromJson(x as Map<String, dynamic>))
+              .toList()
+          : [],
+      currentPage: (json["currentPage"] ?? 0) is int
+          ? (json["currentPage"] ?? 0)
+          : int.tryParse((json["currentPage"] ?? 0).toString()) ?? 0,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "totalElement": totalElement,
@@ -75,28 +87,40 @@ class TaskList {
     required this.createdBy,
   });
 
-  factory TaskList.fromJson(Map<String, dynamic> json) => TaskList(
-        taskId: json["taskId"],
-        adminId: json["adminId"] ?? "NA",
-        employeeId: json["employeeId"] ?? "NA",
-        subject: json["subject"] ?? "NA",
-        startDate: DateTime.parse(json["startDate"]),
-        endDate: DateTime.parse(json["endDate"] ?? json["startDate"]),
-        priority: json["priority"] ?? "NA",
-        relatedTo: json["relatedTo"] ?? "NA",
-        relatedToId: json["relatedToId"] ?? "NA",
-        relatedToName: json["relatedToName"] ?? "NA",
-        hourlyRate: json["hourlyRate"] ?? 0.0,
-        estimatedHours: json["estimatedHours"]?.toDouble(),
-        description: json["description"],
-        status: json["status"],
-        assignedEmployees: List<AssignedEmployee>.from(
-            json["assignedEmployees"].map((x) => AssignedEmployee.fromJson(x))),
-        followersEmployees:
-            List<dynamic>.from(json["followersEmployees"].map((x) => x)),
-        createdAt: DateTime.parse(json["createdAt"]),
-        createdBy: json["createdBy"],
-      );
+  factory TaskList.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      return DateTime.tryParse(date.toString()) ?? DateTime.now();
+    }
+
+    final start = parseDate(json["startDate"]);
+    final end = json["endDate"] != null ? parseDate(json["endDate"]) : start;
+    final created = parseDate(json["createdAt"]);
+
+    return TaskList(
+      taskId: json["taskId"]?.toString() ?? "NA",
+      adminId: json["adminId"]?.toString() ?? "NA",
+      employeeId: json["employeeId"] ?? "NA",
+      subject: json["subject"]?.toString() ?? "NA",
+      startDate: start,
+      endDate: end,
+      priority: json["priority"]?.toString() ?? "NA",
+      relatedTo: json["relatedTo"]?.toString() ?? "NA",
+      relatedToId: json["relatedToId"]?.toString() ?? "NA",
+      relatedToName: json["relatedToName"]?.toString() ?? "NA",
+      hourlyRate: (json["hourlyRate"] as num?)?.toDouble() ?? 0.0,
+      estimatedHours: (json["estimatedHours"] as num?)?.toDouble() ?? 0.0,
+      description: json["description"]?.toString() ?? "",
+      status: json["status"]?.toString() ?? "NA",
+      assignedEmployees: (json["assignedEmployees"] as List<dynamic>? ?? [])
+          .map((x) => AssignedEmployee.fromJson(x as Map<String, dynamic>))
+          .toList(),
+      followersEmployees:
+          List<dynamic>.from(json["followersEmployees"] as List<dynamic>? ?? []),
+      createdAt: created,
+      createdBy: json["createdBy"]?.toString() ?? "NA",
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "taskId": taskId,

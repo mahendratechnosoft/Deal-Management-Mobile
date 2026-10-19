@@ -13,6 +13,7 @@ import 'package:xpertbiz/features/customers/bloc/customer_state.dart';
 import 'package:xpertbiz/features/customers/create_customer/screen/create_customer_screen.dart';
 import 'package:xpertbiz/features/customers/presentation/contact_screen.dart';
 
+import 'package:xpertbiz/features/drawer/presentation/custom_drawer.dart';
 import '../../auth/data/locale_data/hive_service.dart';
 
 class CustomerScreen extends StatefulWidget {
@@ -98,6 +99,7 @@ class _CustomerScreenState extends State<CustomerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const CustomDrawer(),
       backgroundColor: AppColors.background,
       appBar: CommonAppBar(title: 'Customers'),
       floatingActionButton: isCredit == false

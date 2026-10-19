@@ -16,17 +16,47 @@ class LeadResponseModel {
   });
 
   factory LeadResponseModel.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> data =
+        (json.containsKey('data') && json['data'] is Map<String, dynamic>)
+            ? json['data']
+            : json;
+
+    final statusRaw = data['statusAndCount'] ??
+        data['statusCount'] ??
+        data['leadStatusAndCount'] ??
+        json['statusAndCount'] ??
+        [];
+
+    final listRaw = data['leadList'] ??
+        data['leads'] ??
+        data['content'] ??
+        json['leadList'] ??
+        json['leads'] ??
+        [];
+
+    final total = data['totalLeads'] ??
+        data['totalElements'] ??
+        data['totalElement'] ??
+        json['totalLeads'] ??
+        (listRaw is List ? listRaw.length : 0);
+
     return LeadResponseModel(
-      columnSequence: List<String>.from(json['columnSequence'] ?? []),
-      statusAndCount: (json['statusAndCount'] as List<dynamic>? ?? [])
-          .map((e) => StatusCountModel.fromJson(e))
-          .toList(),
-      leadList: (json['leadList'] as List<dynamic>? ?? [])
-          .map((e) => LeadModel.fromJson(e))
-          .toList(),
-      currentPage: json['currentPage'] ?? 0,
-      totalLeads: json['totalLeads'] ?? 0,
-      totalPages: json['totalPages'] ?? 0,
+      columnSequence: List<String>.from(data['columnSequence'] ?? json['columnSequence'] ?? []),
+      statusAndCount: statusRaw is List
+          ? statusRaw.map((e) => StatusCountModel.fromJson(e)).toList()
+          : [],
+      leadList: listRaw is List
+          ? listRaw.map((e) => LeadModel.fromJson(e)).toList()
+          : [],
+      currentPage: (data['currentPage'] ?? json['currentPage'] ?? 0) is int
+          ? (data['currentPage'] ?? json['currentPage'] ?? 0)
+          : int.tryParse((data['currentPage'] ?? json['currentPage'] ?? 0).toString()) ?? 0,
+      totalLeads: (total is num)
+          ? total.toInt()
+          : (int.tryParse(total.toString()) ?? 0),
+      totalPages: (data['totalPages'] ?? json['totalPages'] ?? 0) is int
+          ? (data['totalPages'] ?? json['totalPages'] ?? 0)
+          : int.tryParse((data['totalPages'] ?? json['totalPages'] ?? 0).toString()) ?? 0,
     );
   }
 }

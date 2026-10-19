@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/core/network/api_error.dart';
@@ -61,8 +62,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskListState> {
         hasReachedMax: newTasks.length < pageSize,
       ));
     } on DioException catch (e) {
+      log('TaskBloc fetch DioException: ${e.message}, response: ${e.response?.data}');
       emit(TaskFailure(ApiError.getMessage(e)));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      log('TaskBloc fetch error: $e\n$stackTrace');
       emit(TaskFailure(ApiError.getMessage(e)));
     }
   }

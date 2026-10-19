@@ -139,10 +139,6 @@ class _CommonAppBarState extends State<CommonAppBar> {
                 },
               )
             : const SizedBox.shrink(),
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications),
-        ),
 
         const SizedBox(width: 10),
       ],

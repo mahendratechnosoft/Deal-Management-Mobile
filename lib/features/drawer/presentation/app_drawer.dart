@@ -15,6 +15,12 @@ class DrawerMenu extends StatelessWidget {
 
     final menuItems = <DrawerMenuItem>[
       DrawerMenuItem(
+        title: 'Leads',
+        icon: Icons.leaderboard,
+        route: AppRouteName.dashboard,
+        visible: user?.moduleAccess.leadAccess == true,
+      ),
+      DrawerMenuItem(
         title: 'Task',
         icon: Icons.dashboard,
         route: AppRouteName.task,
@@ -59,7 +65,11 @@ class DrawerMenu extends StatelessWidget {
                   splashColor: Colors.white.withOpacity(0.08),
                   onTap: () {
                     context.read<DrawerBloc>().add(DrawerItemSelected(index));
-                    context.push(item.route);
+                    Navigator.pop(context);
+                    final currentPath = GoRouterState.of(context).uri.path;
+                    if (currentPath != item.route) {
+                      context.push(item.route);
+                    }
                   },
                   child: Padding(
                     padding: EdgeInsets.symmetric(

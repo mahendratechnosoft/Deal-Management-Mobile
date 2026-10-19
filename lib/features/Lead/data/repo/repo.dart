@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:xpertbiz/features/Lead/data/model/activity_log_model.dart';
@@ -17,10 +18,14 @@ class LeadRepository {
 
   Future<List<LeadStatusModel>> fetchLeadStatus() async {
     final response = await apiService.leadStatus();
-
-    final List data = response.data as List;
-
-    return data.map((e) => LeadStatusModel.fromJson(e)).toList();
+    final dynamic rawData = response.data;
+    final dynamic listData = rawData is String
+        ? jsonDecode(rawData)
+        : (rawData is List ? rawData : (rawData is Map && rawData['data'] is List ? rawData['data'] : []));
+    if (listData is List) {
+      return listData.map((e) => LeadStatusModel.fromJson(e)).toList();
+    }
+    return [];
   }
 
   Future<LeadResponseModel> fecthAllLeads({
@@ -33,7 +38,11 @@ class LeadRepository {
       limit: limit,
       leadStatus: status,
     );
-    return LeadResponseModel.fromJson(res.data);
+    final dynamic rawData = res.data;
+    final Map<String, dynamic> data = rawData is String
+        ? jsonDecode(rawData)
+        : (rawData is Map<String, dynamic> ? rawData : {});
+    return LeadResponseModel.fromJson(data);
   }
 
   //

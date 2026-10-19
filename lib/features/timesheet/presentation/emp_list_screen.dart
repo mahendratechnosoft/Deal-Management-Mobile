@@ -9,6 +9,7 @@ import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/bloc/user_role.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
+import 'package:xpertbiz/features/drawer/presentation/custom_drawer.dart';
 import '../../auth/data/locale_data/login_response.dart';
 import '../block/timesheet_bloc.dart';
 import '../block/timesheet_event.dart';
@@ -37,15 +38,6 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     _resetAndFetchData();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    if (ModalRoute.of(context)!.isCurrent) {
-      _resetAndFetchData();
-    }
-  }
-
   void _resetAndFetchData() {
     // Reset bloc state to employee list mode
     context.read<TimeSheetBloc>().add(ResetToEmployeeList(_currentDate));
@@ -54,6 +46,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const CustomDrawer(),
       backgroundColor: Colors.grey[50],
       appBar: CommonAppBar(title: 'Timesheet'),
       body: BlocBuilder<TimeSheetBloc, TimeSheetState>(

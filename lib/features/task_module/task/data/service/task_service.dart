@@ -12,9 +12,21 @@ class TaskApiService {
     String? status,
     String? listType,
     String? search,
+    List<String>? assignEmployeeIds,
+    List<String>? followerId,
+    List<String>? relatedToId,
+    String? relatedTo,
+    List<String>? milestoneIds,
   }) {
     return dio.put(
       '${ApiConstants.getTask}$page/$size',
+      data: {
+        'assignEmployeeIds': assignEmployeeIds ?? [],
+        'followerId': followerId ?? [],
+        'relatedToId': relatedToId ?? [],
+        'relatedTo': relatedTo,
+        'milestoneIds': milestoneIds ?? [],
+      },
       queryParameters: {
         if (status != null) 'status': status,
         if (listType != null) 'listType': listType,

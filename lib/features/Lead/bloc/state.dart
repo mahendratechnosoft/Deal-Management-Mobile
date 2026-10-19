@@ -55,6 +55,7 @@ class AllLeadState extends LeadState {
   final bool leadDetailsLoader;
   final List<ActivityLogModel> activityLogs; // Add activity logs
   final bool activityLogsLoader; // Add activity logs loader
+  final int totalLeads;
   final List<ReminderModel>? remindermodel;
   final bool? reminder;
   final bool createReminder;
@@ -65,6 +66,7 @@ class AllLeadState extends LeadState {
     required this.leads,
     required this.hasMore,
     required this.currentPage,
+    this.totalLeads = 0,
     this.createReminder = false,
     this.createReminderError,
     this.leadDetailsModel,
@@ -98,6 +100,7 @@ class AllLeadState extends LeadState {
     bool? leadDetailsLoader,
     List<ActivityLogModel>? activityLogs,
     bool? activityLogsLoader,
+    int? totalLeads,
     List<ReminderModel>? remindermodel,
     bool? reminder,
   }) {
@@ -111,6 +114,7 @@ class AllLeadState extends LeadState {
       filteredLeads: filteredLeads ?? this.filteredLeads,
       hasMore: hasMore ?? this.hasMore,
       currentPage: currentPage ?? this.currentPage,
+      totalLeads: totalLeads ?? this.totalLeads,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedDate: selectedDate ?? this.selectedDate,
       status: status ?? this.status,
@@ -133,6 +137,7 @@ class AllLeadState extends LeadState {
         filteredLeads,
         hasMore,
         currentPage,
+        totalLeads,
         searchQuery,
         selectedDate,
         status,

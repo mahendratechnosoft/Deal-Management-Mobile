@@ -7,6 +7,7 @@ import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/core/widgtes/skeleton_widget.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
+import 'package:xpertbiz/features/drawer/presentation/custom_drawer.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_bloc.dart';
 import 'package:xpertbiz/features/task_module/task/bloc/task_event.dart';
@@ -81,6 +82,7 @@ class _TaskScreenState extends State<TaskScreen> {
         }
       },
       child: Scaffold(
+        drawer: const CustomDrawer(),
         backgroundColor: const Color.fromARGB(237, 248, 250, 252),
         appBar: CommonAppBar(title: 'Task'),
         floatingActionButton: access == false
