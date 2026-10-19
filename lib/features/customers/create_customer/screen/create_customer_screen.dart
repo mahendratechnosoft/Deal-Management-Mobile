@@ -199,8 +199,8 @@ class _CreateCustomerScreenState extends State<CreateCustomerScreen> {
       customerId: _customerId.isNotEmpty ? _customerId : widget.id ?? '',
       adminId: _adminId,
       companyName: _getController('companyName').text.trim(),
-      phone: _getController('primaryNumber').text.trim(),
-      mobile: _getController('secondaryNumber').text.trim(),
+      phone: _getController('secondaryNumber').text.trim(),
+      mobile: _getController('primaryNumber').text.trim(),
       website: _getController('website').text.trim(),
       industry: industryValue,
       revenue: _getController('revenue').text.trim(),
@@ -293,7 +293,7 @@ class _CreateCustomerScreenState extends State<CreateCustomerScreen> {
                   backgroundColor: Colors.green,
                 ),
               );
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(true);
             }
 
             if (state is UpdateCustomerError) {
@@ -325,7 +325,7 @@ class _CreateCustomerScreenState extends State<CreateCustomerScreen> {
                   backgroundColor: Colors.green,
                 ),
               );
-              Navigator.of(context).pop();
+              Navigator.of(context).pop(true);
             }
           },
         ),

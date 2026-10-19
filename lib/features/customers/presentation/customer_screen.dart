@@ -106,12 +106,15 @@ class _CustomerScreenState extends State<CustomerScreen> {
           ? SizedBox.shrink()
           : FloatingActionButton(
               backgroundColor: AppColors.primaryDark,
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) =>
                             CreateCustomerScreen(edit: false)));
+                if (result == true && context.mounted) {
+                  context.read<CustomerBloc>().add(RefreshCustomersEvent());
+                }
               },
               child: Icon(Icons.add, color: AppColors.background),
             ),
@@ -189,20 +192,25 @@ class _CustomerScreenState extends State<CustomerScreen> {
                             headerTitle: customer.companyName,
                             headerSubtitle: customer.industry,
                             onTap: () {},
-                            editAction: CardActionConfig(
-                              icon: Icons.edit_outlined,
-                              color: AppColors.primaryDark,
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            CreateCustomerScreen(
-                                              edit: true,
-                                              id: customer.customerId,
-                                            )));
-                              },
-                            ),
+                              editAction: CardActionConfig(
+                                icon: Icons.edit_outlined,
+                                color: AppColors.primaryDark,
+                                onTap: () async {
+                                  final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              CreateCustomerScreen(
+                                                edit: true,
+                                                id: customer.customerId,
+                                              )));
+                                  if (result == true && context.mounted) {
+                                    context
+                                        .read<CustomerBloc>()
+                                        .add(RefreshCustomersEvent());
+                                  }
+                                },
+                              ),
                             deleteAction: CardActionConfig(
                               icon: Icons.contact_phone_outlined,
                               color: AppColors.primaryDark,
@@ -218,27 +226,44 @@ class _CustomerScreenState extends State<CustomerScreen> {
                               },
                             ),
                             items: [
-                              InfoItem(
-                                label: "Mobile",
-                                value: customer.mobile,
-                                icon: Icons.phone,
-                              ),
-                              if (customer.website != null)
+                              if (customer.mobile.trim().isNotEmpty)
+                                InfoItem(
+                                  label: "Mobile",
+                                  value: customer.mobile.trim(),
+                                  icon: Icons.phone_android,
+                                ),
+                              if (customer.phone.trim().isNotEmpty)
+                                InfoItem(
+                                  label: "Phone",
+                                  value: customer.phone.trim(),
+                                  icon: Icons.phone,
+                                ),
+                              if (customer.email != null &&
+                                  customer.email!.trim().isNotEmpty)
+                                InfoItem(
+                                  label: "Email",
+                                  value: customer.email!.trim(),
+                                  icon: Icons.email_outlined,
+                                ),
+                              if (customer.website != null &&
+                                  customer.website!.trim().isNotEmpty)
                                 InfoItem(
                                   label: "Website",
-                                  value: customer.website!,
+                                  value: customer.website!.trim(),
                                   icon: Icons.link,
                                 ),
-                              if (customer.revenue != null)
+                              if (customer.revenue != null &&
+                                  customer.revenue!.trim().isNotEmpty)
                                 InfoItem(
                                   label: "Revenue",
-                                  value: customer.revenue!,
+                                  value: customer.revenue!.trim(),
                                   icon: Icons.currency_rupee,
                                 ),
-                              if (customer.description != null)
+                              if (customer.description != null &&
+                                  customer.description!.trim().isNotEmpty)
                                 InfoItem(
                                   label: "Description",
-                                  value: customer.description!,
+                                  value: customer.description!.trim(),
                                   icon: Icons.description_outlined,
                                 ),
                             ],

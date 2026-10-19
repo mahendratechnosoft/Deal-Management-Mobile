@@ -245,7 +245,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
     );
   }
 
-  void fetchMonthAttendance(BuildContext context, Employee employee) {
+  Future<void> fetchMonthAttendance(BuildContext context, Employee employee) async {
     final now = DateTime.now();
 
     final String monthStartDate = DateFormat('yyyy-MM-dd').format(
@@ -261,6 +261,9 @@ class _EmployeeListScreenState extends State<EmployeeListScreen> {
             employeeId: employee.id,
           ),
         );
-    context.push(AppRouteName.attendance, extra: employee);
+    await context.push(AppRouteName.attendance, extra: employee);
+    if (context.mounted) {
+      _resetAndFetchData();
+    }
   }
 }

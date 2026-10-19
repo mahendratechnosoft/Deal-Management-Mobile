@@ -41,12 +41,24 @@ class LeadResponseModel {
         (listRaw is List ? listRaw.length : 0);
 
     return LeadResponseModel(
-      columnSequence: List<String>.from(data['columnSequence'] ?? json['columnSequence'] ?? []),
+      columnSequence: (data['columnSequence'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          (json['columnSequence'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       statusAndCount: statusRaw is List
-          ? statusRaw.map((e) => StatusCountModel.fromJson(e)).toList()
+          ? statusRaw
+              .whereType<Map<String, dynamic>>()
+              .map((e) => StatusCountModel.fromJson(e))
+              .toList()
           : [],
       leadList: listRaw is List
-          ? listRaw.map((e) => LeadModel.fromJson(e)).toList()
+          ? listRaw
+              .whereType<Map<String, dynamic>>()
+              .map((e) => LeadModel.fromJson(e))
+              .toList()
           : [],
       currentPage: (data['currentPage'] ?? json['currentPage'] ?? 0) is int
           ? (data['currentPage'] ?? json['currentPage'] ?? 0)
@@ -72,8 +84,10 @@ class StatusCountModel {
 
   factory StatusCountModel.fromJson(Map<String, dynamic> json) {
     return StatusCountModel(
-      status: json['status'] ?? '',
-      count: json['count'] ?? 0,
+      status: _parseString(json['status']) ?? '',
+      count: (json['count'] is num)
+          ? (json['count'] as num).toInt()
+          : (int.tryParse(json['count']?.toString() ?? '0') ?? 0),
     );
   }
 }
@@ -141,40 +155,55 @@ class LeadModel {
 
   factory LeadModel.fromJson(Map<String, dynamic> json) {
     return LeadModel(
-      id: json['id'] ?? '',
-      adminId: json['adminId'],
-      employeeId: json['employeeId'],
-      assignTo: json['assignTo'],
-      status: json['status'] ?? '',
-      source: json['source'],
-      clientName: json['clientName'],
-      companyName: json['companyName'],
-      customerId: json['customerId'],
+      id: _parseString(json['id']) ?? '',
+      adminId: _parseString(json['adminId']),
+      employeeId: _parseString(json['employeeId']),
+      assignTo: _parseString(json['assignTo']),
+      status: _parseString(json['status']) ?? '',
+      source: _parseString(json['source']),
+      clientName: _parseString(json['clientName']),
+      companyName: _parseString(json['companyName']),
+      customerId: _parseString(json['customerId']),
       revenue: json['revenue'] != null
           ? double.tryParse(json['revenue'].toString())
           : null,
-      mobileNumber: json['mobileNumber'],
-      phoneNumber: json['phoneNumber'],
-      email: json['email'],
-      website: json['website'],
-      industry: json['industry'],
-      priority: json['priority'],
-      converted: json['converted'] ?? false,
-      street: json['street'],
-      country: json['country'],
-      state: json['state'],
-      city: json['city'],
-      zipCode: json['zipCode'],
-      description: json['description'],
-      followUp: json['followUp'],
+      mobileNumber: _parseString(json['mobileNumber']),
+      phoneNumber: _parseString(json['phoneNumber']),
+      email: _parseString(json['email']),
+      website: _parseString(json['website']),
+      industry: _parseString(json['industry']),
+      priority: _parseString(json['priority']),
+      converted: json['converted'] is bool
+          ? json['converted']
+          : (json['converted']?.toString().toLowerCase() == 'true'),
+      street: _parseString(json['street']),
+      country: _parseString(json['country']),
+      state: _parseString(json['state']),
+      city: _parseString(json['city']),
+      zipCode: _parseString(json['zipCode']),
+      description: _parseString(json['description']),
+      followUp: _parseString(json['followUp']),
       createdDate: json['createdDate'] != null
-          ? DateTime.tryParse(json['createdDate'])
+          ? DateTime.tryParse(json['createdDate'].toString())
           : null,
       updatedDate: json['updatedDate'] != null
-          ? DateTime.tryParse(json['updatedDate'])
+          ? DateTime.tryParse(json['updatedDate'].toString())
           : null,
       fields: json['fields'],
       columns: json['columns'],
     );
   }
+}
+
+String? _parseString(dynamic value) {
+  if (value == null) return null;
+  if (value is String) return value;
+  if (value is List) {
+    if (value.isEmpty) return null;
+    return value
+        .map((e) => e?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .join(', ');
+  }
+  return value.toString();
 }

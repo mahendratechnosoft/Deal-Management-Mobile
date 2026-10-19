@@ -64,7 +64,16 @@ class MyApp extends StatelessWidget {
         routerConfig: AppRouter.router,
         builder: (context, child) {
           Responsive.init(context);
-          return child!;
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              final currentFocus = FocusScope.of(context);
+              if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
+                FocusManager.instance.primaryFocus?.unfocus();
+              }
+            },
+            child: child ?? const SizedBox.shrink(),
+          );
         },
       ),
     );

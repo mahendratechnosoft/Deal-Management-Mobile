@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
 import 'package:xpertbiz/features/Lead/data/model/create_lead_payload.dart';
 
-import '../model/create_reminder_payload.dart';
+import 'package:xpertbiz/features/Lead/data/model/create_reminder_payload.dart';
 
 class LeadService {
   final Dio dio;

@@ -108,9 +108,10 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    return RepaintBoundary(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         /// LABEL
         if (widget.showLabel && widget.labelText != null) ...[
           Padding(
@@ -199,6 +200,7 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 }

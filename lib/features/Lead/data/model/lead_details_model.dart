@@ -125,34 +125,38 @@ class LeadDetails {
       );
 
   factory LeadDetails.fromJson(Map<String, dynamic> json) => LeadDetails(
-        id: json["id"] as String? ?? '',
-        adminId: json["adminId"] as String? ?? '',
-        employeeId: json["employeeId"] as String?,
-        assignTo: json["assignTo"] as String?,
-        status: json["status"] as String? ?? '',
-        source: json["source"] as String? ?? '',
-        clientName: json["clientName"] as String? ?? '',
-        companyName: json["companyName"] as String? ?? '',
-        customerId: json["customerId"] as String?,
+        id: _parseString(json["id"]) ?? '',
+        adminId: _parseString(json["adminId"]) ?? '',
+        employeeId: _parseString(json["employeeId"]),
+        assignTo: _parseString(json["assignTo"]),
+        status: _parseString(json["status"]) ?? '',
+        source: _parseString(json["source"]) ?? '',
+        clientName: _parseString(json["clientName"]) ?? '',
+        companyName: _parseString(json["companyName"]) ?? '',
+        customerId: _parseString(json["customerId"]),
         revenue: _parseDouble(json["revenue"]),
-        mobileNumber: json["mobileNumber"] as String? ?? '',
-        phoneNumber: json["phoneNumber"] as String? ?? '',
-        email: json["email"] as String? ?? '',
-        website: json["website"] as String? ?? '',
-        industry: json["industry"] as String? ?? '',
-        priority: json["priority"] as String?,
+        mobileNumber: _parseString(json["mobileNumber"]) ?? '',
+        phoneNumber: _parseString(json["phoneNumber"]) ?? '',
+        email: _parseString(json["email"]) ?? '',
+        website: _parseString(json["website"]) ?? '',
+        industry: _parseString(json["industry"]) ?? '',
+        priority: _parseString(json["priority"]),
         converted: json["converted"] as bool? ?? false,
-        street: json["street"] as String? ?? '',
-        country: json["country"] as String? ?? '',
-        state: json["state"] as String? ?? '',
-        city: json["city"] as String? ?? '',
-        zipCode: json["zipCode"] as String? ?? '',
-        description: json["description"] as String? ?? '',
+        street: _parseString(json["street"]) ?? '',
+        country: _parseString(json["country"]) ?? '',
+        state: _parseString(json["state"]) ?? '',
+        city: _parseString(json["city"]) ?? '',
+        zipCode: _parseString(json["zipCode"]) ?? '',
+        description: _parseString(json["description"]) ?? '',
         followUp: json["followUp"],
         createdDate: _parseDate(json["createdDate"]),
         updatedDate: _parseDate(json["updatedDate"]),
-        fields: json["fields"] as Map<String, dynamic>? ?? const {},
-        columns: json["columns"] as List<dynamic>? ?? const [],
+        fields: json["fields"] is Map<String, dynamic>
+            ? (json["fields"] as Map<String, dynamic>)
+            : const {},
+        columns: json["columns"] is List<dynamic>
+            ? (json["columns"] as List<dynamic>)
+            : const [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -198,5 +202,18 @@ class LeadDetails {
   static double _parseDouble(dynamic value) {
     if (value == null) return 0.0;
     return double.tryParse(value.toString()) ?? 0.0;
+  }
+
+  static String? _parseString(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is List) {
+      if (value.isEmpty) return null;
+      return value
+          .map((e) => e?.toString() ?? '')
+          .where((s) => s.isNotEmpty)
+          .join(', ');
+    }
+    return value.toString();
   }
 }

@@ -6,7 +6,7 @@ import 'package:xpertbiz/core/network/api_error.dart';
 import 'package:xpertbiz/features/Lead/bloc/state.dart';
 import 'package:xpertbiz/features/Lead/data/model/all_lead_model.dart';
 import 'package:xpertbiz/features/Lead/data/repo/repo.dart';
-import '../data/model/activity_log_model.dart';
+import 'package:xpertbiz/features/Lead/data/model/activity_log_model.dart';
 import 'event.dart';
 
 class LeadBloc extends Bloc<LeadEvent, LeadState> {
@@ -350,8 +350,8 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     final lowerCaseQuery = query.toLowerCase();
 
     return leads.where((lead) {
-      return (lead.clientName!.toLowerCase().contains(lowerCaseQuery)) ||
-          (lead.companyName!.toLowerCase().contains(lowerCaseQuery)) ||
+      return (lead.clientName?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
+          (lead.companyName?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (lead.email?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
           (lead.mobileNumber?.toLowerCase().contains(lowerCaseQuery) ??
               false) ||

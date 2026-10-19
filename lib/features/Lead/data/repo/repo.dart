@@ -7,7 +7,7 @@ import 'package:xpertbiz/features/Lead/data/model/lead_details_model.dart';
 import 'package:xpertbiz/features/Lead/data/model/reminder_model.dart';
 
 import '../model/all_lead_model.dart';
-import '../model/create_reminder_payload.dart';
+import 'package:xpertbiz/features/Lead/data/model/create_reminder_payload.dart';
 import '../model/lead_status_model.dart';
 import '../service/service.dart';
 

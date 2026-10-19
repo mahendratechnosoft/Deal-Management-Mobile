@@ -149,8 +149,8 @@ class CustomerFormModel {
     return CustomerModel(
       companyName: companyName ?? '',
       email: email ?? '',
-      phone: primaryNumber ?? '',
-      mobile: secondaryNumber ?? '',
+      phone: secondaryNumber ?? '',
+      mobile: primaryNumber ?? '',
       website: website ?? '',
       industry: industry ?? '',
       revenue: annualRevenue ?? '',

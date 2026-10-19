@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../data/model/create_reminder_payload.dart';
+import 'package:xpertbiz/features/Lead/data/model/create_reminder_payload.dart';
 
 abstract class LeadEvent extends Equatable {
   const LeadEvent();

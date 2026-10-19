@@ -395,7 +395,10 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
     LoadAssigneesEvent event,
     Emitter<CreateTaskState> emit,
   ) async {
-    emit(state.copyWith(isAssigneesLoading: true));
+    emit(state.copyWith(
+      isAssigneesLoading: true,
+      taskCreated: false,
+    ));
     final assignees = await repository.assignDropDown();
     emit(state.copyWith(
       assigneesList: assignees,
@@ -445,17 +448,26 @@ class CreateTaskBloc extends Bloc<CreateTaskEvent, CreateTaskState> {
     Emitter<CreateTaskState> emit,
   ) async {
     emit(state.copyWith(
-      taskCreated: true,
+      isLoading: true,
+      taskCreated: false,
       errorMessage: null,
     ));
 
     try {
       await repository.createTask(event.request);
       emit(state.copyWith(
-        taskCreated: false,
+        isLoading: false,
+        taskCreated: true,
       ));
     } on DioException catch (e) {
       emit(state.copyWith(
+        isLoading: false,
+        taskCreated: false,
+        errorMessage: ApiError.getMessage(e),
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
         taskCreated: false,
         errorMessage: ApiError.getMessage(e),
       ));
