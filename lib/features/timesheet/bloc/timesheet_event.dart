@@ -10,10 +10,17 @@ abstract class TimeSheetEvent extends Equatable {
 /// 📅 Fetch Full Monthly Timesheet Grid (Employees + Calendar + Attendance)
 class FetchMonthlyTimesheetGrid extends TimeSheetEvent {
   final DateTime month;
-  const FetchMonthlyTimesheetGrid(this.month);
+  final String? customStartDate;
+  final String? customEndDate;
+
+  const FetchMonthlyTimesheetGrid(
+    this.month, {
+    this.customStartDate,
+    this.customEndDate,
+  });
 
   @override
-  List<Object?> get props => [month];
+  List<Object?> get props => [month, customStartDate, customEndDate];
 }
 
 /// 👥 Fetch all employee status by date (for legacy list view)
@@ -71,4 +78,30 @@ class CheckStatusEvent extends TimeSheetEvent {
 
   @override
   List<Object?> get props => [checkIn];
+}
+
+class UpdateAttendanceRecordEvent extends TimeSheetEvent {
+  final String employeeId;
+  final bool status;
+  final int timeStamp;
+  final String? attendanceId;
+
+  const UpdateAttendanceRecordEvent({
+    required this.employeeId,
+    required this.status,
+    required this.timeStamp,
+    this.attendanceId,
+  });
+
+  @override
+  List<Object?> get props => [employeeId, status, timeStamp, attendanceId];
+}
+
+class DeleteAttendanceSessionEvent extends TimeSheetEvent {
+  final List<String> attendanceIds;
+
+  const DeleteAttendanceSessionEvent(this.attendanceIds);
+
+  @override
+  List<Object?> get props => [attendanceIds];
 }

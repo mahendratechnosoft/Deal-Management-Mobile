@@ -35,6 +35,8 @@ class ApiConstants {
   static String get empmonthAtteUrl => "${RoleResolver.rolePath}/getAttendanceBetween"; 
   static String get checkInUrl => "${RoleResolver.rolePath}/addAttendance";
   static String get checkInStatusUrl => "${RoleResolver.rolePath}/getAttendanceBetweenForParticalurEmployee";
+  static String get updateAttendanceUrl => "${RoleResolver.rolePath}/updateAttendance";
+  static String get deleteAttendanceUrl => "${RoleResolver.rolePath}/deleteAttendance";
   static String get leadStatusUrl => "${RoleResolver.rolePath}/getLeadStatusAndCount";
   static String get allLeadsUrl => "${RoleResolver.rolePath}/getAllLeads";
   static String get allLeadsDetailsUrl => "${RoleResolver.rolePath}/getLeadById";

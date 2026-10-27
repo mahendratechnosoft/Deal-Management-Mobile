@@ -24,10 +24,8 @@ class ApiInterceptor extends Interceptor {
       log('⚠️ Bearer token NOT added');
     }
 
-    options.headers.addAll({
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    });
+    options.headers.putIfAbsent('Accept', () => 'application/json');
+    options.headers.putIfAbsent('Content-Type', () => 'application/json');
 
     _logRequest(options);
     handler.next(options);

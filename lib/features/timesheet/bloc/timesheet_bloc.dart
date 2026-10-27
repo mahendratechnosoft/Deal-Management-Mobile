@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:xpertbiz/features/auth/bloc/user_role.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import '../../../core/network/api_error.dart';
 import '../data/model/calendar_model.dart';
@@ -22,6 +21,8 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     on<ResetToEmployeeList>(_onResetToEmployeeList);
     on<FilterEmployees>(_onFilterEmployees);
     on<CheckStatusEvent>(_onCheckIn);
+    on<UpdateAttendanceRecordEvent>(_onUpdateAttendanceRecord);
+    on<DeleteAttendanceSessionEvent>(_onDeleteAttendanceSession);
   }
 
   /// 📅 Fetch Full Monthly Timesheet Grid data (Calendar + Employees + Month Attendance)
@@ -30,11 +31,14 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     Emitter<TimeSheetState> emit,
   ) async {
     final DateTime month = event.month;
-    final String startDate =
-        "${month.year}-${month.month.toString().padLeft(2, '0')}-01";
     final int lastDayInt = DateTime(month.year, month.month + 1, 0).day;
-    final String endDate =
+    final String defaultStartDate =
+        "${month.year}-${month.month.toString().padLeft(2, '0')}-01";
+    final String defaultEndDate =
         "${month.year}-${month.month.toString().padLeft(2, '0')}-${lastDayInt.toString().padLeft(2, '0')}";
+
+    final String startDate = event.customStartDate ?? defaultStartDate;
+    final String endDate = event.customEndDate ?? defaultEndDate;
 
     if (state is TimeSheetLoaded) {
       emit((state as TimeSheetLoaded).copyWith(
@@ -268,6 +272,37 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
       }
     } on DioException catch (e) {
       emit(TimeSheetError(ApiError.getMessage(e)));
+    }
+  }
+
+  Future<void> _onUpdateAttendanceRecord(
+    UpdateAttendanceRecordEvent event,
+    Emitter<TimeSheetState> emit,
+  ) async {
+    try {
+      await repository.updateAttendance(
+        employeeId: event.employeeId,
+        status: event.status,
+        timeStamp: event.timeStamp,
+        attendanceId: event.attendanceId,
+      );
+    } on DioException catch (e) {
+      emit(TimeSheetError(ApiError.getMessage(e)));
+    } catch (e) {
+      emit(TimeSheetError('Failed to update attendance: $e'));
+    }
+  }
+
+  Future<void> _onDeleteAttendanceSession(
+    DeleteAttendanceSessionEvent event,
+    Emitter<TimeSheetState> emit,
+  ) async {
+    try {
+      await repository.deleteAttendanceSession(event.attendanceIds);
+    } on DioException catch (e) {
+      emit(TimeSheetError(ApiError.getMessage(e)));
+    } catch (e) {
+      emit(TimeSheetError('Failed to delete attendance: $e'));
     }
   }
 }

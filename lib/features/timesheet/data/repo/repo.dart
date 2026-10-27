@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:xpertbiz/features/timesheet/data/model/calendar_model.dart';
 import 'package:xpertbiz/features/timesheet/data/model/checkIn_model.dart';
 import 'package:xpertbiz/features/timesheet/data/model/emp_month_attendance_model.dart';
@@ -84,5 +85,31 @@ class TimeSheetRepository {
       );
     }
     return EmployeeAttendanceResponse(employeeName: '', dates: []);
+  }
+
+  Future<Response> updateAttendance({
+    required String employeeId,
+    required bool status,
+    required int timeStamp,
+    String? attendanceId,
+  }) {
+    return apiService.updateAttendance(
+      employeeId: employeeId,
+      status: status,
+      timeStamp: timeStamp,
+      attendanceId: attendanceId,
+    );
+  }
+
+  Future<Response> deleteAttendance(String attendanceId) {
+    return apiService.deleteAttendance(attendanceId);
+  }
+
+  Future<void> deleteAttendanceSession(List<String> attendanceIds) async {
+    for (final id in attendanceIds) {
+      if (id.isNotEmpty) {
+        await apiService.deleteAttendance(id);
+      }
+    }
   }
 }

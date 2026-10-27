@@ -100,4 +100,59 @@ class TimesheetService {
       employeeId: employeeId,
     );
   }
+
+  Future<Response> updateAttendance({
+    required String employeeId,
+    required bool status,
+    required int timeStamp,
+    String? attendanceId,
+  }) async {
+    final Map<String, dynamic> data = {
+      "employeeId": employeeId,
+      "status": status,
+      "timeStamp": timeStamp,
+    };
+    if (attendanceId != null && attendanceId.isNotEmpty) {
+      data["attendanceId"] = attendanceId;
+    }
+
+    try {
+      return await dio.post(
+        ApiConstants.updateAttendanceUrl,
+        data: data,
+        options: Options(
+          responseType: ResponseType.plain,
+          headers: {
+            'Accept': '*/*',
+          },
+        ),
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 405) {
+        return await dio.put(
+          ApiConstants.updateAttendanceUrl,
+          data: data,
+          options: Options(
+            responseType: ResponseType.plain,
+            headers: {
+              'Accept': '*/*',
+            },
+          ),
+        );
+      }
+      rethrow;
+    }
+  }
+
+  Future<Response> deleteAttendance(String attendanceId) {
+    return dio.delete(
+      "${ApiConstants.deleteAttendanceUrl}/$attendanceId",
+      options: Options(
+        responseType: ResponseType.plain,
+        headers: {
+          'Accept': '*/*',
+        },
+      ),
+    );
+  }
 }
