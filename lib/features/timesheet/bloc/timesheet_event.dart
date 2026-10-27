@@ -7,10 +7,20 @@ abstract class TimeSheetEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Fetch all employee status by date
+/// 📅 Fetch Full Monthly Timesheet Grid (Employees + Calendar + Attendance)
+class FetchMonthlyTimesheetGrid extends TimeSheetEvent {
+  final DateTime month;
+  const FetchMonthlyTimesheetGrid(this.month);
+
+  @override
+  List<Object?> get props => [month];
+}
+
+/// 👥 Fetch all employee status by date (for legacy list view)
 class FetchAllEmpStatus extends TimeSheetEvent {
   final String date;
   const FetchAllEmpStatus(this.date);
+
   @override
   List<Object?> get props => [date];
 }
@@ -30,7 +40,6 @@ class FetchEmpMonthAttendance extends TimeSheetEvent {
   List<Object?> get props => [fromDate, toDate, employeeId];
 }
 
-// In timesheet_event.dart
 class ResetToEmployeeList extends TimeSheetEvent {
   final String date;
 
@@ -43,39 +52,23 @@ class ResetToEmployeeList extends TimeSheetEvent {
 class FilterEmployees extends TimeSheetEvent {
   final String query;
   const FilterEmployees(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+class FilterTimesheetEmployees extends TimeSheetEvent {
+  final String query;
+  const FilterTimesheetEmployees(this.query);
+
+  @override
+  List<Object?> get props => [query];
 }
 
 class CheckStatusEvent extends TimeSheetEvent {
   final bool checkIn;
   const CheckStatusEvent(this.checkIn);
+
+  @override
+  List<Object?> get props => [checkIn];
 }
-
-// class CheckInStatusEvent extends TimeSheetEvent {
-//   final String fromDate;
-//   final String toDate;
-//   final String employeeId;
-
-//   const CheckInStatusEvent({
-//     required this.fromDate,
-//     required this.toDate,
-//     required this.employeeId,
-//   });
-
-//   @override
-//   List<Object?> get props => [fromDate, toDate, employeeId];
-// }
-
-// class CheckInUser extends TimeSheetEvent {
-//   final String fromDate;
-//   final String toDate;
-//   final String employeeId;
-
-//   const CheckInUser({
-//     required this.fromDate,
-//     required this.toDate,
-//     required this.employeeId,
-//   });
-
-//   @override
-//   List<Object?> get props => [fromDate, toDate, employeeId];
-// }

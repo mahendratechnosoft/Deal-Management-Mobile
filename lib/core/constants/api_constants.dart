@@ -29,6 +29,7 @@ class ApiConstants {
   static String get addAssignees => "${RoleResolver.rolePath}/addAssigneesToTask";
   static String get addFollowers => "${RoleResolver.rolePath}/addFollowersToTask";
   static String get updateStatusUrl => "${RoleResolver.rolePath}/updateTaskStatus";
+  static String get calendarUrl => "${RoleResolver.rolePath}/getCalendar";
   static String get getAllEmpStatusUrl => "${RoleResolver.rolePath}/getLoginStatusAllEmployee";
   static String get empAttendanceUrl => "${RoleResolver.rolePath}/addAttendance";
   static String get empmonthAtteUrl => "${RoleResolver.rolePath}/getAttendanceBetween"; 

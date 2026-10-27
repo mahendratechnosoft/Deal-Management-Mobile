@@ -15,7 +15,7 @@ import 'package:xpertbiz/features/task_module/task/presentation/task_screen.dart
 import 'package:xpertbiz/features/task_module/create_task/screens/create_task_screen.dart';
 import 'package:xpertbiz/features/task_module/edit_task/presentation/task_edit_screen.dart';
 import 'package:xpertbiz/features/task_module/task_deatils/screen/task_details_screen.dart';
-import 'package:xpertbiz/features/timesheet/presentation/emp_list_screen.dart';
+import 'package:xpertbiz/features/timesheet/presentation/monthly_timesheet_screen.dart';
 import 'package:xpertbiz/features/timesheet/presentation/timesheet_screen.dart';
 import 'package:xpertbiz/features/timesheet/data/model/emp_model.dart';
 import 'app_transition.dart';
@@ -118,7 +118,7 @@ class AppRouter {
         path: AppRouteName.timesheet,
         pageBuilder: (context, state) => AppTransition.slide(
           state: state,
-          child: const EmployeeListScreen(),
+          child: const MonthlyTimesheetScreen(),
         ),
       ),
       GoRoute(

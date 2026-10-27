@@ -19,36 +19,58 @@ class TimesheetService {
     );
   }
 
+  Future<Response> getCalendar({
+    required String startDate,
+    required String endDate,
+  }) {
+    return dio.get(
+      ApiConstants.calendarUrl,
+      queryParameters: {
+        "startDate": startDate,
+        "endDate": endDate,
+      },
+    );
+  }
+
+  Future<Response> getEmployeeNameAndId({bool excludeMe = false}) {
+    return dio.get(
+      ApiConstants.assignUrl,
+      queryParameters: {
+        "excludeMe": excludeMe,
+      },
+    );
+  }
+
   Future<Response> empMonthAttendance({
     required String fromDate,
     required String toDate,
-    required String employeeId,
+    String? employeeId,
   }) async {
+    final Map<String, dynamic> queryParams = {
+      "fromDate": fromDate,
+      "toDate": toDate,
+    };
+    if (employeeId != null && employeeId.isNotEmpty) {
+      queryParams["employeeId"] = employeeId;
+    }
+
     final res = await dio.get(
       ApiConstants.empmonthAtteUrl,
       options: Options(
-        responseType: ResponseType.plain, // always plain
+        responseType: ResponseType.plain, // plain to safely handle string error/empty message
       ),
-      queryParameters: {
-        "fromDate": toDate,
-        "toDate": fromDate,
-        "employeeId": employeeId,
-      },
+      queryParameters: queryParams,
     );
 
-     if (res.data is String &&
+    if (res.data is String &&
         (res.data as String).toLowerCase().contains('no attendance')) {
       return Response(
         requestOptions: res.requestOptions,
         statusCode: 200,
-        data: {
-          "success": true,
-          "data": {},
-        },
+        data: <String, dynamic>{},
       );
     }
 
-    // ✅ HANDLE: JSON string
     if (res.data is String && (res.data as String).trim().startsWith('{')) {
       return Response(
         requestOptions: res.requestOptions,
@@ -66,18 +88,16 @@ class TimesheetService {
     );
   }
 
-  Future<Map<String, dynamic>> checkInStatus(
-      {required String fromDate,
-      required String toDate,
-      required String employeeId}) async{
-    final response =await dio.post(
-      ApiConstants.checkInStatusUrl,
-      queryParameters: {
-        "fromDate": fromDate,
-        "toDate": toDate,
-        "employeeId": employeeId,
-      },
+  Future<dynamic> checkInStatus({
+    required String fromDate,
+    required String toDate,
+    required String employeeId,
+  }) async {
+    // Uses getAttendanceBetween for single employee to get today's punches
+    return empMonthAttendance(
+      fromDate: fromDate,
+      toDate: toDate,
+      employeeId: employeeId,
     );
-     return Map<String, dynamic>.from(response.data);
   }
 }

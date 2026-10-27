@@ -13,7 +13,7 @@ class EmpMonthAttendanceModel {
         employeeData.forEach((date, records) {
           if (records is List) {
             dateMap[date] =
-                records.map((e) => Attendance.fromJson(e)).toList();
+                records.map((e) => Attendance.fromJson(e as Map<String, dynamic>)).toList();
           }
         });
 
@@ -46,12 +46,21 @@ class Attendance {
 
   factory Attendance.fromJson(Map<String, dynamic> json) {
     return Attendance(
-      attendanceId: json['attendanceId'],
-      adminId: json['adminId'],
-      employeeId: json['employeeId'],
-      employeeName: json['employeeName'],
-      timeStamp: json['timeStamp'],
-      status: json['status'],
+      attendanceId: json['attendanceId']?.toString() ?? '',
+      adminId: json['adminId']?.toString() ?? '',
+      employeeId: json['employeeId']?.toString() ?? '',
+      employeeName: json['employeeName']?.toString() ?? '',
+      timeStamp: json['timeStamp'] is int ? json['timeStamp'] : 0,
+      status: json['status'] == true,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'attendanceId': attendanceId,
+    'adminId': adminId,
+    'employeeId': employeeId,
+    'employeeName': employeeName,
+    'timeStamp': timeStamp,
+    'status': status,
+  };
 }

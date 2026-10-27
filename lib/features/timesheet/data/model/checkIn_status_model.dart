@@ -17,12 +17,12 @@ class CheckInStatusModel {
 
   factory CheckInStatusModel.fromJson(Map<String, dynamic> json) {
     return CheckInStatusModel(
-      attendanceId: json['attendanceId'] ?? '',
-      adminId: json['adminId'] ?? '',
-      employeeId: json['employeeId'] ?? '',
-      employeeName: json['employeeName'] ?? '',
-      timeStamp: json['timeStamp'] ?? 0,
-      status: json['status'] ?? false,
+      attendanceId: json['attendanceId']?.toString() ?? '',
+      adminId: json['adminId']?.toString() ?? '',
+      employeeId: json['employeeId']?.toString() ?? '',
+      employeeName: json['employeeName']?.toString() ?? '',
+      timeStamp: json['timeStamp'] is int ? json['timeStamp'] : 0,
+      status: json['status'] == true,
     );
   }
 }
@@ -44,16 +44,24 @@ class EmployeeAttendanceResponse {
   });
 
   factory EmployeeAttendanceResponse.fromJson(Map<String, dynamic> json) {
+    if (json.isEmpty) {
+      return EmployeeAttendanceResponse(employeeName: '', dates: []);
+    }
     final employeeName = json.keys.first;
-    final Map<String, dynamic> dateMap = json[employeeName];
+    final dynamic rawDateMap = json[employeeName];
+    if (rawDateMap is! Map<String, dynamic>) {
+      return EmployeeAttendanceResponse(employeeName: employeeName, dates: []);
+    }
 
     final dates = <DateAttendance>[];
 
-    dateMap.forEach((date, list) {
-      final records =
-          (list as List).map((e) => CheckInStatusModel.fromJson(e)).toList();
+    rawDateMap.forEach((date, list) {
+      if (list is List) {
+        final records =
+            list.map((e) => CheckInStatusModel.fromJson(e)).toList();
 
-      dates.add(DateAttendance(date: date, records: records));
+        dates.add(DateAttendance(date: date, records: records));
+      }
     });
 
     return EmployeeAttendanceResponse(

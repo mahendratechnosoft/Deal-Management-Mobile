@@ -2,16 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
-import 'package:xpertbiz/features/timesheet/block/timesheet_bloc.dart';
-import 'package:xpertbiz/features/timesheet/block/timesheet_event.dart';
+import 'package:xpertbiz/features/timesheet/bloc/timesheet_bloc.dart';
+import 'package:xpertbiz/features/timesheet/bloc/timesheet_event.dart';
 import 'package:xpertbiz/features/timesheet/checInUser_bloc/bloc.dart';
 import 'package:xpertbiz/features/timesheet/checInUser_bloc/event.dart';
 import 'package:xpertbiz/features/timesheet/checInUser_bloc/state.dart';
 
 class CheckInOutWidget extends StatefulWidget {
-  const CheckInOutWidget({super.key});
+  final VoidCallback? onStatusChanged;
+  const CheckInOutWidget({super.key, this.onStatusChanged});
 
   @override
   State<CheckInOutWidget> createState() => _CheckInOutWidgetState();
@@ -42,30 +42,34 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
     return BlocConsumer<CheckInBloc, CheckInUserState>(
       listener: (context, state) {
         if (state is CheckInError) {
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+        if (state is CheckInLoaded) {
+          widget.onStatusChanged?.call();
         }
       },
       builder: (context, state) {
-        // if (state is TimeSheetLoaded) {
-        //   // running = state.isCheckedIn;
-
-        //   if (state.checkInStatus != null &&
-        //       state.checkInStatus!.dates.isNotEmpty &&
-        //       state.checkInStatus!.dates.first.records.isNotEmpty) {
-        //     final lastRecord = state.checkInStatus!.dates.first.records;
-        //     startTs = lastRecord.first.timeStamp;
-        //     end = lastRecord.last.timeStamp;
-        //   } else {
-        //     startTs = state.startTimestamp ?? 0;
-        //   }
-        // }
         if (state is CheckInLoaded) {
           running = state.isCheckedIn;
-          final lastRecord = state.checkInStatus.dates.first.records;
-          startTs = lastRecord.first.timeStamp;
-          end = lastRecord.last.timeStamp;
+          startTs = state.startTimestamp;
+          if (state.checkInStatus.dates.isNotEmpty &&
+              state.checkInStatus.dates.first.records.isNotEmpty) {
+            final records = state.checkInStatus.dates.first.records;
+            if (startTs == 0 && records.any((r) => r.status)) {
+              startTs = records.lastWhere((r) => r.status).timeStamp;
+            }
+            if (!running && records.any((r) => !r.status)) {
+              end = records.lastWhere((r) => !r.status).timeStamp;
+            }
+          }
         }
+
+        final bool isLoading = state is CheckInLoading;
 
         return StreamBuilder<int>(
           stream: running ? _timerStream() : null,
@@ -74,20 +78,26 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
 
             if (running && snap.hasData && startTs > 0) {
               final diff = snap.data! - startTs;
-
-              // safety guard
+              if (diff > 0) {
+                elapsed = Duration(milliseconds: diff);
+              }
+            } else if (running && startTs > 0) {
+              final diff = DateTime.now().millisecondsSinceEpoch - startTs;
               if (diff > 0) {
                 elapsed = Duration(milliseconds: diff);
               }
             }
+
             return _CheckInCard(
               endTime: end,
               elapsed: elapsed,
               isCheckedIn: running,
               startTimestamp: startTs,
+              isLoading: isLoading,
               onTap: () {
+                if (isLoading) return;
+                context.read<CheckInBloc>().add(ToggleCheckIn());
                 context.read<TimeSheetBloc>().add(CheckStatusEvent(!running));
-                context.read<TimeSheetBloc>().add(ResetToEmployeeList(today));
               },
             );
           },
@@ -98,10 +108,7 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
 }
 
 Stream<int> _timerStream() async* {
-  // 🔥 emit immediately
   yield DateTime.now().millisecondsSinceEpoch;
-
-  // ⏱ then every second
   yield* Stream.periodic(
     const Duration(seconds: 1),
     (_) => DateTime.now().millisecondsSinceEpoch,
@@ -114,6 +121,7 @@ class _CheckInCard extends StatelessWidget {
   final VoidCallback onTap;
   final int startTimestamp;
   final int endTime;
+  final bool isLoading;
 
   const _CheckInCard({
     required this.elapsed,
@@ -121,6 +129,7 @@ class _CheckInCard extends StatelessWidget {
     required this.onTap,
     required this.startTimestamp,
     required this.endTime,
+    this.isLoading = false,
   });
 
   String _format(Duration d) {
@@ -135,22 +144,19 @@ class _CheckInCard extends StatelessWidget {
     final primary = Colors.blue.shade700;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          colors: [
-            Colors.white,
-            Colors.blue.shade50,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCheckedIn ? Colors.green.shade200 : Colors.grey.shade200,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-            color: Colors.black.withOpacity(.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.04),
           ),
         ],
       ),
@@ -161,77 +167,123 @@ class _CheckInCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Work Session",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time_filled,
+                    size: 18,
+                    color: isCheckedIn ? Colors.green : Colors.grey.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Work Session Today",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
               ),
               _StatusChip(isCheckedIn),
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
-          /// TIMER
-          Text(
-            _format(elapsed),
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
+          /// TIMER DISPLAY
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                _format(elapsed),
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                  color: isCheckedIn ? const Color(0xFF0F172A) : Colors.grey.shade600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (isCheckedIn)
+                Text(
+                  "active",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green.shade600,
+                  ),
+                ),
+            ],
           ),
 
           const SizedBox(height: 10),
 
-          /// META INFO
-          if (startTimestamp > 0)
-            Row(
-              children: [
-                _MetaItem(
-                  label: "Check In",
-                  value: formatStartTime(startTimestamp),
-                ),
-                const Spacer(),
-                if (endTime > startTimestamp)
-                  _MetaItem(
-                    label: "Last Out",
-                    value: formatStartTime(endTime),
-                  ),
-              ],
+          /// META INFO (Check In / Check Out times)
+          if (startTimestamp > 0 || endTime > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  if (startTimestamp > 0)
+                    _MetaItem(
+                      label: "Check In",
+                      value: formatStartTime(startTimestamp),
+                    ),
+                  const Spacer(),
+                  if (endTime > startTimestamp)
+                    _MetaItem(
+                      label: "Last Out",
+                      value: formatStartTime(endTime),
+                    ),
+                ],
+              ),
             ),
 
-          const SizedBox(height: 18),
-          const Divider(height: 1),
           const SizedBox(height: 14),
 
           /// ACTION BUTTON
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: onTap,
-              icon: Icon(
-                isCheckedIn ? Icons.logout : Icons.login,
-                color: AppColors.background,
-                size: 18,
-              ),
+              onPressed: isLoading ? null : onTap,
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Icon(
+                      isCheckedIn ? Icons.logout_rounded : Icons.login_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
               label: Text(
-                isCheckedIn ? 'Check Out' : 'Check In',
+                isLoading
+                    ? 'Updating...'
+                    : (isCheckedIn ? 'Check Out' : 'Check In'),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isCheckedIn ? Colors.red.shade500 : primary,
+                backgroundColor: isCheckedIn ? Colors.red.shade600 : primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 2,
+                elevation: 0,
               ),
             ),
           ),
@@ -247,26 +299,34 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = checkedIn ? Colors.green : Colors.grey;
+    final color = checkedIn ? Colors.green.shade700 : Colors.grey.shade600;
+    final bg = checkedIn ? Colors.green.shade50 : Colors.grey.shade100;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(.12),
+        color: bg,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: checkedIn ? Colors.green.shade200 : Colors.grey.shade300,
+        ),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            checkedIn ? Icons.play_circle_fill : Icons.pause_circle_filled,
-            size: 14,
-            color: color,
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+            ),
           ),
           const SizedBox(width: 6),
           Text(
-            checkedIn ? 'Checked In' : 'Not Started',
+            checkedIn ? 'Checked In' : 'Checked Out',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -278,6 +338,7 @@ class _StatusChip extends StatelessWidget {
 }
 
 String formatStartTime(int ts) {
+  if (ts <= 0) return "--:--";
   final dt = DateTime.fromMillisecondsSinceEpoch(ts);
   final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
   final minute = dt.minute.toString().padLeft(2, '0');
@@ -301,17 +362,18 @@ class _MetaItem extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Colors.grey,
+          style: TextStyle(
+            fontSize: 10,
+            color: Colors.grey.shade600,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1E293B),
           ),
         ),
       ],

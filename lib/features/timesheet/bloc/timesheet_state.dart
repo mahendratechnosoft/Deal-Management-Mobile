@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
+import '../data/model/calendar_model.dart';
 import '../data/model/checkIn_status_model.dart';
 import '../data/model/emp_month_attendance_model.dart';
+import '../data/model/employee_item_model.dart';
 import '../data/model/get_all_emp_status.dart';
 
 abstract class TimeSheetState extends Equatable {
@@ -24,10 +26,8 @@ class TimeSheetError extends TimeSheetState {
   List<Object?> get props => [message];
 }
 
-/// 🔥 SINGLE SOURCE OF TRUTH STATE
-/// All screen-related data lives here
 class TimeSheetLoaded extends TimeSheetState {
-  /// Employee list
+  /// Employee list for legacy/status list
   final List<GetAllEmpStatusModel> employees;
   final List<GetAllEmpStatusModel> allEmployees;
 
@@ -41,13 +41,25 @@ class TimeSheetLoaded extends TimeSheetState {
   /// Today check-in status
   final EmployeeAttendanceResponse? checkInStatus;
 
+  /// 📅 Monthly Timesheet Grid specific data
+  final DateTime? selectedMonth;
+  final List<EmployeeItemModel> employeeList;
+  final List<EmployeeItemModel> filteredEmployeeList;
+  final Map<String, CalendarModel> calendarMap;
+  final bool isGridLoading;
+
   const TimeSheetLoaded({
-    required this.employees,
-    required this.allEmployees,
+    this.employees = const [],
+    this.allEmployees = const [],
     this.isCheckedIn = false,
     this.startTimestamp,
     this.monthlyAttendance,
     this.checkInStatus,
+    this.selectedMonth,
+    this.employeeList = const [],
+    this.filteredEmployeeList = const [],
+    this.calendarMap = const {},
+    this.isGridLoading = false,
   });
 
   TimeSheetLoaded copyWith({
@@ -57,6 +69,11 @@ class TimeSheetLoaded extends TimeSheetState {
     int? startTimestamp,
     EmpMonthAttendanceModel? monthlyAttendance,
     EmployeeAttendanceResponse? checkInStatus,
+    DateTime? selectedMonth,
+    List<EmployeeItemModel>? employeeList,
+    List<EmployeeItemModel>? filteredEmployeeList,
+    Map<String, CalendarModel>? calendarMap,
+    bool? isGridLoading,
   }) {
     return TimeSheetLoaded(
       employees: employees ?? this.employees,
@@ -65,6 +82,11 @@ class TimeSheetLoaded extends TimeSheetState {
       startTimestamp: startTimestamp ?? this.startTimestamp,
       monthlyAttendance: monthlyAttendance ?? this.monthlyAttendance,
       checkInStatus: checkInStatus ?? this.checkInStatus,
+      selectedMonth: selectedMonth ?? this.selectedMonth,
+      employeeList: employeeList ?? this.employeeList,
+      filteredEmployeeList: filteredEmployeeList ?? this.filteredEmployeeList,
+      calendarMap: calendarMap ?? this.calendarMap,
+      isGridLoading: isGridLoading ?? this.isGridLoading,
     );
   }
 
@@ -76,8 +98,10 @@ class TimeSheetLoaded extends TimeSheetState {
         startTimestamp,
         monthlyAttendance,
         checkInStatus,
+        selectedMonth,
+        employeeList,
+        filteredEmployeeList,
+        calendarMap,
+        isGridLoading,
       ];
 }
-
-
-

@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:xpertbiz/features/timesheet/checInUser_bloc/event.dart';
 import 'package:xpertbiz/features/timesheet/checInUser_bloc/state.dart';
+import 'package:xpertbiz/features/timesheet/data/model/checkIn_status_model.dart';
 import 'package:xpertbiz/features/timesheet/data/repo/repo.dart';
-//import '../block/timesheet_event.dart';
 
 class CheckInBloc extends Bloc<CheckInEvent, CheckInUserState> {
   final TimeSheetRepository repository;
@@ -25,17 +25,29 @@ class CheckInBloc extends Bloc<CheckInEvent, CheckInUserState> {
         employeeId: event.employeeId,
       );
 
-      final records = result.dates.first.records;
-      final last = records.isNotEmpty ? records.last : null;
+      bool isCheckedIn = false;
+      int startTimestamp = 0;
+
+      if (result.dates.isNotEmpty) {
+        final records = result.dates.first.records;
+        if (records.isNotEmpty) {
+          final last = records.last;
+          isCheckedIn = last.status;
+          if (isCheckedIn) {
+            startTimestamp = last.timeStamp;
+          }
+        }
+      }
 
       emit(
         CheckInLoaded(
-            isCheckedIn: last?.status ?? false,
-            startTimestamp: last?.timeStamp ?? 0,
-            checkInStatus: result),
+          isCheckedIn: isCheckedIn,
+          startTimestamp: startTimestamp,
+          checkInStatus: result,
+        ),
       );
     } catch (e) {
-      // emit(CheckInError(e.toString()));
+      emit(CheckInError(e.toString()));
     }
   }
 
@@ -43,17 +55,21 @@ class CheckInBloc extends Bloc<CheckInEvent, CheckInUserState> {
     ToggleCheckIn event,
     Emitter<CheckInUserState> emit,
   ) async {
-    //  if (state is! CheckInLoaded) return;
     try {
-      final current = state as CheckInLoaded;
+      final current = state is CheckInLoaded ? (state as CheckInLoaded) : null;
+      final currentlyCheckedIn = current?.isCheckedIn ?? false;
+      final nextStatus = !currentlyCheckedIn;
 
-      final res = await repository.checkIn(!current.isCheckedIn);
+      emit(CheckInLoading());
+
+      final res = await repository.checkIn(nextStatus);
 
       emit(
         CheckInLoaded(
-          isCheckedIn: res.status, // 🔥 UI updates here
-          startTimestamp: res.timeStamp,
-          checkInStatus: current.checkInStatus,
+          isCheckedIn: res.status,
+          startTimestamp: res.status ? res.timeStamp : 0,
+          checkInStatus: current?.checkInStatus ??
+              EmployeeAttendanceResponse(employeeName: '', dates: []),
         ),
       );
     } catch (e) {
