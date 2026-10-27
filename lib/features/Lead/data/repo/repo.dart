@@ -1,11 +1,8 @@
 import 'dart:convert';
-import 'dart:developer';
-
 import 'package:xpertbiz/features/Lead/data/model/activity_log_model.dart';
 import 'package:xpertbiz/features/Lead/data/model/create_lead_payload.dart';
 import 'package:xpertbiz/features/Lead/data/model/lead_details_model.dart';
 import 'package:xpertbiz/features/Lead/data/model/reminder_model.dart';
-
 import '../model/all_lead_model.dart';
 import 'package:xpertbiz/features/Lead/data/model/create_reminder_payload.dart';
 import '../model/lead_status_model.dart';
@@ -32,11 +29,13 @@ class LeadRepository {
     required int page,
     required int limit,
     String? status,
+    String? search,
   }) async {
     final res = await apiService.fetchAllLeads(
       page: page,
       limit: limit,
       leadStatus: status,
+      search: search,
     );
     final dynamic rawData = res.data;
     final Map<String, dynamic> data = rawData is String
@@ -45,7 +44,6 @@ class LeadRepository {
     return LeadResponseModel.fromJson(data);
   }
 
-  //
   Future<LeadDetailsModel> fecthLeadDetails({required String? taskId}) async {
     final res = await apiService.fetchLeadDetails(taskId: taskId);
     return LeadDetailsModel.fromJson(res.data);
@@ -53,7 +51,6 @@ class LeadRepository {
 
   Future<List<ActivityLogModel>> fetchActivity({String? taskId}) async {
     final res = await apiService.fetchActivity(taskId: taskId);
-
     return (res.data as List).map((e) => ActivityLogModel.fromJson(e)).toList();
   }
 
@@ -62,22 +59,19 @@ class LeadRepository {
     return (res.data as List).map((e) => ReminderModel.fromJson(e)).toList();
   }
 
-  Future createReminder({required CreateReminderRequest request}) async {
+  Future<bool> createReminder({required CreateReminderRequest request}) async {
     final res = await apiService.createReminder(request: request);
-    log('response : $res');
-    //  return LeadResponseModel.fromJson(res.data);
+    return res.statusCode == 200 || res.statusCode == 201;
   }
 
-  Future createLead(
+  Future<dynamic> createLead(
       {required CreateLeadRequest request, required bool edit}) async {
     final res = await apiService.createLead(request: request, edit: edit);
-    log('response : $res');
     return res.data;
   }
 
-  Future deleteLead(String leadId) async {
-    final res = await apiService.deletelead(leadId);
-    log('response : $res');
+  Future<dynamic> deleteLead(String taskId) async {
+    final res = await apiService.deletelead(taskId);
     return res.data;
   }
 }

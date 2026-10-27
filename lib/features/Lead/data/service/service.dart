@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:xpertbiz/core/constants/api_constants.dart';
 import 'package:xpertbiz/features/Lead/data/model/create_lead_payload.dart';
-
 import 'package:xpertbiz/features/Lead/data/model/create_reminder_payload.dart';
 
 class LeadService {
@@ -19,12 +18,18 @@ class LeadService {
     required int page,
     required int limit,
     String? leadStatus,
+    String? search,
   }) async {
+    final Map<String, dynamic> query = {};
+    if (leadStatus != null && leadStatus.isNotEmpty && leadStatus != 'All') {
+      query['leadStatus'] = leadStatus;
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      query['search'] = search.trim();
+    }
     return dio.get(
       '${ApiConstants.allLeadsUrl}/$page/$limit',
-      queryParameters: {
-        if (leadStatus != null) 'leadStatus': leadStatus,
-      },
+      queryParameters: query.isNotEmpty ? query : null,
     );
   }
 

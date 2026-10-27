@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/widgtes/app_appbar.dart';
 import 'package:xpertbiz/features/auth/bloc/user_role.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/drawer/presentation/custom_drawer.dart';
 import 'package:xpertbiz/features/timesheet/bloc/timesheet_bloc.dart';
 import 'package:xpertbiz/features/timesheet/bloc/timesheet_event.dart';
@@ -111,26 +112,74 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = AuthLocalStorage.getUser();
+    final bool hasAccess = user?.moduleAccess.timeSheetAccess ?? false;
+    final bool canViewAll = user?.moduleAccess.timeSheetViewAll ?? false;
+    final bool canCreate = user?.moduleAccess.timeSheetCreate ?? false;
+    final bool canEdit = user?.moduleAccess.timeSheetEdit ?? false;
+    final bool canDelete = user?.moduleAccess.timeSheetDelete ?? false;
     final role = RoleResolver.rolePath;
+
+    // 🔒 1. Module Access: timeSheetAccess check
+    if (!hasAccess) {
+      return Scaffold(
+        drawer: const CustomDrawer(),
+        appBar: CommonAppBar(title: 'Timesheet'),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_person_rounded,
+                    size: 64, color: Colors.grey.shade400),
+                const SizedBox(height: 16),
+                const Text(
+                  'Access Restricted',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'You do not have permission to access the Timesheet module.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final screenTitle = canViewAll ? 'Timesheet' : 'My Timesheet';
 
     return Scaffold(
       drawer: const CustomDrawer(),
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: CommonAppBar(
-        title: 'Timesheet',
+        title: screenTitle,
         actions: [
-          IconButton(
-            tooltip: _isListView ? 'Switch to Grid View' : 'Switch to List View',
-            icon: Icon(
-              _isListView ? Icons.grid_on_rounded : Icons.view_list_rounded,
-              color: Colors.white,
+          if (canViewAll)
+            IconButton(
+              tooltip:
+                  _isListView ? 'Switch to Grid View' : 'Switch to List View',
+              icon: Icon(
+                _isListView ? Icons.grid_on_rounded : Icons.view_list_rounded,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isListView = !_isListView;
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _isListView = !_isListView;
-              });
-            },
-          ),
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
@@ -138,7 +187,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
           ),
         ],
       ),
-      body: _isListView
+      body: _isListView && canViewAll
           ? const EmployeeListScreen()
           : BlocBuilder<TimeSheetBloc, TimeSheetState>(
               builder: (context, state) {
@@ -196,11 +245,14 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                   onRefresh: () async => _loadData(),
                   child: Column(
                     children: [
-                      // 1. Employee Check-In / Check-Out Widget (Collapsible Card)
-                      _buildCheckInHeader(role),
+                      // 1. Employee Check-In / Check-Out Widget (Only for Employee, not Admin)
+                      _buildCheckInHeader(role: role, canCreate: canCreate),
 
                       // 2. Month Selector & Search Controls
-                      _buildControls(employees.length),
+                      _buildControls(
+                        count: employees.length,
+                        canViewAll: canViewAll,
+                      ),
 
                       // 3. Legend Bar (P, A, W, H)
                       _buildLegendBar(),
@@ -219,6 +271,9 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                     employees: employees,
                                     calendarMap: calendarMap,
                                     monthlyAttendance: monthlyAttendance,
+                                    canViewAll: canViewAll,
+                                    canEdit: canEdit,
+                                    canDelete: canDelete,
                                   ),
                       ),
                     ],
@@ -229,8 +284,12 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     );
   }
 
-  /// 🕒 Check-In / Check-Out Section at the top
-  Widget _buildCheckInHeader(String role) {
+  /// 🕒 Check-In / Check-Out Section (ONLY for Employee, NOT for Admin)
+  Widget _buildCheckInHeader({required String role, required bool canCreate}) {
+    if (role != 'employee' || !canCreate) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 10, 14, 6),
       decoration: BoxDecoration(
@@ -295,7 +354,6 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: CheckInOutWidget(
                 onStatusChanged: () {
-                  // Reload grid to update today's status
                   _loadData();
                 },
               ),
@@ -306,7 +364,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
   }
 
   /// 📅 Month Selector and Search Bar
-  Widget _buildControls(int count) {
+  Widget _buildControls({required int count, required bool canViewAll}) {
     final monthFormat = DateFormat('MMMM yyyy');
     final formattedMonth = monthFormat.format(_selectedMonth);
 
@@ -317,15 +375,12 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
         children: [
           Row(
             children: [
-              // Previous Month Button
               IconButton(
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.chevron_left_rounded, size: 24),
                 color: const Color(0xFF334155),
                 onPressed: _previousMonth,
               ),
-
-              // Month Display & Picker
               Expanded(
                 child: InkWell(
                   onTap: _pickMonthYear,
@@ -354,8 +409,6 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                   ),
                 ),
               ),
-
-              // Next Month Button
               IconButton(
                 visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.chevron_right_rounded, size: 24),
@@ -365,46 +418,47 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
             ],
           ),
 
-          const SizedBox(height: 6),
-
-          // Search Filter Input
-          SizedBox(
-            height: 38,
-            child: TextField(
-              controller: _searchController,
-              onChanged: (val) {
-                context
-                    .read<TimeSheetBloc>()
-                    .add(FilterTimesheetEmployees(val));
-              },
-              style: const TextStyle(fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Search employee by name ($count found)...',
-                hintStyle:
-                    const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-                prefixIcon: const Icon(Icons.search_rounded,
-                    size: 18, color: Color(0xFF94A3B8)),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        onPressed: () {
-                          _searchController.clear();
-                          context
-                              .read<TimeSheetBloc>()
-                              .add(const FilterTimesheetEmployees(''));
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: const Color(0xFFF1F5F9),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
+          // Search Filter Input (only needed when user can view all employees)
+          if (canViewAll) ...[
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 38,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (val) {
+                  context
+                      .read<TimeSheetBloc>()
+                      .add(FilterTimesheetEmployees(val));
+                },
+                style: const TextStyle(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Search employee by name ($count found)...',
+                  hintStyle:
+                      const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      size: 18, color: Color(0xFF94A3B8)),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close_rounded, size: 16),
+                          onPressed: () {
+                            _searchController.clear();
+                            context
+                                .read<TimeSheetBloc>()
+                                .add(const FilterTimesheetEmployees(''));
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: const Color(0xFFF1F5F9),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -477,6 +531,9 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     required List<EmployeeItemModel> employees,
     required Map<String, CalendarModel> calendarMap,
     required EmpMonthAttendanceModel? monthlyAttendance,
+    required bool canViewAll,
+    required bool canEdit,
+    required bool canDelete,
   }) {
     final int daysInMonth =
         DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
@@ -514,11 +571,18 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.people_alt_rounded,
-                          size: 15, color: Color(0xFF64748B)),
+                      Icon(
+                        canViewAll
+                            ? Icons.people_alt_rounded
+                            : Icons.person_rounded,
+                        size: 15,
+                        color: const Color(0xFF64748B),
+                      ),
                       const SizedBox(width: 6),
                       Text(
-                        'Employee (${employees.length})',
+                        canViewAll
+                            ? 'Employee (${employees.length})'
+                            : 'My Timesheet',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -699,7 +763,14 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                           );
 
                           return InkWell(
-                            onTap: () => _showCellDetails(context, emp, date, cellData),
+                            onTap: () => _showCellDetails(
+                              context: context,
+                              employee: emp,
+                              date: date,
+                              data: cellData,
+                              canEdit: canEdit,
+                              canDelete: canDelete,
+                            ),
                             child: Container(
                               width: _dayCellWidth,
                               height: _cellHeight,
@@ -804,7 +875,6 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     final bool isCalWeekend = calEntry?.isWeekend == true;
     final bool isCalHoliday = calEntry?.isHoliday == true;
 
-    // Fallback: if calendarMap is missing weekend entry, Sunday is always weekend
     final bool isWeekend = isCalWeekend ||
         (calEntry == null && date.weekday == DateTime.sunday);
 
@@ -837,12 +907,10 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
       );
     }
 
-    // Check attendance records
     final empAttendance = monthlyAttendance?.data[employee.name];
     final records = empAttendance?[dateKey] ?? [];
 
     if (records.isNotEmpty) {
-      // Calculate work duration
       Duration total = Duration.zero;
       DateTime? lastIn;
 
@@ -873,7 +941,6 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
       }
     }
 
-    // Past or today working day with no punch
     return _CellStatusData(
       code: 'A',
       title: 'Absent',
@@ -890,12 +957,14 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
   }
 
   /// 💬 Punch details bottom sheet on cell tap
-  void _showCellDetails(
-    BuildContext context,
-    EmployeeItemModel employee,
-    DateTime date,
-    _CellStatusData data,
-  ) {
+  void _showCellDetails({
+    required BuildContext context,
+    required EmployeeItemModel employee,
+    required DateTime date,
+    required _CellStatusData data,
+    required bool canEdit,
+    required bool canDelete,
+  }) {
     final formattedDate = DateFormat('EEEE, dd MMMM yyyy').format(date);
 
     showModalBottomSheet(
@@ -1033,13 +1102,35 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
               // Punches Timeline (if any)
               if (data.records.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text(
-                  "Punches Recorded",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF334155),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "Punches Recorded",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    if (!canEdit && !canDelete)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          "Read Only",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 ConstrainedBox(

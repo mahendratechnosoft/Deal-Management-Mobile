@@ -46,6 +46,9 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
     }
 
     try {
+      final user = AuthLocalStorage.getUser();
+      final bool canViewAll = user?.moduleAccess.timeSheetViewAll ?? false;
+
       // 1. Fetch Calendar off-days/holidays
       final calendarFuture = repository.getCalendar(
         startDate: startDate,
@@ -57,10 +60,11 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
         excludeMe: false,
       );
 
-      // 3. Fetch Monthly Attendance for all employees
+      // 3. Fetch Monthly Attendance (all employees if canViewAll, else current employee only)
       final attendanceFuture = repository.empMonthAttendance(
         fromDate: startDate,
         toDate: endDate,
+        employeeId: canViewAll ? null : user?.employeeId,
       );
 
       final results = await Future.wait([
@@ -77,13 +81,33 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
         for (final item in calendarList) item.date: item,
       };
 
-      // Filter employees if role is employee and only restricted
-      final role = RoleResolver.rolePath;
-      final user = AuthLocalStorage.getUser();
+      // Apply module access permission: timeSheetViewAll
       List<EmployeeItemModel> visibleEmployees = employeeList;
-      if (role == 'employee' && user?.employeeId != null) {
-        // Can optionally filter or show all based on admin/employee view
-        // Keep visibleEmployees as is or filter if needed
+      if (!canViewAll) {
+        final myId = user?.employeeId;
+        final myName = user?.loginUserName;
+
+        visibleEmployees = employeeList.where((e) {
+          if (myId != null && myId.isNotEmpty && e.employeeId == myId) {
+            return true;
+          }
+          if (myName != null &&
+              myName.isNotEmpty &&
+              e.name.toLowerCase() == myName.toLowerCase()) {
+            return true;
+          }
+          return false;
+        }).toList();
+
+        // If employee list from server didn't contain user, synthesize user's row
+        if (visibleEmployees.isEmpty && myId != null) {
+          visibleEmployees = [
+            EmployeeItemModel(
+              employeeId: myId,
+              name: myName ?? 'My Timesheet',
+            ),
+          ];
+        }
       }
 
       if (state is TimeSheetLoaded) {
@@ -161,11 +185,11 @@ class TimeSheetBloc extends Bloc<TimeSheetEvent, TimeSheetState> {
         return;
       }
 
-      final role = RoleResolver.rolePath;
       final user = AuthLocalStorage.getUser();
+      final bool canViewAll = user?.moduleAccess.timeSheetViewAll ?? false;
 
       List<GetAllEmpStatusModel> visibleEmployees = employees;
-      if (role == 'employee' && user?.employeeId != null) {
+      if (!canViewAll && user?.employeeId != null) {
         visibleEmployees =
             employees.where((e) => e.employeeId == user!.employeeId).toList();
       }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:xpertbiz/core/utils/app_colors.dart';
 import '../../create_lead_bloc.dart/create_bloc.dart';
 import '../../create_lead_bloc.dart/create_event.dart';
 
@@ -20,10 +19,21 @@ class CreateLeadHelper {
   // Show success snackbar
   static void showSuccessSnackbar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Lead created successfully'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            SizedBox(width: 10),
+            Text(
+              'Lead saved successfully',
+              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF059669),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -32,8 +42,23 @@ class CreateLeadHelper {
   static void showErrorSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFDC2626),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -43,8 +68,23 @@ class CreateLeadHelper {
   static void showInfoSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.blue,
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF2563EB),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -54,46 +94,68 @@ class CreateLeadHelper {
   static Widget buildSectionHeader(String title) {
     return Text(
       title,
-      style: TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
+      style: const TextStyle(
+        color: Color(0xFF0F172A),
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
 
   // Build label with optional required indicator
   static Widget buildLabel(String text, {bool isRequired = false}) {
-    return RichText(
-      text: TextSpan(
-        text: text,
-        style: TextStyle(
-          fontSize: 12,
-          color: AppColors.textPrimary,
-          fontWeight: FontWeight.w600,
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, bottom: 4),
+      child: RichText(
+        text: TextSpan(
+          text: text,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF334155),
+            fontWeight: FontWeight.w600,
+          ),
+          children: isRequired
+              ? [
+                  const TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ]
+              : [],
         ),
-        children: isRequired
-            ? [
-                const TextSpan(
-                  text: ' *',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ]
-            : [],
       ),
     );
   }
 
   // Build error message widget
   static Widget buildErrorMessage(String error) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(
-        error,
-        style: const TextStyle(
-          color: Colors.red,
-          fontSize: 14,
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFECDD3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              color: Color(0xFFEF4444), size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              error,
+              style: const TextStyle(
+                color: Color(0xFF991B1B),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -101,12 +163,22 @@ class CreateLeadHelper {
   // Build loading widget for dropdowns
   static Widget buildDropdownLoading() {
     return Container(
-      height: 50,
+      height: 48,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: const Center(child: CircularProgressIndicator()),
+      child: const Center(
+        child: SizedBox(
+          height: 18,
+          width: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Color(0xFF2563EB),
+          ),
+        ),
+      ),
     );
   }
 
@@ -116,11 +188,22 @@ class CreateLeadHelper {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 20),
+          const SizedBox(
+            height: 36,
+            width: 36,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Color(0xFF2563EB),
+            ),
+          ),
+          const SizedBox(height: 16),
           Text(
             message,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF64748B),
+            ),
           ),
         ],
       ),
@@ -130,21 +213,62 @@ class CreateLeadHelper {
   // Build success view
   static Widget buildSuccessView({VoidCallback? onBackPressed}) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 80),
-          const SizedBox(height: 20),
-          const Text(
-            'Lead Created Successfully!',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: onBackPressed,
-            child: const Text('Go Back'),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: const Icon(Icons.check_circle_rounded,
+                  color: Color(0xFF059669), size: 64),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Lead Saved Successfully!',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'The lead information has been updated in your pipeline.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onBackPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Back to Leads',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -158,39 +282,57 @@ class CreateLeadHelper {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error, color: Colors.red, size: 80),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF2F2),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFFECDD3)),
+            ),
+            child: const Icon(Icons.error_outline_rounded,
+                color: Color(0xFFDC2626), size: 54),
+          ),
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32.0),
             child: Text(
               message,
-              style: const TextStyle(fontSize: 16, color: Colors.red),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF991B1B),
+              ),
               textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 20),
-          ElevatedButton(
+          ElevatedButton.icon(
             onPressed: onRetry,
-            child: const Text('Retry'),
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: const Text('Try Again'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // NEW: Format phone number with country code
+  // Format phone number with country code
   static String formatPhoneNumber(String phoneNumber, String? countryCode) {
     if (phoneNumber.isEmpty) return phoneNumber;
-
-    // Remove any non-digit characters
     String digits = phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
-
-    // If already has country code, return as is
     if (phoneNumber.contains('+')) {
       return phoneNumber;
     }
 
-    // Map country codes
     final Map<String, String> countryCodes = {
       'US': '+1',
       'IN': '+91',
@@ -207,11 +349,11 @@ class CreateLeadHelper {
       'RU': '+7',
     };
 
-    String code = countryCodes[countryCode] ?? '+1';
+    String code = countryCodes[countryCode] ?? '+91';
     return '($code) $digits';
   }
 
-  // NEW: Format date for API
+  // Format date for API
   static String? formatDateForApi(DateTime? date) {
     if (date == null) return null;
     return date.toUtc().toIso8601String();
@@ -267,8 +409,8 @@ class CreateLeadConstants {
   static const Map<String, String> fieldHints = {
     'clientName': 'Enter Client Name',
     'companyName': 'Enter Company Name',
-    'primaryNumber': '+91 9876543210',
-    'secondaryNumber': '+91 9876543210',
+    'primaryNumber': '9876543210',
+    'secondaryNumber': '9876543210',
     'email': 'example@domain.com',
     'website': 'https://example.com',
     'address': 'Enter complete address',
@@ -279,16 +421,16 @@ class CreateLeadConstants {
 
   // Field icons
   static const Map<String, IconData> fieldIcons = {
-    'clientName': Icons.person,
-    'companyName': Icons.business,
+    'clientName': Icons.person_outline_rounded,
+    'companyName': Icons.business_outlined,
     'primaryNumber': Icons.phone_iphone_rounded,
-    'secondaryNumber': Icons.phone_iphone_rounded,
-    'email': Icons.mail,
-    'website': Icons.link,
-    'address': Icons.location_city,
-    'zipCode': Icons.location_on,
-    'description': Icons.description,
-    'additionalNotes': Icons.note_add,
+    'secondaryNumber': Icons.phone_outlined,
+    'email': Icons.alternate_email_rounded,
+    'website': Icons.language_rounded,
+    'address': Icons.location_city_outlined,
+    'zipCode': Icons.pin_drop_outlined,
+    'description': Icons.notes_rounded,
+    'additionalNotes': Icons.note_add_outlined,
   };
 
   // Required fields

@@ -144,11 +144,18 @@ class AppRouter {
       GoRoute(
         path: AppRouteName.createLead,
         pageBuilder: (context, state) {
-          final bool edit = state.extra as bool? ?? true;
+          final bool edit = (state.extra is bool)
+              ? (state.extra as bool)
+              : (state.extra != null);
+          final dynamic initialLead =
+              (state.extra is! bool) ? state.extra : null;
           log('ROUTE extra = ${state.extra}'); // 👈 debug
           return AppTransition.slide(
             state: state,
-            child: CreateLeadScreen(edit: edit),
+            child: CreateLeadScreen(
+              edit: edit,
+              initialLead: initialLead,
+            ),
           );
         },
       ),

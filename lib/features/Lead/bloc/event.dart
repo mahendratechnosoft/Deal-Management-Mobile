@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-
 import 'package:xpertbiz/features/Lead/data/model/create_reminder_payload.dart';
 
 abstract class LeadEvent extends Equatable {
@@ -16,14 +15,18 @@ class FetchLeadStatus extends LeadEvent {
 class FetchAllLeadsEvent extends LeadEvent {
   final bool loadMore;
   final String? status;
+  final String? search;
+  final int? page;
 
   const FetchAllLeadsEvent({
     this.loadMore = false,
     this.status,
+    this.search,
+    this.page,
   });
 
   @override
-  List<Object?> get props => [loadMore, status];
+  List<Object?> get props => [loadMore, status, search, page];
 }
 
 class ResetLeadEvent extends LeadEvent {
@@ -32,20 +35,22 @@ class ResetLeadEvent extends LeadEvent {
 
 class RefreshLeads extends LeadEvent {
   final String? status;
+  final String? search;
 
-  const RefreshLeads({this.status});
+  const RefreshLeads({this.status, this.search});
 
   @override
-  List<Object?> get props => [status];
+  List<Object?> get props => [status, search];
 }
 
 class SearchLeadsEvent extends LeadEvent {
   final String searchQuery;
+  final String? status;
 
-  const SearchLeadsEvent(this.searchQuery);
+  const SearchLeadsEvent(this.searchQuery, {this.status});
 
   @override
-  List<Object?> get props => [searchQuery];
+  List<Object?> get props => [searchQuery, status];
 }
 
 class FilterByDateEvent extends LeadEvent {
@@ -66,7 +71,7 @@ class ClearAllFiltersEvent extends LeadEvent {
 }
 
 class LeadDetailsEvent extends LeadEvent {
-  final String leadId; // Changed from taskId to leadId
+  final String leadId;
 
   const LeadDetailsEvent({required this.leadId});
 
@@ -98,6 +103,7 @@ class FetchReminderEvent extends LeadEvent {
 class CreateReminderSubmitEvent extends LeadEvent {
   final CreateReminderRequest request;
   const CreateReminderSubmitEvent({required this.request});
-}
 
-// create lead
+  @override
+  List<Object?> get props => [request];
+}

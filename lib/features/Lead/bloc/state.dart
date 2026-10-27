@@ -3,9 +3,14 @@ import 'package:xpertbiz/features/Lead/data/model/all_lead_model.dart';
 import 'package:xpertbiz/features/Lead/data/model/lead_details_model.dart';
 import 'package:xpertbiz/features/Lead/data/model/reminder_model.dart';
 import '../data/model/lead_status_model.dart';
-
-// Add this import
 import 'package:xpertbiz/features/Lead/data/model/activity_log_model.dart';
+
+abstract class LeadEventState extends Equatable {
+  const LeadEventState();
+
+  @override
+  List<Object?> get props => [];
+}
 
 abstract class LeadState extends Equatable {
   const LeadState();
@@ -46,16 +51,18 @@ class AllLeadState extends LeadState {
   final List<LeadModel> filteredLeads;
   final bool hasMore;
   final int currentPage;
+  final int totalPages;
+  final int totalLeads;
   final String? searchQuery;
   final DateTime? selectedDate;
   final String? status;
   final bool isSearching;
   final bool isDateFiltered;
+  final bool isLoadingPage;
   final LeadDetailsModel? leadDetailsModel;
   final bool leadDetailsLoader;
-  final List<ActivityLogModel> activityLogs; // Add activity logs
-  final bool activityLogsLoader; // Add activity logs loader
-  final int totalLeads;
+  final List<ActivityLogModel> activityLogs;
+  final bool activityLogsLoader;
   final List<ReminderModel>? remindermodel;
   final bool? reminder;
   final bool createReminder;
@@ -66,19 +73,21 @@ class AllLeadState extends LeadState {
     required this.leads,
     required this.hasMore,
     required this.currentPage,
+    this.totalPages = 1,
     this.totalLeads = 0,
     this.createReminder = false,
     this.createReminderError,
     this.leadDetailsModel,
     this.leadDetailsLoader = false,
-    this.activityLogs = const [], // Initialize empty
-    this.activityLogsLoader = false, // Initialize false
+    this.activityLogs = const [],
+    this.activityLogsLoader = false,
     this.searchQuery,
     this.selectedDate,
     this.status,
     this.filteredLeads = const [],
     this.isSearching = false,
     this.isDateFiltered = false,
+    this.isLoadingPage = false,
     this.reminder,
     this.remindermodel,
   });
@@ -91,35 +100,39 @@ class AllLeadState extends LeadState {
     String? createReminderError,
     bool? hasMore,
     int? currentPage,
+    int? totalPages,
+    int? totalLeads,
     String? searchQuery,
     DateTime? selectedDate,
     String? status,
     bool? isSearching,
     bool? isDateFiltered,
+    bool? isLoadingPage,
     LeadDetailsModel? leadDetailsModel,
     bool? leadDetailsLoader,
     List<ActivityLogModel>? activityLogs,
     bool? activityLogsLoader,
-    int? totalLeads,
     List<ReminderModel>? remindermodel,
     bool? reminder,
   }) {
     return AllLeadState(
-      statusAndCount: statusAndCount?? this.statusAndCount,
+      statusAndCount: statusAndCount ?? this.statusAndCount,
       createReminder: createReminder ?? this.createReminder,
       createReminderError: createReminderError ?? this.createReminderError,
       reminder: reminder ?? this.reminder,
-      remindermodel: remindermodel ?? remindermodel,
+      remindermodel: remindermodel ?? this.remindermodel,
       leads: leads ?? this.leads,
       filteredLeads: filteredLeads ?? this.filteredLeads,
       hasMore: hasMore ?? this.hasMore,
       currentPage: currentPage ?? this.currentPage,
+      totalPages: totalPages ?? this.totalPages,
       totalLeads: totalLeads ?? this.totalLeads,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedDate: selectedDate ?? this.selectedDate,
       status: status ?? this.status,
       isSearching: isSearching ?? this.isSearching,
       isDateFiltered: isDateFiltered ?? this.isDateFiltered,
+      isLoadingPage: isLoadingPage ?? this.isLoadingPage,
       leadDetailsModel: leadDetailsModel ?? this.leadDetailsModel,
       leadDetailsLoader: leadDetailsLoader ?? this.leadDetailsLoader,
       activityLogs: activityLogs ?? this.activityLogs,
@@ -137,12 +150,14 @@ class AllLeadState extends LeadState {
         filteredLeads,
         hasMore,
         currentPage,
+        totalPages,
         totalLeads,
         searchQuery,
         selectedDate,
         status,
         isSearching,
         isDateFiltered,
+        isLoadingPage,
         leadDetailsModel,
         leadDetailsLoader,
         activityLogs,

@@ -25,6 +25,7 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
   bool _reminder = false;
   final List<LeadModel> _leads = [];
   final List<ActivityLogModel> _activityLogs = [];
+  List<StatusCountModel> _cachedStatusAndCount = [];
 
   LeadBloc(this.repository) : super(LeadInitial()) {
     on<ResetLeadEvent>((event, emit) {
@@ -53,7 +54,6 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     if (currentState is! AllLeadState) return;
 
     _isFetchingActivity = true;
-
     emit(currentState.copyWith(activityLogsLoader: true));
 
     try {
@@ -67,17 +67,8 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
           activityLogs: List.unmodifiable(_activityLogs),
         ),
       );
-    } on DioException catch (e) {
-      emit(currentState.copyWith(
-        activityLogsLoader: false,
-      ));
-      if (kDebugMode) {
-        print('Activity logs error: ${ApiError.getMessage(e)}');
-      }
     } catch (e) {
-      emit(currentState.copyWith(
-        activityLogsLoader: false,
-      ));
+      emit(currentState.copyWith(activityLogsLoader: false));
       if (kDebugMode) {
         print('Activity logs error: $e');
       }
@@ -86,23 +77,19 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     }
   }
 
-  // Reset and fetch with new status
   void fetchLeadsByStatus(String? status) {
     _currentStatus = status;
-    add(FetchAllLeadsEvent(status: status));
+    add(FetchAllLeadsEvent(page: 0, status: status));
   }
 
   Future<void> _fetchLeadStatus(
     FetchLeadStatus event,
     Emitter<LeadState> emit,
   ) async {
-    //   if (state is LeadLoaded) return;
     emit(LeadLoading());
     try {
       final leads = await repository.fetchLeadStatus();
       emit(LeadLoaded(leads));
-    } on DioException catch (e) {
-      emit(LeadError(ApiError.getMessage(e)));
     } catch (e) {
       emit(LeadError(ApiError.getMessage(e)));
     }
@@ -114,65 +101,72 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
   ) async {
     final currentState = state;
     if (currentState is! AllLeadState) {
-      emit(AllLeadState(
-        statusAndCount: const [],
-        leads: const [],
-        filteredLeads: const [],
+      emit(const AllLeadState(
+        statusAndCount: [],
+        leads: [],
+        filteredLeads: [],
         hasMore: false,
-        currentPage: 1,
+        currentPage: 0,
         createReminder: true,
       ));
       return;
     }
 
-    log('Creating reminder...');
-    emit(
-        currentState.copyWith(createReminder: true, createReminderError: null));
+    emit(currentState.copyWith(createReminder: true, createReminderError: null));
 
     try {
       final result = await repository.createReminder(request: event.request);
-      log('Reminder created successfully $result');
-      // Update state to show success
+      log('Reminder created: $result');
       emit(
         currentState.copyWith(
           createReminder: false,
           createReminderError: null,
         ),
       );
-    } on DioException catch (e) {
+    } catch (e) {
       final errorMessage = ApiError.getMessage(e);
-      log('Create reminder error: $errorMessage');
-
       emit(currentState.copyWith(
         createReminder: false,
         createReminderError: errorMessage,
       ));
-    } catch (e) {
-      log('Create reminder error: $e');
-
-      emit(currentState.copyWith(
-        createReminder: false,
-        createReminderError: e.toString(),
-      ));
     }
   }
 
-  // ================= FETCH ALL LEADS (PAGINATION) =================
+  // ================= FETCH ALL LEADS (PAGE-BASED PAGINATION & SEARCH) =================
   Future<void> _onFetchLeads(
     FetchAllLeadsEvent event,
     Emitter<LeadState> emit,
   ) async {
     if (_isFetching) return;
-    if (event.loadMore && !_hasMore) return;
-
     _isFetching = true;
 
-    // If status changed or not loading more, reset pagination
-    if (!event.loadMore || event.status != _currentStatus) {
+    final currentState = state;
+
+    // Check if status or search has changed
+    final statusChanged = event.status != _currentStatus;
+    final searchChanged = event.search != null && event.search != _currentSearchQuery;
+
+    if (event.page != null) {
+      _page = event.page!;
+    } else if (statusChanged || searchChanged || !event.loadMore) {
       _page = 0;
       _hasMore = true;
-      _leads.clear();
-      _currentStatus = event.status;
+    }
+
+    if (event.status != null || statusChanged) {
+      _currentStatus = (event.status == 'All' || event.status == '') ? null : event.status;
+    }
+    if (event.search != null || searchChanged) {
+      _currentSearchQuery = (event.search?.trim().isEmpty ?? true) ? null : event.search?.trim();
+    }
+
+    if (currentState is AllLeadState && currentState.leads.isNotEmpty) {
+      emit(currentState.copyWith(
+        isLoadingPage: true,
+        status: _currentStatus,
+        searchQuery: _currentSearchQuery,
+      ));
+    } else {
       emit(LeadLoading());
     }
 
@@ -181,90 +175,88 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
         page: _page,
         limit: limit,
         status: _currentStatus,
+        search: _currentSearchQuery,
       );
+
+      _leads.clear();
       _leads.addAll(response.leadList);
-      _hasMore = response.currentPage < response.totalPages;
-      _page++;
+
+      final int calculatedPages = response.totalPages > 0
+          ? response.totalPages
+          : (response.totalLeads > 0 ? (response.totalLeads / limit).ceil() : 1);
+      final int totalPages = calculatedPages > 0 ? calculatedPages : 1;
+      _hasMore = (_page + 1) < totalPages;
 
       List<StatusCountModel> statusAndCount = response.statusAndCount;
-      if (statusAndCount.isEmpty) {
+      if (statusAndCount.isNotEmpty) {
+        _cachedStatusAndCount = statusAndCount;
+      } else if (_cachedStatusAndCount.isNotEmpty) {
+        statusAndCount = _cachedStatusAndCount;
+      } else {
         try {
           final statuses = await repository.fetchLeadStatus();
           statusAndCount = statuses
               .map((s) => StatusCountModel(status: s.status, count: s.count))
               .toList();
+          _cachedStatusAndCount = statusAndCount;
         } catch (e) {
           log('fetchLeadStatus fallback error: $e');
         }
       }
 
-      // Apply current filters to the newly loaded data
-      final filteredLeads = _applyFilters(_leads);
-
       emit(
         AllLeadState(
           statusAndCount: statusAndCount,
           leads: List.unmodifiable(_leads),
-          filteredLeads: filteredLeads,
+          filteredLeads: List.unmodifiable(_leads),
           hasMore: _hasMore,
-          currentPage: response.currentPage,
+          currentPage: _page,
+          totalPages: totalPages,
           totalLeads: response.totalLeads,
           searchQuery: _currentSearchQuery,
           selectedDate: _currentSelectedDate,
           status: _currentStatus,
-          isSearching:
-              _currentSearchQuery != null && _currentSearchQuery!.isNotEmpty,
+          isSearching: _currentSearchQuery != null && _currentSearchQuery!.isNotEmpty,
           isDateFiltered: _currentSelectedDate != null,
+          isLoadingPage: false,
         ),
       );
-    } on DioException catch (e) {
-      emit(LeadError(ApiError.getMessage(e)));
     } catch (e) {
-      log('error ${e.toString()}');
+      log('Lead fetch error: $e');
       emit(LeadError(ApiError.getMessage(e)));
     } finally {
       _isFetching = false;
     }
   }
 
-  // ================= SEARCH LEADS =================
-  void _onSearchLeads(
+  // ================= SERVER-SIDE SEARCH =================
+  Future<void> _onSearchLeads(
     SearchLeadsEvent event,
     Emitter<LeadState> emit,
-  ) {
-    final currentState = state;
-
-    if (currentState is AllLeadState) {
-      final searchQuery = event.searchQuery.trim();
-      _currentSearchQuery = searchQuery.isNotEmpty ? searchQuery : null;
-
-      final filteredLeads = _applyFilters(_leads);
-
-      emit(
-        currentState.copyWith(
-          filteredLeads: filteredLeads,
-          searchQuery: _currentSearchQuery,
-          isSearching: _currentSearchQuery != null,
-        ),
-      );
+  ) async {
+    final query = event.searchQuery.trim();
+    _currentSearchQuery = query.isNotEmpty ? query : null;
+    _page = 0;
+    if (event.status != null) {
+      _currentStatus = (event.status == 'All' || event.status == '') ? null : event.status;
     }
+
+    add(FetchAllLeadsEvent(
+      page: 0,
+      status: _currentStatus,
+      search: _currentSearchQuery,
+    ));
   }
 
-  // ================= FILTER BY DATE =================
   void _onFilterByDate(
     FilterByDateEvent event,
     Emitter<LeadState> emit,
   ) {
     final currentState = state;
-
     if (currentState is AllLeadState) {
       _currentSelectedDate = event.selectedDate;
-
-      final filteredLeads = _applyFilters(_leads);
-
       emit(
         currentState.copyWith(
-          filteredLeads: filteredLeads,
           selectedDate: event.selectedDate,
           isDateFiltered: event.selectedDate != null,
         ),
@@ -272,108 +264,42 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     }
   }
 
-  // ================= CLEAR SEARCH =================
   void _onClearSearch(
     ClearSearchEvent event,
     Emitter<LeadState> emit,
   ) {
-    final currentState = state;
-
-    if (currentState is AllLeadState) {
-      _currentSearchQuery = null;
-
-      final filteredLeads = _applyFilters(_leads);
-
-      emit(
-        currentState.copyWith(
-          filteredLeads: filteredLeads,
-          searchQuery: null,
-          isSearching: false,
-        ),
-      );
-    }
+    _currentSearchQuery = null;
+    _page = 0;
+    add(FetchAllLeadsEvent(
+      page: 0,
+      status: _currentStatus,
+      search: null,
+    ));
   }
 
-  // ================= CLEAR ALL FILTERS =================
   void _onClearAllFilters(
     ClearAllFiltersEvent event,
     Emitter<LeadState> emit,
   ) {
-    final currentState = state;
-
-    if (currentState is AllLeadState) {
-      _currentSearchQuery = null;
-      _currentSelectedDate = null;
-
-      emit(
-        currentState.copyWith(
-          filteredLeads: _leads,
-          searchQuery: null,
-          selectedDate: null,
-          isSearching: false,
-          isDateFiltered: false,
-        ),
-      );
-    }
+    _currentSearchQuery = null;
+    _currentStatus = null;
+    _currentSelectedDate = null;
+    _page = 0;
+    add(const FetchAllLeadsEvent(page: 0, status: null, search: null));
   }
 
-  // ================= REFRESH =================
   Future<void> _onRefresh(
     RefreshLeads event,
     Emitter<LeadState> emit,
   ) async {
+    _page = 0;
     add(FetchAllLeadsEvent(
-      loadMore: false,
+      page: 0,
       status: event.status ?? _currentStatus,
+      search: event.search ?? _currentSearchQuery,
     ));
   }
 
-  // ================= HELPER: APPLY ALL FILTERS =================
-  List<LeadModel> _applyFilters(List<LeadModel> leads) {
-    List<LeadModel> filtered = leads;
-
-    // Apply search filter
-    if (_currentSearchQuery != null && _currentSearchQuery!.isNotEmpty) {
-      filtered = _filterBySearch(filtered, _currentSearchQuery!);
-    }
-
-    // Apply date filter
-    if (_currentSelectedDate != null) {
-      filtered = _filterByDate(filtered, _currentSelectedDate!);
-    }
-
-    return filtered;
-  }
-
-  // ================= HELPER: FILTER BY SEARCH =================
-  List<LeadModel> _filterBySearch(List<LeadModel> leads, String query) {
-    final lowerCaseQuery = query.toLowerCase();
-
-    return leads.where((lead) {
-      return (lead.clientName?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-          (lead.companyName?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-          (lead.email?.toLowerCase().contains(lowerCaseQuery) ?? false) ||
-          (lead.mobileNumber?.toLowerCase().contains(lowerCaseQuery) ??
-              false) ||
-          (lead.status.toLowerCase().contains(lowerCaseQuery));
-    }).toList();
-  }
-
-  // ================= HELPER: FILTER BY DATE =================
-  List<LeadModel> _filterByDate(List<LeadModel> leads, DateTime date) {
-    return leads.where((lead) {
-      try {
-        final leadDate = lead.createdDate;
-        return leadDate!.year == date.year &&
-            leadDate.month == date.month &&
-            leadDate.day == date.day;
-      } catch (e) {
-        return false;
-      }
-    }).toList();
-  }
-
-  //
   Future<void> _leadDetails(
     LeadDetailsEvent event,
     Emitter<LeadState> emit,
@@ -384,34 +310,24 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     if (currentState is! AllLeadState) return;
 
     _isFetchingDetails = true;
-
     emit(currentState.copyWith(leadDetailsLoader: true));
 
     try {
       final res = await repository.fecthLeadDetails(taskId: event.leadId);
-
       emit(
         currentState.copyWith(
           leadDetailsLoader: false,
           leadDetailsModel: res,
         ),
       );
-    } on DioException catch (e) {
-      emit(currentState.copyWith(
-        leadDetailsLoader: false,
-      ));
-      log('Lead details error: ${ApiError.getMessage(e)}');
     } catch (e) {
-      emit(currentState.copyWith(
-        leadDetailsLoader: false,
-      ));
+      emit(currentState.copyWith(leadDetailsLoader: false));
       log('Lead details error: $e');
     } finally {
       _isFetchingDetails = false;
     }
   }
 
-  //
   Future<void> _onReminder(
     FetchReminderEvent event,
     Emitter<LeadState> emit,
@@ -422,28 +338,19 @@ class LeadBloc extends Bloc<LeadEvent, LeadState> {
     if (currentState is! AllLeadState) return;
 
     _reminder = true;
-
     emit(currentState.copyWith(reminder: true));
 
     try {
       final res = await repository.fetchReminder(taskId: event.leadId);
-
       emit(
         currentState.copyWith(
           reminder: false,
           remindermodel: res,
         ),
       );
-    } on DioException catch (e) {
-      emit(currentState.copyWith(
-        reminder: false,
-      ));
-      log('Lead details error: ${ApiError.getMessage(e)}');
     } catch (e) {
-      emit(currentState.copyWith(
-        reminder: false,
-      ));
-      log('Lead details error: $e');
+      emit(currentState.copyWith(reminder: false));
+      log('Reminder error: $e');
     } finally {
       _reminder = false;
     }
