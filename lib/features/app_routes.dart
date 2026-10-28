@@ -5,6 +5,7 @@ import 'package:xpertbiz/features/Lead/data/model/all_lead_model.dart';
 import 'package:xpertbiz/features/Lead/presentation/screens/all_lead_details_screen.dart';
 import 'package:xpertbiz/features/Lead/presentation/screens/create_lead_screen.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
+import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/auth/presentation/screens/login_screen.dart';
 import 'package:xpertbiz/features/auth/presentation/screens/splash_screen.dart';
 import 'package:xpertbiz/features/Lead/presentation/screens/lead_screen.dart';
@@ -45,6 +46,16 @@ class AppRouter {
       /// DASHBOARD / LEADS
       GoRoute(
         path: AppRouteName.dashboard,
+        redirect: (context, state) {
+          final user = AuthLocalStorage.getUser();
+          if (user != null && user.moduleAccess.leadAccess != true) {
+            final target = AuthLocalStorage.getInitialRoute(user);
+            if (target != AppRouteName.dashboard) {
+              return target;
+            }
+          }
+          return null;
+        },
         pageBuilder: (context, state) => AppTransition.slide(
           state: state,
           child: const LeadScreen(),

@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:hive/hive.dart';
 import 'package:xpertbiz/core/network/dio_client.dart';
+import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/login_response.dart';
 
 import '../../bloc/user_role.dart';
@@ -28,6 +29,28 @@ class AuthLocalStorage {
     RoleResolver.setRole(user.role);
     apiInterceptor.updateToken(user.jwtToken);
     return true;
+  }
+
+  /// Returns the first accessible module route based on user module access.
+  /// Order matches the App Drawer: Leads -> Task -> Timesheets -> Customers.
+  static String getInitialRoute([LoginResponse? user]) {
+    final currentUser = user ?? getUser();
+    final access = currentUser?.moduleAccess;
+    if (access != null) {
+      if (access.leadAccess) {
+        return AppRouteName.dashboard;
+      }
+      if (access.taskAccess) {
+        return AppRouteName.task;
+      }
+      if (access.timeSheetAccess) {
+        return AppRouteName.timesheet;
+      }
+      if (access.customerAccess) {
+        return AppRouteName.customers;
+      }
+    }
+    return AppRouteName.dashboard;
   }
 
   static Future<void> clear() async {

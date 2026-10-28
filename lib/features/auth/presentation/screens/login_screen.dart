@@ -9,10 +9,10 @@ import 'package:xpertbiz/core/utils/validators.dart';
 import 'package:xpertbiz/core/widgtes/app_button.dart';
 import 'package:xpertbiz/core/widgtes/app_snackbar.dart';
 import 'package:xpertbiz/core/widgtes/app_text_field.dart';
-import 'package:xpertbiz/features/app_route_name.dart';
 import '../../bloc/auth_bloc.dart';
 import '../../bloc/auth_event.dart';
 import '../../bloc/auth_state.dart';
+import '../../data/locale_data/hive_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,7 +59,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 message: AppStrings.success,
                 type: SnackBarType.success,
               );
-              context.go(AppRouteName.dashboard);
+              final initialRoute =
+                  AuthLocalStorage.getInitialRoute(state.loginResponse);
+              context.go(initialRoute);
             } else if (state is AuthFailure) {
               AppSnackBar.show(
                 context,

@@ -36,7 +36,10 @@ class _LeadScreenState extends State<LeadScreen> {
     super.initState();
     user = AuthLocalStorage.getUser();
     canCreate = user?.moduleAccess.leadCreate ?? true;
-    _fetchLeads(page: 0);
+    final bool hasAccess = user?.moduleAccess.leadAccess ?? false;
+    if (hasAccess) {
+      _fetchLeads(page: 0);
+    }
   }
 
   @override
@@ -95,6 +98,44 @@ class _LeadScreenState extends State<LeadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool hasAccess = user?.moduleAccess.leadAccess ?? false;
+    if (!hasAccess) {
+      return Scaffold(
+        drawer: const CustomDrawer(),
+        appBar: CommonAppBar(title: 'Leads'),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_person_rounded,
+                    size: 64, color: Colors.grey.shade400),
+                const SizedBox(height: 16),
+                const Text(
+                  'Access Restricted',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'You do not have permission to access the Leads module.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       drawer: const CustomDrawer(),
       backgroundColor: const Color(0xFFF8FAFC),

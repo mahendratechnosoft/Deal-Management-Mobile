@@ -33,7 +33,8 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted) return;
       Responsive.init(context);
       if (AuthLocalStorage.isLoggedIn()) {
-        context.go(AppRouteName.dashboard);
+        final initialRoute = AuthLocalStorage.getInitialRoute();
+        context.go(initialRoute);
       } else {
         context.go(AppRouteName.login);
       }

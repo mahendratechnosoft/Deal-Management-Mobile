@@ -43,13 +43,20 @@ class DrawerMenu extends StatelessWidget {
     return Expanded(
       child: BlocBuilder<DrawerBloc, DrawerState>(
         builder: (context, state) {
+          String currentPath = '';
+          try {
+            currentPath = GoRouterState.of(context).uri.path;
+          } catch (_) {}
+
           return ListView.separated(
             padding: EdgeInsets.symmetric(vertical: Responsive.h(12)),
             itemCount: menuItems.length,
             separatorBuilder: (_, __) => SizedBox(height: Responsive.h(6)),
             itemBuilder: (context, index) {
               final item = menuItems[index];
-              final isActive = state.selectedIndex == index;
+              final isActive = currentPath.isNotEmpty
+                  ? currentPath == item.route
+                  : state.selectedIndex == index;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 margin: EdgeInsets.symmetric(
@@ -62,12 +69,12 @@ class DrawerMenu extends StatelessWidget {
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(Responsive.h(12)),
-                  splashColor: Colors.white.withOpacity(0.08),
+                  splashColor: Colors.white.withValues(alpha: 0.08),
                   onTap: () {
                     context.read<DrawerBloc>().add(DrawerItemSelected(index));
                     Navigator.pop(context);
-                    final currentPath = GoRouterState.of(context).uri.path;
-                    if (currentPath != item.route) {
+                    final path = GoRouterState.of(context).uri.path;
+                    if (path != item.route) {
                       context.push(item.route);
                     }
                   },

@@ -50,3 +50,4 @@ Deal-Management-APICollection/
 # Signing secrets
 android/key.properties
 android/app/upload-keystore.jks
+/API_DOCUMENTATION.md

@@ -337,7 +337,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
             child: Column(
               children: [
                 // 1. Employee Attendance Punch Bar (Only for Employee role, collapsed by default)
-                _buildCheckInHeader(role: role, canCreate: canCreate),
+                _buildCheckInHeader(role: role, canCheckIn: hasAccess),
 
                 // 2. Filter Pills (Monthly/Weekly/Daily) + Period Selector + Search
                 _buildControls(
@@ -364,6 +364,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                   calendarMap: calendarMap,
                                   monthlyAttendance: monthlyAttendance,
                                   canViewAll: canViewAll,
+                                  canCreate: canCreate,
                                   canEdit: canEdit,
                                   canDelete: canDelete,
                                 )
@@ -373,6 +374,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                   calendarMap: calendarMap,
                                   monthlyAttendance: monthlyAttendance,
                                   canViewAll: canViewAll,
+                                  canCreate: canCreate,
                                   canEdit: canEdit,
                                   canDelete: canDelete,
                                 )),
@@ -386,8 +388,8 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
   }
 
   /// 🕒 Attendance Punch Section (ONLY for Employee role)
-  Widget _buildCheckInHeader({required String role, required bool canCreate}) {
-    if (role != 'employee' || !canCreate) {
+  Widget _buildCheckInHeader({required String role, required bool canCheckIn}) {
+    if (role != 'employee' || !canCheckIn) {
       return const SizedBox.shrink();
     }
 
@@ -441,14 +443,14 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                       ),
                       const SizedBox(width: 10),
                       const Text(
-                        "Attendance Punch",
+                        'Attendance Punch',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF1E293B),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2.5),
@@ -491,7 +493,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                           ],
                         ),
                       ),
-                      const Spacer(),
+                      SizedBox(width: 6),
                       Icon(
                         _showCheckInCard
                             ? Icons.keyboard_arrow_up_rounded
@@ -810,6 +812,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     required EmpMonthAttendanceModel? monthlyAttendance,
     required bool canViewAll,
     required bool canEdit,
+    required bool canCreate,
     required bool canDelete,
   }) {
     final date =
@@ -865,6 +868,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
               employee: emp,
               date: date,
               data: cellData,
+              canCreate: canCreate,
               canEdit: canEdit,
               canDelete: canDelete,
             ),
@@ -981,6 +985,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     required Map<String, CalendarModel> calendarMap,
     required EmpMonthAttendanceModel? monthlyAttendance,
     required bool canViewAll,
+    required bool canCreate,
     required bool canEdit,
     required bool canDelete,
   }) {
@@ -1214,6 +1219,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                               employee: emp,
                               date: date,
                               data: cellData,
+                              canCreate: canCreate,
                               canEdit: canEdit,
                               canDelete: canDelete,
                             ),
@@ -1501,15 +1507,16 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     required EmployeeItemModel employee,
     required DateTime date,
     required _CellStatusData data,
+    required bool canCreate,
     required bool canEdit,
     required bool canDelete,
   }) {
     final formattedDate = DateFormat('EEEE, dd MMMM yyyy').format(date);
     final user = AuthLocalStorage.getUser();
     final myEmpId = user?.employeeId ?? '';
-    final bool isSelf = myEmpId.isNotEmpty && myEmpId == employee.employeeId;
-    final bool allowEdit = canEdit || isSelf;
-    final bool allowDelete = canDelete || isSelf;
+    final bool allowCreate = canCreate;
+    final bool allowEdit = canEdit;
+    final bool allowDelete = canDelete;
 
     final sessions = _groupRecordsIntoSessions(data.records);
     final bool defaultNextStatus =
@@ -1699,7 +1706,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                         ],
                       ],
                     ),
-                    if (allowEdit)
+                    if (allowCreate)
                       ElevatedButton.icon(
                         onPressed: () {
                           _showAddPunchDialog(

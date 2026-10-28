@@ -7,6 +7,7 @@ import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
 import 'package:xpertbiz/features/Lead/bloc/event.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
+import 'package:xpertbiz/features/drawer/bloc/drawer_bloc.dart';
 
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
@@ -38,10 +39,11 @@ class DrawerFooter extends StatelessWidget {
             ),
             onTap: () async {
               final bool? shouldLogout = await showLogoutDialog(context);
-              if (shouldLogout == true) {
+              if (shouldLogout == true && context.mounted) {
                 AuthLocalStorage.clear();
                 context.read<LeadBloc>().add(const ResetLeadEvent());
                 context.read<AuthBloc>().add(LogoutEvent());
+                context.read<DrawerBloc>().add(DrawerItemSelected(0));
                 context.go(AppRouteName.login);
               }
             },

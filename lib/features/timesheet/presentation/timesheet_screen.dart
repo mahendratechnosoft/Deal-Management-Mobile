@@ -128,7 +128,6 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
       }
     }
 
-    // ✅ FIX: today ongoing check-in
     if (isToday && lastIn != null) {
       total += DateTime.now().difference(lastIn);
     }
@@ -139,7 +138,6 @@ class _AttendanceCalendarScreenState extends State<AttendanceCalendarScreen> {
   Color _dayColor(List<Attendance> records, {bool isToday = false}) {
     final work = _totalWork(records, isToday: isToday);
 
-    // ✅ FIX: Today + checked-in at least once = PRESENT
     if (isToday && _hasCheckedIn(records)) {
       return Colors.green.withOpacity(0.3);
     }
