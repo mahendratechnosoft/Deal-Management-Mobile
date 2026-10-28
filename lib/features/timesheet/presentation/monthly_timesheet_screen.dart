@@ -18,6 +18,8 @@ import 'package:xpertbiz/features/timesheet/data/model/employee_item_model.dart'
 import 'package:xpertbiz/features/timesheet/data/repo/repo.dart';
 import 'package:xpertbiz/features/timesheet/presentation/attendance_mark.dart';
 
+import '../checInUser_bloc/event.dart';
+
 enum TimesheetFilterMode { monthly, weekly, daily }
 
 class MonthlyTimesheetScreen extends StatefulWidget {
@@ -65,7 +67,25 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
       _isSyncingScroll = false;
     });
 
+    _loadCheckInStatus();
     _loadData();
+  }
+
+  void _loadCheckInStatus() {
+    final user = AuthLocalStorage.getUser();
+    final role = RoleResolver.rolePath;
+    final bool hasAccess = user?.moduleAccess.timeSheetAccess ?? false;
+    if (role == 'employee' && hasAccess) {
+      final String currentDate =
+          DateFormat('yyyy-MM-dd').format(DateTime.now());
+      context.read<CheckInBloc>().add(
+            CheckInUserEvent(
+              fromDate: currentDate,
+              toDate: currentDate,
+              employeeId: user?.employeeId ?? '',
+            ),
+          );
+    }
   }
 
   @override
@@ -233,7 +253,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     final bool canDelete = user?.moduleAccess.timeSheetDelete ?? false;
     final role = RoleResolver.rolePath;
 
-    // 🔒 1. Module Access: timeSheetAccess check
+    // 1. Module Access: timeSheetAccess check
     if (!hasAccess) {
       return Scaffold(
         drawer: const CustomDrawer(),
@@ -333,7 +353,10 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
           final isGridLoading = loadedState?.isGridLoading ?? false;
 
           return RefreshIndicator(
-            onRefresh: () async => _loadData(),
+            onRefresh: () async {
+              _loadCheckInStatus();
+              _loadData();
+            },
             child: Column(
               children: [
                 // 1. Employee Attendance Punch Bar (Only for Employee role, collapsed by default)
@@ -420,6 +443,8 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: BlocBuilder<CheckInBloc, CheckInUserState>(
                 builder: (context, checkInState) {
+                  final bool isInitialLoading =
+                      checkInState is CheckInInitial || checkInState is CheckInLoading;
                   final bool isCheckedIn =
                       checkInState is CheckInLoaded && checkInState.isCheckedIn;
 
@@ -434,7 +459,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
-                          Icons.fingerprint_rounded,
+                          Icons.touch_app_rounded,
                           size: 18,
                           color: isCheckedIn
                               ? const Color(0xFF166534)
@@ -455,14 +480,18 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2.5),
                         decoration: BoxDecoration(
-                          color: isCheckedIn
-                              ? const Color(0xFFDCFCE7)
-                              : const Color(0xFFF1F5F9),
+                          color: isInitialLoading
+                              ? const Color(0xFFF1F5F9)
+                              : (isCheckedIn
+                                  ? const Color(0xFFDCFCE7)
+                                  : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: isCheckedIn
-                                ? const Color(0xFF86EFAC)
-                                : const Color(0xFFCBD5E1),
+                            color: isInitialLoading
+                                ? const Color(0xFFCBD5E1)
+                                : (isCheckedIn
+                                    ? const Color(0xFF86EFAC)
+                                    : const Color(0xFFCBD5E1)),
                             width: 0.8,
                           ),
                         ),
@@ -474,20 +503,26 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                               height: 6,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: isCheckedIn
-                                    ? const Color(0xFF16A34A)
-                                    : const Color(0xFF94A3B8),
+                                color: isInitialLoading
+                                    ? const Color(0xFF94A3B8)
+                                    : (isCheckedIn
+                                        ? const Color(0xFF16A34A)
+                                        : const Color(0xFF94A3B8)),
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              isCheckedIn ? "Checked In" : "Not In",
+                              isInitialLoading
+                                  ? "Checking..."
+                                  : (isCheckedIn ? "Checked In" : "Not In"),
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: isCheckedIn
-                                    ? const Color(0xFF166534)
-                                    : const Color(0xFF64748B),
+                                color: isInitialLoading
+                                    ? const Color(0xFF64748B)
+                                    : (isCheckedIn
+                                        ? const Color(0xFF166534)
+                                        : const Color(0xFF64748B)),
                               ),
                             ),
                           ],
@@ -507,17 +542,23 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
               ),
             ),
           ),
-          if (_showCheckInCard) ...[
-            const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: CheckInOutWidget(
-                onStatusChanged: () {
-                  _loadData();
-                },
-              ),
+          Visibility(
+            visible: _showCheckInCard,
+            maintainState: true,
+            child: Column(
+              children: [
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: CheckInOutWidget(
+                    onStatusChanged: () {
+                      _loadData();
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

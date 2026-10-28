@@ -28,13 +28,16 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
   @override
   void initState() {
     super.initState();
-    context.read<CheckInBloc>().add(
-          CheckInUserEvent(
-            fromDate: currentDate,
-            toDate: currentDate,
-            employeeId: user?.employeeId ?? '',
-          ),
-        );
+    final currentState = context.read<CheckInBloc>().state;
+    if (currentState is! CheckInLoaded) {
+      context.read<CheckInBloc>().add(
+            CheckInUserEvent(
+              fromDate: currentDate,
+              toDate: currentDate,
+              employeeId: user?.employeeId ?? '',
+            ),
+          );
+    }
   }
 
   @override

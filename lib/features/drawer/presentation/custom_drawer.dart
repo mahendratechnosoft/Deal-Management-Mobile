@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/utils/responsive.dart';
 import 'package:xpertbiz/features/drawer/presentation/header_widget.dart';
 import 'app_drawer.dart';
@@ -11,11 +10,27 @@ class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: Responsive.h(260),
-      decoration: const BoxDecoration(gradient: AppColors.drawerColor),
-      child: SafeArea(
+      width: Responsive.h(255),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(26)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF111827), // Deep Charcoal (Gray 900)
+            Color(0xFF1E293B), // Dark Slate (Slate 800)
+          ],
+        ),
+        border: Border(
+          right: BorderSide(
+            color: Color(0xFF334155),
+            width: 0.8,
+          ),
+        ),
+      ),
+      child: const SafeArea(
         child: Column(
-          children: const [
+          children: [
             DrawerHeaderWidget(),
             DrawerMenu(),
             DrawerFooter(),

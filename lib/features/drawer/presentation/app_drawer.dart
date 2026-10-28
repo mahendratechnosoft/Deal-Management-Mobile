@@ -16,25 +16,25 @@ class DrawerMenu extends StatelessWidget {
     final menuItems = <DrawerMenuItem>[
       DrawerMenuItem(
         title: 'Leads',
-        icon: Icons.leaderboard,
+        icon: Icons.leaderboard_rounded,
         route: AppRouteName.dashboard,
         visible: user?.moduleAccess.leadAccess == true,
       ),
       DrawerMenuItem(
-        title: 'Task',
-        icon: Icons.dashboard,
-        route: AppRouteName.task,
-        visible: user?.moduleAccess.taskAccess == true,
-      ),
-      DrawerMenuItem(
         title: 'Timesheets',
-        icon: Icons.people,
+        icon: Icons.access_time_rounded,
         route: AppRouteName.timesheet,
         visible: user?.moduleAccess.timeSheetAccess == true,
       ),
       DrawerMenuItem(
+        title: 'Task',
+        icon: Icons.task_alt_rounded,
+        route: AppRouteName.task,
+        visible: user?.moduleAccess.taskAccess == true,
+      ),
+      DrawerMenuItem(
         title: 'Customers',
-        icon: Icons.receipt_long,
+        icon: Icons.people_alt_rounded,
         route: AppRouteName.customers,
         visible: user?.moduleAccess.customerAccess == true,
       ),
@@ -48,75 +48,126 @@ class DrawerMenu extends StatelessWidget {
             currentPath = GoRouterState.of(context).uri.path;
           } catch (_) {}
 
-          return ListView.separated(
-            padding: EdgeInsets.symmetric(vertical: Responsive.h(12)),
-            itemCount: menuItems.length,
-            separatorBuilder: (_, __) => SizedBox(height: Responsive.h(6)),
-            itemBuilder: (context, index) {
-              final item = menuItems[index];
-              final isActive = currentPath.isNotEmpty
-                  ? currentPath == item.route
-                  : state.selectedIndex == index;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                margin: EdgeInsets.symmetric(
-                  horizontal: Responsive.h(10),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  Responsive.h(16),
+                  Responsive.h(12),
+                  Responsive.h(16),
+                  Responsive.h(6),
                 ),
-                decoration: BoxDecoration(
-                  color:
-                      isActive ? const Color(0xFF1E293B) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(Responsive.h(12)),
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(Responsive.h(12)),
-                  splashColor: Colors.white.withValues(alpha: 0.08),
-                  onTap: () {
-                    context.read<DrawerBloc>().add(DrawerItemSelected(index));
-                    Navigator.pop(context);
-                    final path = GoRouterState.of(context).uri.path;
-                    if (path != item.route) {
-                      context.push(item.route);
-                    }
-                  },
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Responsive.h(16),
-                      vertical: Responsive.h(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          item.icon,
-                          size: Responsive.h(22),
-                          color: isActive ? Colors.white : Colors.white70,
-                        ),
-                        SizedBox(width: Responsive.h(16)),
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            style: TextStyle(
-                              fontSize: Responsive.h(15),
-                              fontWeight:
-                                  isActive ? FontWeight.w600 : FontWeight.w500,
-                              color: isActive ? Colors.white : Colors.white70,
-                            ),
-                          ),
-                        ),
-                        if (isActive)
-                          Container(
-                            width: Responsive.h(4),
-                            height: Responsive.h(24),
-                            decoration: BoxDecoration(
-                              color: Colors.blueAccent,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                      ],
-                    ),
+                child: Text(
+                  "MAIN MENU",
+                  style: TextStyle(
+                    fontSize: Responsive.h(10.5),
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF64748B),
+                    letterSpacing: 1.1,
                   ),
                 ),
-              );
-            },
+              ),
+              Expanded(
+                child: ListView.separated(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.h(12),
+                    vertical: Responsive.h(4),
+                  ),
+                  itemCount: menuItems.length,
+                  separatorBuilder: (_, __) =>
+                      SizedBox(height: Responsive.h(4)),
+                  itemBuilder: (context, index) {
+                    final item = menuItems[index];
+                    final isActive = currentPath.isNotEmpty
+                        ? currentPath == item.route
+                        : state.selectedIndex == index;
+
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? const Color(0xFF1E293B)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(Responsive.h(10)),
+                        border: Border.all(
+                          color: isActive
+                              ? const Color(0xFF334155)
+                              : Colors.transparent,
+                          width: 1,
+                        ),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(Responsive.h(8)),
+                        splashColor: Colors.white.withValues(alpha: 0.06),
+                        onTap: () {
+                          context
+                              .read<DrawerBloc>()
+                              .add(DrawerItemSelected(index));
+                          Navigator.pop(context);
+                          final path = GoRouterState.of(context).uri.path;
+                          if (path != item.route) {
+                            context.push(item.route);
+                          }
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: Responsive.h(8),
+                            vertical: Responsive.h(7),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(Responsive.h(6.5)),
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? const Color(0xFF2563EB)
+                                      : const Color(0xFF1E293B),
+                                  borderRadius:
+                                      BorderRadius.circular(Responsive.h(7)),
+                                ),
+                                child: Icon(
+                                  item.icon,
+                                  size: Responsive.h(17),
+                                  color: isActive
+                                      ? Colors.white
+                                      : const Color(0xFF94A3B8),
+                                ),
+                              ),
+                              SizedBox(width: Responsive.h(12)),
+                              Expanded(
+                                child: Text(
+                                  item.title,
+                                  style: TextStyle(
+                                    fontSize: Responsive.h(13.5),
+                                    fontWeight: isActive
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: isActive
+                                        ? Colors.white
+                                        : const Color(0xFFCBD5E1),
+                                    letterSpacing: 0.1,
+                                  ),
+                                ),
+                              ),
+                              if (isActive)
+                                Container(
+                                  width: Responsive.h(3.5),
+                                  height: Responsive.h(18),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF3B82F6),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                )
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

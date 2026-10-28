@@ -17,7 +17,9 @@ class CheckInBloc extends Bloc<CheckInEvent, CheckInUserState> {
     Emitter<CheckInUserState> emit,
   ) async {
     try {
-      emit(CheckInLoading());
+      if (state is! CheckInLoaded) {
+        emit(CheckInLoading());
+      }
 
       final result = await repository.checkInStatus(
         fromDate: event.fromDate,

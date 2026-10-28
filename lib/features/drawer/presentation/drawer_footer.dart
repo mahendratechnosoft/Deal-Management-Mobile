@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/utils/responsive.dart';
 import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
 import 'package:xpertbiz/features/Lead/bloc/event.dart';
@@ -18,25 +17,26 @@ class DrawerFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(Responsive.w(12)),
-      child: Column(
-        children: [
-          const Divider(
-            thickness: 0.5,
-            color: AppColors.textSecondary,
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        Responsive.h(12),
+        Responsive.h(10),
+        Responsive.h(12),
+        Responsive.h(12),
+      ),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: Color(0xFF334155),
+            width: 0.8,
           ),
-          // SizedBox(height: Responsive.h(8)),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: Text(
-              "Logout",
-              style: TextStyle(
-                fontSize: Responsive.sp(16),
-                fontWeight: FontWeight.w600,
-                color: AppColors.textOnPrimary,
-              ),
-            ),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(Responsive.h(8)),
             onTap: () async {
               final bool? shouldLogout = await showLogoutDialog(context);
               if (shouldLogout == true && context.mounted) {
@@ -47,6 +47,62 @@ class DrawerFooter extends StatelessWidget {
                 context.go(AppRouteName.login);
               }
             },
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.h(10),
+                vertical: Responsive.h(8.5),
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(Responsive.h(8)),
+                border: Border.all(
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.28),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(Responsive.h(6)),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(Responsive.h(6)),
+                    ),
+                    child: Icon(
+                      Icons.logout_rounded,
+                      size: Responsive.h(15),
+                      color: const Color(0xFFF87171),
+                    ),
+                  ),
+                  SizedBox(width: Responsive.h(10)),
+                  Expanded(
+                    child: Text(
+                      "Sign Out",
+                      style: TextStyle(
+                        fontSize: Responsive.h(13),
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFFF87171),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: Responsive.h(11),
+                    color: const Color(0xFFF87171).withValues(alpha: 0.5),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: Responsive.h(8)),
+          Text(
+            "XpertBiz • v1.0.0",
+            style: TextStyle(
+              fontSize: Responsive.h(10.5),
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF64748B),
+              letterSpacing: 0.3,
+            ),
           ),
         ],
       ),
