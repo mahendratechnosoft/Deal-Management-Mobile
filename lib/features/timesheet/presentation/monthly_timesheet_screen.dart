@@ -455,7 +455,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                         decoration: BoxDecoration(
                           color: isCheckedIn
                               ? const Color(0xFFDCFCE7)
-                              : const Color(0xFFEEF2FF),
+                              : const Color(0xFFE9EFFB),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -463,7 +463,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                           size: 18,
                           color: isCheckedIn
                               ? const Color(0xFF166534)
-                              : const Color(0xFF4F46E5),
+                              : const Color(0xFF2563EB),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -564,7 +564,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     );
   }
 
-  /// 📅 Month/Week/Day Filter Pills, Period Selector and Search Bar
+  /// Month/Week/Day Filter Pills, Period Selector and Search Bar
   Widget _buildControls({required int count, required bool canViewAll}) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 6),
@@ -1489,13 +1489,36 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
 
   /// 🔄 Group raw punches into paired work sessions
   List<WorkSession> _groupRecordsIntoSessions(List<Attendance> records) {
+    if (records.isEmpty) return [];
+
+    // 1. Sort punches ascending by timeStamp
     final sorted = List<Attendance>.from(records)
       ..sort((a, b) => a.timeStamp.compareTo(b.timeStamp));
+
+    // 2. Filter out duplicates (same attendanceId, same timestamp, or rapid duplicate status within 2 mins)
+    final List<Attendance> deduplicated = [];
+    for (final r in sorted) {
+      if (deduplicated.isEmpty) {
+        deduplicated.add(r);
+        continue;
+      }
+      final prev = deduplicated.last;
+      final bool sameId =
+          r.attendanceId.isNotEmpty && r.attendanceId == prev.attendanceId;
+      final bool sameTimestamp = r.timeStamp == prev.timeStamp;
+      final bool rapidDuplicate = r.status == prev.status &&
+          (r.timeStamp - prev.timeStamp).abs() <= 120000;
+
+      if (sameId || sameTimestamp || rapidDuplicate) {
+        continue;
+      }
+      deduplicated.add(r);
+    }
 
     final List<WorkSession> sessions = [];
     Attendance? pendingIn;
 
-    for (final r in sorted) {
+    for (final r in deduplicated) {
       if (r.status) {
         if (pendingIn != null) {
           sessions.add(
@@ -1561,7 +1584,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
 
     final sessions = _groupRecordsIntoSessions(data.records);
     final bool defaultNextStatus =
-        data.records.isEmpty || !data.records.last.status;
+        sessions.isEmpty || sessions.last.checkOut != null;
 
     showModalBottomSheet(
       context: context,
@@ -1763,7 +1786,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                         },
                         icon: Icon(
                           defaultNextStatus
-                              ? Icons.login_rounded
+                              ? Icons.touch_app_rounded
                               : Icons.logout_rounded,
                           size: 15,
                         ),
@@ -1776,7 +1799,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: defaultNextStatus
-                              ? const Color(0xFF059669)
+                              ? const Color(0xFF2563EB)
                               : const Color(0xFFEA580C),
                           foregroundColor: Colors.white,
                           elevation: 0,
@@ -1858,7 +1881,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
     );
   }
 
-  /// 📇 Render a work session card with connected In/Out and duration in between
+  /// Render a work session card with connected In/Out and duration in between
   Widget _buildSessionCard({
     required BuildContext context,
     required WorkSession session,
@@ -2246,11 +2269,11 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
 
     bool isSubmitting = false;
     final primaryColor =
-        isCheckIn ? const Color(0xFF059669) : const Color(0xFFEA580C);
+        isCheckIn ? const Color(0xFF2563EB) : const Color(0xFFEA580C);
     final lightBgColor =
-        isCheckIn ? const Color(0xFFECFDF5) : const Color(0xFFFFF7ED);
+        isCheckIn ? const Color(0xFFEFF6FF) : const Color(0xFFFFF7ED);
     final borderColor =
-        isCheckIn ? const Color(0xFFA7F3D0) : const Color(0xFFFED7AA);
+        isCheckIn ? const Color(0xFFBFDBFE) : const Color(0xFFFED7AA);
 
     await showDialog(
       context: parentContext,
@@ -2264,77 +2287,75 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
 
             return Dialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
               insetPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              elevation: 8,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 390),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 🌟 Premium Gradient Header
+                    // ── Clean Professional Header ──
                     Container(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isCheckIn
-                              ? [
-                                  const Color(0xFF047857),
-                                  const Color(0xFF10B981)
-                                ]
-                              : [
-                                  const Color(0xFFC2410C),
-                                  const Color(0xFFF97316)
-                                ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                          bottom: BorderSide(
+                              color: Color(0xFFE2E8F0), width: 1),
                         ),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
+                              color: lightBgColor,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: borderColor, width: 1),
                             ),
+                            alignment: Alignment.center,
                             child: Icon(
                               isCheckIn
-                                  ? Icons.login_rounded
+                                  ? Icons.touch_app_rounded
                                   : Icons.logout_rounded,
-                              color: Colors.white,
-                              size: 22,
+                              color: primaryColor,
+                              size: 20,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   isCheckIn
                                       ? 'Record Check In'
                                       : 'Record Check Out',
                                   style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: -0.3,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  isCheckIn
-                                      ? 'Starting a new work session'
-                                      : 'Concluding current work session',
-                                  style: TextStyle(
+                                  DateFormat('EEEE, dd MMM yyyy')
+                                      .format(date),
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.white.withValues(alpha: 0.85),
+                                    color: Color(0xFF64748B),
                                   ),
                                 ),
                               ],
@@ -2345,46 +2366,46 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                 ? null
                                 : () => Navigator.pop(dialogCtx),
                             icon: const Icon(Icons.close_rounded,
-                                color: Colors.white, size: 20),
+                                color: Color(0xFF94A3B8), size: 20),
                             visualDensity: VisualDensity.compact,
-                            style: IconButton.styleFrom(
-                              backgroundColor:
-                                 Colors.white.withValues(alpha: 0.15),
-                            ),
                           ),
                         ],
                       ),
                     ),
 
-                    // 📋 Dialog Body Content
+                    // ── Body ──
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Employee & Date Summary Bar
+                          // Employee & Context Summary Row
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
+                                horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(14),
-                              border:
-                                  Border.all(color: const Color(0xFFE2E8F0)),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
                             ),
                             child: Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: const Color(0xFF4F46E5),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2563EB),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
                                   child: Text(
-                                    employee.name.isNotEmpty
-                                        ? employee.name[0]
+                                    employee.name.trim().isNotEmpty
+                                        ? employee.name.trim()[0].toUpperCase()
                                         : '?',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
@@ -2400,13 +2421,19 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           fontSize: 13,
-                                          fontWeight: FontWeight.w700,
+                                          fontWeight: FontWeight.w600,
                                           color: Color(0xFF0F172A),
                                         ),
                                       ),
+                                      const SizedBox(height: 1),
                                       Text(
-                                        DateFormat('EEEE, dd MMM yyyy')
-                                            .format(date),
+                                        lastRecord == null
+                                            ? 'First punch of the day'
+                                            : (lastRecord.status
+                                                ? 'Last: Check In at ${DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastRecord.timeStamp))}'
+                                                : 'Last: Check Out at ${DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastRecord.timeStamp))}'),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: Color(0xFF64748B),
@@ -2418,17 +2445,20 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                 if (isToday)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
+                                        horizontal: 7, vertical: 2.5),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                          color: const Color(0xFFBBF7D0)),
                                     ),
                                     child: const Text(
-                                      'Today',
+                                      'TODAY',
                                       style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
                                         color: Color(0xFF15803D),
+                                        letterSpacing: 0.4,
                                       ),
                                     ),
                                   ),
@@ -2436,242 +2466,144 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 14),
 
-                          // Enforced Sequence Card
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: lightBgColor,
-                              borderRadius: BorderRadius.circular(14),
-                              border:
-                                  Border.all(color: borderColor, width: 1.2),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
+                          // Punch Time Field (Professional Form Field Style)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'PUNCH TIME',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF475569),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  if (isToday)
+                                    Text(
+                                      'Current: ${DateFormat('hh:mm a').format(DateTime.now())}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: isSubmitting
+                                    ? null
+                                    : () async {
+                                        final picked = await showTimePicker(
+                                          context: ctx,
+                                          initialTime: selectedTime,
+                                          helpText: isCheckIn
+                                              ? 'SELECT CHECK IN TIME'
+                                              : 'SELECT CHECK OUT TIME',
+                                        );
+                                        if (picked != null) {
+                                          setState(
+                                              () => selectedTime = picked);
+                                        }
+                                      },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: borderColor),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: validationError != null
+                                          ? const Color(0xFFEF4444)
+                                          : const Color(0xFFCBD5E1),
+                                      width:
+                                          validationError != null ? 1.2 : 1,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    isCheckIn
-                                        ? Icons.login_rounded
-                                        : Icons.logout_rounded,
-                                    size: 18,
-                                    color: primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  child: Row(
                                     children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            isCheckIn
-                                                ? 'Check In Required'
-                                                : 'Check Out Required',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w800,
-                                              color: primaryColor,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Icon(Icons.lock_outline_rounded,
-                                              size: 13, color: primaryColor),
-                                        ],
+                                      Icon(
+                                        Icons.access_time_rounded,
+                                        size: 18,
+                                        color: primaryColor,
                                       ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        lastRecord == null
-                                            ? 'No punches for this day. You must Check In first.'
-                                            : (lastRecord.status
-                                                ? 'Last punch was Check In at ${DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastRecord.timeStamp))}. You must Check Out next.'
-                                                : 'Last punch was Check Out at ${DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastRecord.timeStamp))}. You must Check In next.'),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                          color: primaryColor.withValues(
-                                              alpha: 0.9),
-                                          height: 1.3,
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          formattedTime,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 9, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border: Border.all(
+                                              color: const Color(0xFFE2E8F0)),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.edit_outlined,
+                                                size: 12,
+                                                color: Color(0xFF475569)),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Change',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF475569),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // Digital Time Selector Card
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: validationError != null
-                                    ? const Color(0xFFFCA5A5)
-                                    : const Color(0xFFCBD5E1),
-                                width: validationError != null ? 1.5 : 1,
                               ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'PUNCH TIME',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF64748B),
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    if (isToday)
-                                      Text(
-                                        'Max: ${DateFormat('hh:mm a').format(DateTime.now())}',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF64748B),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                InkWell(
-                                  onTap: isSubmitting
-                                      ? null
-                                      : () async {
-                                          final picked = await showTimePicker(
-                                            context: ctx,
-                                            initialTime: selectedTime,
-                                            helpText: isCheckIn
-                                                ? 'SELECT CHECK IN TIME'
-                                                : 'SELECT CHECK OUT TIME',
-                                          );
-                                          if (picked != null) {
-                                            setState(
-                                                () => selectedTime = picked);
-                                          }
-                                        },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                          color: const Color(0xFFE2E8F0)),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.02),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEEF2FF),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(
-                                            Icons.access_time_filled_rounded,
-                                            color: Color(0xFF4F46E5),
-                                            size: 20,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 14),
-                                        Expanded(
-                                          child: Text(
-                                            formattedTime,
-                                            style: const TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF0F172A),
-                                              letterSpacing: -0.5,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEEF2FF),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: const Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.edit_rounded,
-                                                size: 13,
-                                                color: Color(0xFF4F46E5),
-                                              ),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                'Change',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Color(0xFF4F46E5),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            ],
                           ),
 
                           // Validation Error Box (if invalid time)
                           if (validationError != null) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
+                                  horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFEE2E2),
-                                borderRadius: BorderRadius.circular(10),
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(8),
                                 border:
-                                    Border.all(color: const Color(0xFFFCA5A5)),
+                                    Border.all(color: const Color(0xFFFECACA)),
                               ),
                               child: Row(
                                 children: [
                                   const Icon(Icons.error_outline_rounded,
-                                      size: 16, color: Color(0xFFDC2626)),
+                                      size: 15, color: Color(0xFFDC2626)),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       validationError,
                                       style: const TextStyle(
                                         fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w500,
                                         color: Color(0xFFDC2626),
                                       ),
                                     ),
@@ -2681,7 +2613,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                             ),
                           ],
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 18),
 
                           // Action Buttons
                           Row(
@@ -2695,22 +2627,23 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                     side: const BorderSide(
                                         color: Color(0xFFCBD5E1)),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 13),
+                                        vertical: 11),
                                   ),
                                   child: const Text(
                                     'Cancel',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
+                                      color: Color(0xFF475569),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               Expanded(
                                 flex: 2,
                                 child: ElevatedButton(
@@ -2775,24 +2708,25 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 13),
+                                        vertical: 11),
                                   ),
                                   child: isSubmitting
                                       ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
+                                          width: 16,
+                                          height: 16,
                                           child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                                            strokeWidth: 1.8,
                                             color: Colors.white,
                                           ),
                                         )
                                       : Text(
                                           isCheckIn
-                                              ? 'Save Check In'
-                                              : 'Save Check Out',
+                                              ? 'Record Check In'
+                                              : 'Record Check Out',
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
@@ -2856,7 +2790,11 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
 
     bool isSubmitting = false;
     final primaryColor =
-        punch.status ? const Color(0xFF059669) : const Color(0xFFEA580C);
+        punch.status ? const Color(0xFF2563EB) : const Color(0xFFEA580C);
+    final lightBgColor =
+        punch.status ? const Color(0xFFEFF6FF) : const Color(0xFFFFF7ED);
+    final borderColor =
+        punch.status ? const Color(0xFFBFDBFE) : const Color(0xFFFED7AA);
 
     await showDialog(
       context: parentContext,
@@ -2870,73 +2808,73 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
 
             return Dialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
               insetPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              elevation: 8,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 390),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Header Gradient
+                    // ── Clean Professional Header ──
                     Container(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: punch.status
-                              ? [
-                                  const Color(0xFF047857),
-                                  const Color(0xFF10B981)
-                                ]
-                              : [
-                                  const Color(0xFFC2410C),
-                                  const Color(0xFFF97316)
-                                ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                          bottom: BorderSide(
+                              color: Color(0xFFE2E8F0), width: 1),
                         ),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
+                              color: lightBgColor,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: borderColor, width: 1),
                             ),
+                            alignment: Alignment.center,
                             child: Icon(
                               punch.status
-                                  ? Icons.login_rounded
+                                  ? Icons.touch_app_rounded
                                   : Icons.logout_rounded,
-                              color: Colors.white,
-                              size: 22,
+                              color: primaryColor,
+                              size: 20,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Edit ${punch.status ? "Check In" : "Check Out"} Time',
                                   style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: -0.3,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Update recorded timestamp',
-                                  style: TextStyle(
+                                  DateFormat('EEEE, dd MMM yyyy')
+                                      .format(date),
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.white.withValues(alpha: 0.85),
+                                    color: Color(0xFF64748B),
                                   ),
                                 ),
                               ],
@@ -2947,46 +2885,46 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                 ? null
                                 : () => Navigator.pop(dialogCtx),
                             icon: const Icon(Icons.close_rounded,
-                                color: Colors.white, size: 20),
+                                color: Color(0xFF94A3B8), size: 20),
                             visualDensity: VisualDensity.compact,
-                            style: IconButton.styleFrom(
-                              backgroundColor:
-                                  Colors.white.withValues(alpha: 0.15),
-                            ),
                           ),
                         ],
                       ),
                     ),
 
-                    // Body
+                    // ── Body ──
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Employee & Date Summary
+                          // Employee & Context Summary Row
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
+                                horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(14),
-                              border:
-                                  Border.all(color: const Color(0xFFE2E8F0)),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
                             ),
                             child: Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: const Color(0xFF4F46E5),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2563EB),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
                                   child: Text(
-                                    employee.name.isNotEmpty
-                                        ? employee.name[0]
+                                    employee.name.trim().isNotEmpty
+                                        ? employee.name.trim()[0].toUpperCase()
                                         : '?',
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
@@ -3002,13 +2940,13 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
                                           fontSize: 13,
-                                          fontWeight: FontWeight.w700,
+                                          fontWeight: FontWeight.w600,
                                           color: Color(0xFF0F172A),
                                         ),
                                       ),
+                                      const SizedBox(height: 1),
                                       Text(
-                                        DateFormat('EEEE, dd MMM yyyy')
-                                            .format(date),
+                                        'Original: ${DateFormat('hh:mm a').format(currentDT)}',
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: Color(0xFF64748B),
@@ -3020,17 +2958,20 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                 if (isToday)
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
+                                        horizontal: 7, vertical: 2.5),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFDCFCE7),
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                          color: const Color(0xFFBBF7D0)),
                                     ),
                                     child: const Text(
-                                      'Today',
+                                      'TODAY',
                                       style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
                                         color: Color(0xFF15803D),
+                                        letterSpacing: 0.4,
                                       ),
                                     ),
                                   ),
@@ -3038,166 +2979,141 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 14),
 
-                          // Digital Time Picker Card
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: validationError != null
-                                    ? const Color(0xFFFCA5A5)
-                                    : const Color(0xFFCBD5E1),
-                                width: validationError != null ? 1.5 : 1,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'SELECT NEW TIME',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF64748B),
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    if (isToday)
-                                      Text(
-                                        'Max: ${DateFormat('hh:mm a').format(DateTime.now())}',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF64748B),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                InkWell(
-                                  onTap: isSubmitting
-                                      ? null
-                                      : () async {
-                                          final picked = await showTimePicker(
-                                            context: ctx,
-                                            initialTime: selectedTime,
-                                          );
-                                          if (picked != null) {
-                                            setState(
-                                                () => selectedTime = picked);
-                                          }
-                                        },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                          color: const Color(0xFFE2E8F0)),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.02),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEEF2FF),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(
-                                            Icons.access_time_filled_rounded,
-                                            color: Color(0xFF4F46E5),
-                                            size: 20,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 14),
-                                        Expanded(
-                                          child: Text(
-                                            formattedTime,
-                                            style: const TextStyle(
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w800,
-                                              color: Color(0xFF0F172A),
-                                              letterSpacing: -0.5,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 6),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEEF2FF),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: const Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.edit_rounded,
-                                                size: 13,
-                                                color: Color(0xFF4F46E5),
-                                              ),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                'Change',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Color(0xFF4F46E5),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                          // Punch Time Field (Professional Form Field Style)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'SELECT NEW TIME',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF475569),
+                                      letterSpacing: 0.5,
                                     ),
                                   ),
+                                  if (isToday)
+                                    Text(
+                                      'Max: ${DateFormat('hh:mm a').format(DateTime.now())}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: isSubmitting
+                                    ? null
+                                    : () async {
+                                        final picked = await showTimePicker(
+                                          context: ctx,
+                                          initialTime: selectedTime,
+                                        );
+                                        if (picked != null) {
+                                          setState(
+                                              () => selectedTime = picked);
+                                        }
+                                      },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: validationError != null
+                                          ? const Color(0xFFEF4444)
+                                          : const Color(0xFFCBD5E1),
+                                      width:
+                                          validationError != null ? 1.2 : 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time_rounded,
+                                        size: 18,
+                                        color: primaryColor,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          formattedTime,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 9, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border: Border.all(
+                                              color: const Color(0xFFE2E8F0)),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.edit_outlined,
+                                                size: 12,
+                                                color: Color(0xFF475569)),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Change',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF475569),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
 
                           // Validation Error Box (if invalid time)
                           if (validationError != null) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 10),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
+                                  horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFEE2E2),
-                                borderRadius: BorderRadius.circular(10),
+                                color: const Color(0xFFFEF2F2),
+                                borderRadius: BorderRadius.circular(8),
                                 border:
-                                    Border.all(color: const Color(0xFFFCA5A5)),
+                                    Border.all(color: const Color(0xFFFECACA)),
                               ),
                               child: Row(
                                 children: [
                                   const Icon(Icons.error_outline_rounded,
-                                      size: 16, color: Color(0xFFDC2626)),
+                                      size: 15, color: Color(0xFFDC2626)),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       validationError,
                                       style: const TextStyle(
                                         fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w500,
                                         color: Color(0xFFDC2626),
                                       ),
                                     ),
@@ -3207,7 +3123,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                             ),
                           ],
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 18),
 
                           // Action Buttons
                           Row(
@@ -3221,22 +3137,23 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                     side: const BorderSide(
                                         color: Color(0xFFCBD5E1)),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 13),
+                                        vertical: 11),
                                   ),
                                   child: const Text(
                                     'Cancel',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
+                                      color: Color(0xFF475569),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               Expanded(
                                 flex: 2,
                                 child: ElevatedButton(
@@ -3305,17 +3222,18 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 13),
+                                        vertical: 11),
                                   ),
                                   child: isSubmitting
                                       ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
+                                          width: 16,
+                                          height: 16,
                                           child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                                            strokeWidth: 1.8,
                                             color: Colors.white,
                                           ),
                                         )
@@ -3324,6 +3242,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
+                                            color: Colors.white,
                                           ),
                                         ),
                                 ),
@@ -3359,63 +3278,70 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
           builder: (ctx, setState) {
             return Dialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
               insetPadding:
                   const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              elevation: 8,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 390),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Header Gradient
+                    // ── Clean Professional Header ──
                     Container(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
+                      padding: const EdgeInsets.fromLTRB(18, 16, 12, 16),
                       decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                        color: Colors.white,
+                        border: Border(
+                          bottom: BorderSide(
+                              color: Color(0xFFE2E8F0), width: 1),
                         ),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
+                              color: const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                  color: const Color(0xFFFECACA), width: 1),
                             ),
+                            alignment: Alignment.center,
                             child: const Icon(
-                              Icons.delete_forever_rounded,
-                              color: Colors.white,
-                              size: 22,
+                              Icons.delete_outline_rounded,
+                              color: Color(0xFFDC2626),
+                              size: 20,
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Delete Session ${session.sessionIndex}',
                                   style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: -0.3,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                Text(
+                                const Text(
                                   'Permanent removal',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.white.withValues(alpha: 0.85),
+                                    color: Color(0xFF64748B),
                                   ),
                                 ),
                               ],
@@ -3426,30 +3352,26 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                 ? null
                                 : () => Navigator.pop(dialogCtx),
                             icon: const Icon(Icons.close_rounded,
-                                color: Colors.white, size: 20),
+                                color: Color(0xFF94A3B8), size: 20),
                             visualDensity: VisualDensity.compact,
-                            style: IconButton.styleFrom(
-                              backgroundColor:
-                                  Colors.white.withValues(alpha: 0.15),
-                            ),
                           ),
                         ],
                       ),
                     ),
 
-                    // Content
+                    // ── Content ──
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFEF2F2),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: const Color(0xFFFECACA), width: 1.2),
+                                  color: const Color(0xFFFECACA), width: 1),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3457,27 +3379,27 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                 const Icon(
                                   Icons.warning_amber_rounded,
                                   color: Color(0xFFDC2626),
-                                  size: 22,
+                                  size: 20,
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       const Text(
-                                        'Are you sure you want to delete this session?',
+                                        'Delete this work session?',
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700,
                                           color: Color(0xFF991B1B),
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 3),
                                       Text(
-                                        'This will permanently delete both check-in and check-out records for Session ${session.sessionIndex}. This action cannot be undone.',
+                                        'Both check-in and check-out punches for Session ${session.sessionIndex} will be permanently removed. This action cannot be undone.',
                                         style: const TextStyle(
-                                          fontSize: 12,
+                                          fontSize: 11.5,
                                           color: Color(0xFFB91C1C),
                                           height: 1.35,
                                         ),
@@ -3489,7 +3411,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 18),
 
                           // Action Buttons
                           Row(
@@ -3503,22 +3425,23 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                     side: const BorderSide(
                                         color: Color(0xFFCBD5E1)),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 13),
+                                        vertical: 11),
                                   ),
                                   child: const Text(
                                     'Cancel',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
+                                      color: Color(0xFF475569),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               Expanded(
                                 flex: 2,
                                 child: ElevatedButton(
@@ -3570,17 +3493,18 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                     foregroundColor: Colors.white,
                                     elevation: 0,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                        vertical: 13),
+                                        vertical: 11),
                                   ),
                                   child: isDeleting
                                       ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
+                                          width: 16,
+                                          height: 16,
                                           child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                                            strokeWidth: 1.8,
                                             color: Colors.white,
                                           ),
                                         )
@@ -3589,6 +3513,7 @@ class _MonthlyTimesheetScreenState extends State<MonthlyTimesheetScreen> {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
+                                            color: Colors.white,
                                           ),
                                         ),
                                 ),

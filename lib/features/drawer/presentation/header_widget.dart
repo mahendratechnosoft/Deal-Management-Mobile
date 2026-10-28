@@ -284,9 +284,6 @@ class _DrawerHeaderWidgetState extends State<DrawerHeaderWidget> {
                                     context
                                         .read<CheckInBloc>()
                                         .add(ToggleCheckIn());
-                                    context
-                                        .read<TimeSheetBloc>()
-                                        .add(CheckStatusEvent(!isCheckedIn));
                                   },
                             borderRadius:
                                 BorderRadius.circular(Responsive.h(8)),

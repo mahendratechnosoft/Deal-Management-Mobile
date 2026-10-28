@@ -100,7 +100,6 @@ class _CheckInOutWidgetState extends State<CheckInOutWidget> {
               onTap: () {
                 if (isLoading) return;
                 context.read<CheckInBloc>().add(ToggleCheckIn());
-                context.read<TimeSheetBloc>().add(CheckStatusEvent(!running));
               },
             );
           },
@@ -144,7 +143,7 @@ class _CheckInCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Colors.blue.shade700;
+    final primary = Color(0xFF2563EB);
 
     return Container(
       padding: const EdgeInsets.all(16),
