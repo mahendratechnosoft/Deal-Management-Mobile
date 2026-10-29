@@ -4,6 +4,8 @@ import 'package:xpertbiz/core/images/app_images.dart';
 import 'package:xpertbiz/core/utils/app_colors.dart';
 import 'package:xpertbiz/core/utils/responsive.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
+import 'package:xpertbiz/features/app_update/presentation/widgets/app_update_dialog.dart';
+import 'package:xpertbiz/features/app_update/services/app_update_service.dart';
 import '../../data/locale_data/hive_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -29,16 +31,47 @@ class _SplashScreenState extends State<SplashScreen>
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      Responsive.init(context);
-      if (AuthLocalStorage.isLoggedIn()) {
-        final initialRoute = AuthLocalStorage.getInitialRoute();
-        context.go(initialRoute);
-      } else {
-        context.go(AppRouteName.login);
+    _checkUpdateAndNavigate();
+  }
+
+  Future<void> _checkUpdateAndNavigate() async {
+    // Show splash animation for at least 1.8 seconds
+    await Future.delayed(const Duration(milliseconds: 1800));
+    if (!mounted) return;
+    Responsive.init(context);
+
+    // Check for App Updates (Major vs Minor)
+    try {
+      final updateInfo = await AppUpdateService.checkForUpdate();
+      if (mounted && updateInfo != null && updateInfo.hasUpdate) {
+        if (updateInfo.isMajor) {
+          // Major update: blocks entry completely until user updates
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => AppUpdateDialog(updateInfo: updateInfo),
+          );
+          return;
+        } else if (updateInfo.isMinor) {
+          // Minor update: has skip/later option, if skipped continue
+          await showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (_) => AppUpdateDialog(updateInfo: updateInfo),
+          );
+        }
       }
-    });
+    } catch (_) {
+      // Continue gracefully if network error
+    }
+
+    if (!mounted) return;
+    if (AuthLocalStorage.isLoggedIn()) {
+      final initialRoute = AuthLocalStorage.getInitialRoute();
+      context.go(initialRoute);
+    } else {
+      context.go(AppRouteName.login);
+    }
   }
 
   @override

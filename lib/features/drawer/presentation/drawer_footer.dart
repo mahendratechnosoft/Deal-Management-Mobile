@@ -1,19 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:xpertbiz/core/utils/responsive.dart';
 import 'package:xpertbiz/features/Lead/bloc/bloc.dart';
 import 'package:xpertbiz/features/Lead/bloc/event.dart';
 import 'package:xpertbiz/features/app_route_name.dart';
+import 'package:xpertbiz/features/app_update/services/app_update_service.dart';
 import 'package:xpertbiz/features/auth/data/locale_data/hive_service.dart';
 import 'package:xpertbiz/features/drawer/bloc/drawer_bloc.dart';
-
 import '../../auth/bloc/auth_bloc.dart';
 import '../../auth/bloc/auth_event.dart';
 import 'logout_dialog.dart';
 
-class DrawerFooter extends StatelessWidget {
+class DrawerFooter extends StatefulWidget {
   const DrawerFooter({super.key});
+
+  @override
+  State<DrawerFooter> createState() => _DrawerFooterState();
+}
+
+class _DrawerFooterState extends State<DrawerFooter> {
+  String _version = 'v1.1.2';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _version = 'v${info.version}';
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +60,7 @@ class DrawerFooter extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Sign Out Action
           InkWell(
             borderRadius: BorderRadius.circular(Responsive.h(8)),
             onTap: () async {
@@ -54,7 +80,7 @@ class DrawerFooter extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: const Color(0xFFEF4444).withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(Responsive.h(8)),
+                borderRadius: BorderRadius.circular(Responsive.h(10)),
                 border: Border.all(
                   color: const Color(0xFFEF4444).withValues(alpha: 0.28),
                   width: 0.8,
@@ -66,7 +92,7 @@ class DrawerFooter extends StatelessWidget {
                     padding: EdgeInsets.all(Responsive.h(6)),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEF4444).withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(Responsive.h(6)),
+                      borderRadius: BorderRadius.circular(Responsive.h(8)),
                     ),
                     child: Icon(
                       Icons.logout_rounded,
@@ -94,14 +120,40 @@ class DrawerFooter extends StatelessWidget {
               ),
             ),
           ),
+
           SizedBox(height: Responsive.h(8)),
-          Text(
-            "XpertBiz • v1.0.0",
-            style: TextStyle(
-              fontSize: Responsive.h(10.5),
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF64748B),
-              letterSpacing: 0.3,
+
+          // Version & Check for Updates on Tap
+          InkWell(
+            onTap: () {
+              AppUpdateService.showUpdateDialogIfNeeded(context, isManualCheck: true);
+            },
+            borderRadius: BorderRadius.circular(Responsive.h(6)),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.h(8),
+                vertical: Responsive.h(3),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "XpertBiz • $_version",
+                    style: TextStyle(
+                      fontSize: Responsive.h(10.5),
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF64748B),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  SizedBox(width: Responsive.h(4)),
+                  Icon(
+                    Icons.sync_rounded,
+                    size: Responsive.h(12),
+                    color: const Color(0xFF475569),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
