@@ -13,4 +13,7 @@ class AppRouteName {
   static const String allLead = '/all_lead';
   static const String leadDetails = '/lead_deatils';
   static const String createLead = '/create_lead';
+  static String leaveDetails = '/leave_details';
+  static const String leaveRequests = '/leave_requests';
+  static const String applyLeave = '/apply_leave';
 }

@@ -116,13 +116,14 @@ class ModuleAccessAdapter extends TypeAdapter<ModuleAccess> {
       customerComplianceCreate: fields[96] as bool,
       customerComplianceDelete: fields[97] as bool,
       customerComplianceEdit: fields[98] as bool,
+      leaveRequestApprover: (fields[99] as bool?) ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, ModuleAccess obj) {
     writer
-      ..writeByte(99)
+      ..writeByte(100)
       ..writeByte(0)
       ..write(obj.moduleAccessId)
       ..writeByte(1)
@@ -320,7 +321,9 @@ class ModuleAccessAdapter extends TypeAdapter<ModuleAccess> {
       ..writeByte(97)
       ..write(obj.customerComplianceDelete)
       ..writeByte(98)
-      ..write(obj.customerComplianceEdit);
+      ..write(obj.customerComplianceEdit)
+      ..writeByte(99)
+      ..write(obj.leaveRequestApprover);
   }
 
   @override

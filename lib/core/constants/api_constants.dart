@@ -51,6 +51,14 @@ class ApiConstants {
   static String get createCustomerUrl => "${RoleResolver.rolePath}/createCustomer";
   static String get updateCustomerUrl => "${RoleResolver.rolePath}/updateCustomer";
   static String get getCustomerDetailsUrl => "${RoleResolver.rolePath}/getCustomerById";
+  static String get getAllLeavesUrl => "${RoleResolver.rolePath}/getAllLeaves";
+  static String get applyForLeaveUrl => "${RoleResolver.rolePath}/applyForLeave";
+  static String get cancelLeaveUrl => "${RoleResolver.rolePath}/cancelLeave";
+  static String get processLeaveUrl => "${RoleResolver.rolePath}/processLeaveRequest";
+  static String get getLeaveByIdUrl => "${RoleResolver.rolePath}/getLeaveRequestById";
+  static String get getLeaveApproversUrl => "${RoleResolver.rolePath}/getLeaveApproversDropdown";
+  static String get updateLeaveUrl => "${RoleResolver.rolePath}/updateLeaveRequest";
+  static String get mediaUploadUrl => "media";
   
   
   

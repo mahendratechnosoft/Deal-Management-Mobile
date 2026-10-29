@@ -301,6 +301,9 @@ class ModuleAccess extends HiveObject {
   @HiveField(98)
   final bool customerComplianceEdit;
 
+  @HiveField(99)
+  final bool leaveRequestApprover;
+
   ModuleAccess({
     required this.moduleAccessId,
     this.adminId,
@@ -401,6 +404,7 @@ class ModuleAccess extends HiveObject {
     required this.customerComplianceCreate,
     required this.customerComplianceDelete,
     required this.customerComplianceEdit,
+    this.leaveRequestApprover = false,
   });
 
   factory ModuleAccess.fromJson(Map<String, dynamic> json) {
@@ -504,6 +508,7 @@ class ModuleAccess extends HiveObject {
       customerComplianceCreate: json['customerComplianceCreate'] ?? false,
       customerComplianceDelete: json['customerComplianceDelete'] ?? false,
       customerComplianceEdit: json['customerComplianceEdit'] ?? false,
+      leaveRequestApprover: json['leaveRequestApprover'] ?? false,
     );
   }
 
@@ -608,6 +613,7 @@ class ModuleAccess extends HiveObject {
       'customerComplianceCreate': customerComplianceCreate,
       'customerComplianceDelete': customerComplianceDelete,
       'customerComplianceEdit': customerComplianceEdit,
+      'leaveRequestApprover': leaveRequestApprover,
     };
   }
 }

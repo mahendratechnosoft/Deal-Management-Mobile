@@ -18,4 +18,14 @@ class EmployeeItemModel {
     'employeeId': employeeId,
     'name': name,
   };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EmployeeItemModel &&
+          runtimeType == other.runtimeType &&
+          employeeId == other.employeeId;
+
+  @override
+  int get hashCode => employeeId.hashCode;
 }

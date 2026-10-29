@@ -21,6 +21,9 @@ import 'package:xpertbiz/features/timesheet/bloc/timesheet_bloc.dart';
 import 'package:xpertbiz/features/timesheet/checInUser_bloc/bloc.dart';
 import 'package:xpertbiz/features/timesheet/data/repo/repo.dart';
 import 'package:xpertbiz/features/timesheet/data/service/service.dart';
+import 'package:xpertbiz/features/leave_request/bloc/leave_request_bloc.dart';
+import 'package:xpertbiz/features/leave_request/data/repositories/leave_request_repository.dart';
+import 'package:xpertbiz/features/leave_request/data/services/leave_request_api_service.dart';
 
 import '../features/Lead/data/repo/repo.dart';
 import '../features/task_module/task_deatils/bloc/bloc.dart';
@@ -39,6 +42,7 @@ void init() {
   sl.registerLazySingleton(() => TimesheetService(sl()));
   sl.registerLazySingleton(() => LeadService(sl()));
   sl.registerLazySingleton(() => CustomerService(sl()));
+  sl.registerLazySingleton(() => LeaveRequestApiService(sl()));
 
   sl.registerLazySingleton(() => AuthRepository(sl()));
   sl.registerLazySingleton(() => TaskRepository(sl()));
@@ -47,6 +51,7 @@ void init() {
   sl.registerLazySingleton(() => TimeSheetRepository(sl()));
   sl.registerLazySingleton(() => LeadRepository(sl()));
   sl.registerLazySingleton(() => CustomerRepository(sl()));
+  sl.registerLazySingleton(() => LeaveRequestRepository(sl()));
 
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(() => TaskBloc(sl()));
@@ -58,4 +63,5 @@ void init() {
   sl.registerFactory(() => CustomerBloc(sl()));
   sl.registerFactory(() => CreateCustomerBloc(sl()));
   sl.registerFactory(() => CheckInBloc(sl()));
+  sl.registerFactory(() => LeaveRequestBloc(sl()));
 }

@@ -27,6 +27,12 @@ class DrawerMenu extends StatelessWidget {
         visible: user?.moduleAccess.timeSheetAccess == true,
       ),
       DrawerMenuItem(
+        title: 'Leave Requests',
+        icon: Icons.event_note_rounded,
+        route: AppRouteName.leaveRequests,
+        visible: user?.moduleAccess.leaveRequestAccess == true,
+      ),
+      DrawerMenuItem(
         title: 'Task',
         icon: Icons.task_alt_rounded,
         route: AppRouteName.task,

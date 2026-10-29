@@ -19,6 +19,9 @@ import 'package:xpertbiz/features/task_module/task_deatils/screen/task_details_s
 import 'package:xpertbiz/features/timesheet/presentation/monthly_timesheet_screen.dart';
 import 'package:xpertbiz/features/timesheet/presentation/timesheet_screen.dart';
 import 'package:xpertbiz/features/timesheet/data/model/emp_model.dart';
+import 'package:xpertbiz/features/leave_request/presentation/screens/leave_requests_screen.dart';
+import 'package:xpertbiz/features/leave_request/presentation/screens/apply_leave_screen.dart';
+import 'package:xpertbiz/features/leave_request/data/models/leave_request_model.dart';
 import 'app_transition.dart';
 
 class AppRouter {
@@ -139,6 +142,25 @@ class AppRouter {
           return AppTransition.slide(
             state: state,
             child: AttendanceCalendarScreen(employee: employee),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRouteName.leaveRequests,
+        pageBuilder: (context, state) => AppTransition.slide(
+          state: state,
+          child: const LeaveRequestsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRouteName.applyLeave,
+        pageBuilder: (context, state) {
+          final initialLeave = state.extra is LeaveRequestModel
+              ? state.extra as LeaveRequestModel
+              : null;
+          return AppTransition.slide(
+            state: state,
+            child: ApplyLeaveScreen(initialLeave: initialLeave),
           );
         },
       ),

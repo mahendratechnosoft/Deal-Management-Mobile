@@ -32,7 +32,7 @@ class AuthLocalStorage {
   }
 
   /// Returns the first accessible module route based on user module access.
-  /// Order matches the App Drawer: Leads -> Timesheets -> Task -> Customers.
+  /// Order matches the App Drawer: Leads -> Timesheets -> Leave Requests -> Task -> Customers.
   static String getInitialRoute([LoginResponse? user]) {
     final currentUser = user ?? getUser();
     final access = currentUser?.moduleAccess;
@@ -42,6 +42,9 @@ class AuthLocalStorage {
       }
       if (access.timeSheetAccess) {
         return AppRouteName.timesheet;
+      }
+      if (access.leaveRequestAccess) {
+        return AppRouteName.leaveRequests;
       }
       if (access.taskAccess) {
         return AppRouteName.task;
